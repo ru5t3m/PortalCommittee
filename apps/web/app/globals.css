@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 14% 4%, rgba(0, 169, 155, 0.14), transparent 30rem),
+    radial-gradient(circle at 90% 28%, rgba(214, 168, 58, 0.14), transparent 28rem),
+    linear-gradient(180deg, #f6fbf8 0%, #ffffff 42%, #eef8f6 100%);
+  color: #1f2933;
+  text-rendering: geometricPrecision;
+}
+
+:focus-visible {
+  outline: 3px solid #d6a83a;
+  outline-offset: 2px;
+}
+
+.visually-enhanced {
+  font-size: 112.5%;
+  letter-spacing: 0;
+  filter: contrast(1.1);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.security-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 58px 58px;
+}
+
+.paper-grid {
+  background-image:
+    linear-gradient(rgba(6, 27, 51, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 27, 51, 0.045) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+
+.scanline {
+  animation: scanline 5.8s ease-in-out infinite;
+}
+
+.pulse-node {
+  animation: pulse-node 2.6s ease-in-out infinite;
+}
+
+.float-soft {
+  animation: float-soft 7s ease-in-out infinite;
+}
+
+@keyframes scanline {
+  0%, 100% {
+    transform: translateY(-12%);
+    opacity: 0;
+  }
+  14%, 82% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(112%);
+  }
+}
+
+@keyframes pulse-node {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.82;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+
+@keyframes float-soft {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
