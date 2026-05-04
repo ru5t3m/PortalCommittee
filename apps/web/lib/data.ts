@@ -1,56 +1,152 @@
-import { Brain, BriefcaseBusiness, Eye, FileCheck2, FileWarning, Globe2, GraduationCap, Landmark, LockKeyhole, Network, RadioTower, Route, Shield, Smartphone, Timer } from "lucide-react";
+import { Brain, Eye, FileCheck2, FileSearch, FileWarning, Globe2, GraduationCap, LockKeyhole, Network, RadioTower, Route, Shield, ShieldCheck, Smartphone, Timer } from "lucide-react";
+import type { Locale } from "@/lib/i18n";
 
-export const activities = [
-  { slug: "counter-terrorism", icon: Shield, title: "Контртерроризм", text: "Профилактика, выявление и пресечение террористических угроз." },
-  { slug: "counter-intelligence", icon: LockKeyhole, title: "Контрразведка", text: "Защита суверенитета и государственных интересов." },
-  { slug: "cybersecurity", icon: Network, title: "Кибербезопасность", text: "Реагирование на цифровые угрозы и защита критической инфраструктуры." },
-  { slug: "border-security", icon: Globe2, title: "Пограничная безопасность", text: "Охрана государственной границы и пограничный контроль." },
-  { slug: "state-secrets", icon: FileWarning, title: "Защита гостайн", text: "Организация режима секретности и защита сведений." },
-  { slug: "government-comms", icon: RadioTower, title: "Правительственная связь", text: "Защищенные каналы связи для государственных органов." },
-  { slug: "anti-extremism", icon: Landmark, title: "Противодействие экстремизму", text: "Профилактика радикализации и незаконной пропаганды." },
-  { slug: "economic-security", icon: BriefcaseBusiness, title: "Экономическая безопасность", text: "Выявление угроз экономической устойчивости государства." }
+const activitiesRu = [
+  { slug: "counter-terrorism", icon: Shield, title: "Противодействие терроризму", text: "Выявление, предупреждение и пресечение терроризма и иной деятельности, направленной на насильственное изменение конституционного строя, нарушение целостности и подрыв безопасности Республики Казахстан." },
+  { slug: "intelligence-counterintelligence", icon: LockKeyhole, title: "Разведывательная и контрразведывательная деятельность", text: "Осуществление контрразведывательной деятельности, добывание разведывательной информации в интересах Республики Казахстан." },
+  { slug: "state-border-protection", icon: Globe2, title: "Защита Государственной границы", text: "Обеспечение защиты и охраны Государственной границы Республики Казахстан." },
+  { slug: "state-secrets", icon: FileWarning, title: "Защита государственных секретов", text: "Координация и осуществление деятельности по противодействию техническим разведкам в отношении сведений, составляющих государственные секреты." },
+  { slug: "government-comms", icon: RadioTower, title: "Обеспечение правительственной связью", text: "Обеспечение Президента РК, государственных органов, Вооруженных Сил, других войск и воинских формирований РК правительственной связью в мирное и военное время, организация шифровальной работы." },
+  { slug: "criminal-investigations", icon: FileSearch, title: "Расследование уголовных правонарушений", text: "Выявление, пресечение, раскрытие и расследование уголовных правонарушений, отнесенных законодательством к ведению органов национальной безопасности." }
 ];
 
-export const news = [
+const activitiesKk = [
+  { slug: "counter-terrorism", icon: Shield, title: "Терроризмге қарсы іс-қимыл", text: "Қазақстан Республикасының конституциялық құрылысын күштеп өзгертуге, тұтастығын бұзуға және қауіпсіздігіне нұқсан келтіруге бағытталған терроризмді және өзге де қызметті анықтау, алдын алу және жолын кесу." },
+  { slug: "intelligence-counterintelligence", icon: LockKeyhole, title: "Барлау және қарсы барлау қызметі", text: "Қарсы барлау қызметін жүзеге асыру, Қазақстан Республикасының мүдделері үшін барлау ақпаратын алу." },
+  { slug: "state-border-protection", icon: Globe2, title: "Мемлекеттік шекараны қорғау", text: "Қазақстан Республикасының Мемлекеттік шекарасын қорғауды және күзетуді қамтамасыз ету." },
+  { slug: "state-secrets", icon: FileWarning, title: "Мемлекеттік құпияларды қорғау", text: "Мемлекеттік құпияларды құрайтын мәліметтерге қатысты техникалық барлауларға қарсы іс-қимыл жөніндегі қызметті үйлестіру және жүзеге асыру." },
+  { slug: "government-comms", icon: RadioTower, title: "Үкіметтік байланысты қамтамасыз ету", text: "ҚР Президентін, мемлекеттік органдарды, Қарулы Күштерді, басқа да әскерлер мен әскери құралымдарды бейбіт және соғыс уақытында үкіметтік байланыспен қамтамасыз ету, шифрлау жұмысын ұйымдастыру." },
+  { slug: "criminal-investigations", icon: FileSearch, title: "Қылмыстық құқық бұзушылықтарды тергеу", text: "Заңнамада ұлттық қауіпсіздік органдарының қарауына жатқызылған қылмыстық құқық бұзушылықтарды анықтау, жолын кесу, ашу және тергеу." }
+];
+
+export const activities = activitiesRu;
+
+const newsRu = [
   { title: "Официальное заявление", date: "28.04.2026", tag: "Заявления", text: "Комитет напоминает о необходимости доверять только официальным источникам и не распространять непроверенные сведения.", gradient: "bg-gradient-to-br from-state-navy via-state-tealDark to-state-teal" },
   { title: "Памятка по кибербезопасности", date: "24.04.2026", tag: "Безопасность", text: "Практические рекомендации гражданам по защите персональных данных, мессенджеров и учетных записей.", gradient: "bg-gradient-to-br from-state-blue via-state-teal to-cyan-300" },
   { title: "Аккредитация СМИ", date: "18.04.2026", tag: "Пресс-центр", text: "Открыт прием заявок на аккредитацию представителей средств массовой информации для официальных мероприятий.", gradient: "bg-gradient-to-br from-state-gold via-state-teal to-state-blue" }
 ];
 
-export const admissionSteps = [
-  "Заявка",
-  "Отбор",
-  "Медкомиссия",
-  "Психотест",
-  "Полиграф",
-  "Проверка",
-  "Решение"
+const newsKk = [
+  { title: "Ресми мәлімдеме", date: "28.04.2026", tag: "Мәлімдемелер", text: "Комитет тек ресми дереккөздерге сену және тексерілмеген мәліметтерді таратпау қажет екенін еске салады.", gradient: "bg-gradient-to-br from-state-navy via-state-tealDark to-state-teal" },
+  { title: "Киберқауіпсіздік жадынамасы", date: "24.04.2026", tag: "Қауіпсіздік", text: "Жеке деректерді, мессенджерлерді және есептік жазбаларды қорғау бойынша азаматтарға арналған практикалық ұсынымдар.", gradient: "bg-gradient-to-br from-state-blue via-state-teal to-cyan-300" },
+  { title: "БАҚ аккредитациясы", date: "18.04.2026", tag: "Баспасөз орталығы", text: "Ресми іс-шараларға бұқаралық ақпарат құралдары өкілдерін аккредиттеуге өтінімдер қабылдау ашылды.", gradient: "bg-gradient-to-br from-state-gold via-state-teal to-state-blue" }
 ];
 
-export const quickActions = [
+export const news = newsRu;
+
+const admissionStepsRu = [
+  "Заявление",
+  "Необходимые документы",
+  "Собеседование",
+  "Специальная проверка",
+  "Медицинское и психофизиологическое освидетельствование",
+  "Полиграфологическое исследование",
+  "Оценка профессиональных компетенций",
+  "Проверка физической подготовленности",
+  "Конкурсный отбор"
+];
+
+const admissionStepsKk = [
+  "Өтініш",
+  "Қажетті құжаттар",
+  "Әңгімелесу",
+  "Арнайы тексеру",
+  "Медициналық және психофизиологиялық куәландыру",
+  "Полиграфологиялық зерттеу",
+  "Кәсіби құзыреттерді бағалау",
+  "Дене даярлығы деңгейін тексеру",
+  "Конкурстық іріктеу"
+];
+
+export const admissionSteps = admissionStepsRu;
+
+const quickActionsRu = [
   { title: "Направления деятельности", text: "Изучите ключевые направления работы через визуальный scroll-story.", href: "activities", icon: Route },
-  { title: "Психологическое тестирование", text: "Проверьте внимание, память, логику и устойчивость к нагрузке.", href: "psychological-testing", icon: Brain },
-  { title: "Поступление на службу", text: "Требования, этапы отбора и документы для кандидатов.", href: "careers/admission", icon: GraduationCap },
-  { title: "Документы", text: "Ознакомьтесь с законами, регламентами и справочными материалами.", href: "documents", icon: FileCheck2 }
+  { title: "Поступление на службу", text: "Требования, этапы отбора и документы для кандидатов.", href: "careers/admission", icon: ShieldCheck },
+  { title: "Поступление на учебу", text: "Выберите Академию КНБ или Пограничную академию КНБ.", href: "education", icon: GraduationCap },
+  { title: "Необходимые документы", text: "Перейдите к разделу документов для дальнейшего обновления перечня.", href: "documents", icon: FileCheck2 }
 ];
 
-export const safetyGuides = [
+const quickActionsKk = [
+  { title: "Қызмет бағыттары", text: "Негізгі қызмет бағыттарын көрнекі бөлім арқылы қараңыз.", href: "activities", icon: Route },
+  { title: "Қызметке қабылдау", text: "Кандидаттарға қойылатын талаптар, іріктеу кезеңдері және құжаттар.", href: "careers/admission", icon: ShieldCheck },
+  { title: "Оқуға қабылдау", text: "ҰҚК Академиясын немесе ҰҚК Шекара академиясын таңдаңыз.", href: "education", icon: GraduationCap },
+  { title: "Қажетті құжаттар", text: "Құжаттар бөліміне өтіп, қажетті тізімді қараңыз.", href: "documents", icon: FileCheck2 }
+];
+
+export const quickActions = quickActionsRu;
+
+const safetyGuidesRu = [
   { title: "Фишинг и мошенничество", text: "Проверяйте адрес отправителя, не открывайте подозрительные ссылки и не сообщайте SMS-коды.", icon: Smartphone },
   { title: "Антитеррор", text: "При обнаружении подозрительных предметов сохраняйте дистанцию и сообщайте в экстренные службы.", icon: Shield },
   { title: "Информационная гигиена", text: "Сверяйте новости с официальными источниками и не распространяйте неподтвержденные материалы.", icon: Network },
   { title: "Защита документов", text: "Не передавайте копии удостоверений и служебных документов через непроверенные каналы.", icon: FileWarning }
 ];
 
-export const admissionFaq = [
+const safetyGuidesKk = [
+  { title: "Фишинг және алаяқтық", text: "Жіберушінің мекенжайын тексеріңіз, күмәнді сілтемелерді ашпаңыз және SMS-кодтарды хабарламаңыз.", icon: Smartphone },
+  { title: "Антитеррор", text: "Күдікті заттар табылған жағдайда қашықтық сақтап, шұғыл қызметтерге хабарлаңыз.", icon: Shield },
+  { title: "Ақпараттық гигиена", text: "Жаңалықтарды ресми дереккөздермен салыстырып, расталмаған материалдарды таратпаңыз.", icon: Network },
+  { title: "Құжаттарды қорғау", text: "Жеке куәлік пен қызметтік құжат көшірмелерін тексерілмеген арналар арқылы жібермеңіз.", icon: FileWarning }
+];
+
+export const safetyGuides = safetyGuidesRu;
+
+const admissionFaqRu = [
   { question: "Можно ли подать первичную заявку онлайн?", answer: "Да. Электронная заявка помогает предварительно оценить соответствие базовым требованиям. Оригиналы документов предоставляются на последующих этапах отбора." },
   { question: "Какие качества особенно важны для кандидата?", answer: "Дисциплина, устойчивость к стрессу, законопослушность, аналитическое мышление, ответственность и готовность к службе в интересах государства." },
   { question: "Сколько длится проверка?", answer: "Срок зависит от полноты документов, медицинской комиссии, психологического тестирования и результатов специальных проверок." },
   { question: "Что делать при отказе?", answer: "Кандидат получает разъяснение в рамках допустимого объема информации. После устранения причин отказа возможна повторная подача, если это не противоречит требованиям." }
 ];
 
-export const psychologicalTests = [
+const admissionFaqKk = [
+  { question: "Алғашқы өтінімді онлайн беруге бола ма?", answer: "Иә. Электрондық өтінім негізгі талаптарға сәйкестікті алдын ала бағалауға көмектеседі. Құжаттардың түпнұсқалары кейінгі кезеңдерде ұсынылады." },
+  { question: "Кандидат үшін қандай қасиеттер маңызды?", answer: "Тәртіп, күйзеліске төзімділік, заңға бағыну, аналитикалық ойлау, жауапкершілік және мемлекет мүддесі үшін қызмет етуге дайындық." },
+  { question: "Тексеру қанша уақытқа созылады?", answer: "Мерзім құжаттардың толықтығына, медициналық комиссияға, психологиялық тестілеуге және арнайы тексерулер нәтижелеріне байланысты." },
+  { question: "Бас тартылған жағдайда не істеу керек?", answer: "Кандидатқа рұқсат етілген көлемде түсіндірме беріледі. Себептер жойылғаннан кейін талаптарға қайшы келмесе қайта жүгінуге болады." }
+];
+
+export const admissionFaq = admissionFaqRu;
+
+const psychologicalTestsRu = [
   { slug: "attention", title: "Тест внимания", text: "Проверьте скорость концентрации, устойчивость фокуса и точность восприятия деталей.", icon: Eye, duration: "7 минут", metric: "концентрация" },
   { slug: "memory", title: "Тест памяти", text: "Оцените кратковременную память, удержание последовательностей и воспроизведение информации.", icon: Brain, duration: "9 минут", metric: "память" },
   { slug: "logic", title: "Логическое мышление", text: "Проверьте анализ закономерностей, причинно-следственные связи и структурное мышление.", icon: Network, duration: "10 минут", metric: "логика" },
   { slug: "stress-resilience", title: "Стрессоустойчивость", text: "Самооценка реакции на давление, неопределенность и необходимость быстро принимать решения.", icon: Timer, duration: "6 минут", metric: "устойчивость" }
 ];
+
+const psychologicalTestsKk = [
+  { slug: "attention", title: "Зейін тесті", text: "Шоғырлану жылдамдығын, назар тұрақтылығын және бөлшектерді қабылдау дәлдігін тексеріңіз.", icon: Eye, duration: "7 минут", metric: "зейін" },
+  { slug: "memory", title: "Жад тесті", text: "Қысқа мерзімді жадты, реттілікті есте сақтауды және ақпаратты қайта жаңғыртуды бағалаңыз.", icon: Brain, duration: "9 минут", metric: "жад" },
+  { slug: "logic", title: "Логикалық ойлау", text: "Заңдылықтарды талдау, себеп-салдар байланыстары және құрылымдық ойлау қабілетін тексеріңіз.", icon: Network, duration: "10 минут", metric: "логика" },
+  { slug: "stress-resilience", title: "Күйзеліске төзімділік", text: "Қысым, белгісіздік және жылдам шешім қабылдау жағдайындағы реакцияны бағалау.", icon: Timer, duration: "6 минут", metric: "төзімділік" }
+];
+
+export function getActivities(locale: Locale) {
+  return locale === "kk" ? activitiesKk : activitiesRu;
+}
+
+export function getNews(locale: Locale) {
+  return locale === "kk" ? newsKk : newsRu;
+}
+
+export function getAdmissionSteps(locale: Locale) {
+  return locale === "kk" ? admissionStepsKk : admissionStepsRu;
+}
+
+export function getQuickActions(locale: Locale) {
+  return locale === "kk" ? quickActionsKk : quickActionsRu;
+}
+
+export function getSafetyGuides(locale: Locale) {
+  return locale === "kk" ? safetyGuidesKk : safetyGuidesRu;
+}
+
+export function getAdmissionFaq(locale: Locale) {
+  return locale === "kk" ? admissionFaqKk : admissionFaqRu;
+}
+
+export function getPsychologicalTests(locale: Locale) {
+  return locale === "kk" ? psychologicalTestsKk : psychologicalTestsRu;
+}

@@ -17,7 +17,7 @@ flowchart LR
 
 ## Applications
 
-- `apps/web`: public portal and admin shell. Routes are locale-prefixed: `/kk`, `/ru`, `/en`.
+- `apps/web`: public portal and admin shell. Routes are locale-prefixed: `/kk`, `/ru`.
 - `apps/api`: REST API, validation, persistence, auth, RBAC checks, and seed data.
 - `infra`: reserved for deployment manifests, ingress, observability, and hardening policies.
 

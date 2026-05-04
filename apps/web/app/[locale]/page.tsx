@@ -19,19 +19,89 @@ import { NewsCard } from "@/components/ui/NewsCard";
 import { PremiumCard } from "@/components/ui/PremiumCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
-import { activities, news, psychologicalTests, quickActions } from "@/lib/data";
+import { getActivities, getNews, getPsychologicalTests, getQuickActions } from "@/lib/data";
 import { getDictionary, type Locale } from "@/lib/i18n";
 
-const trustStats = [
+const trustStatsRu = [
   ["1992", "год образования"],
-  ["24/7", "оперативная готовность"],
-  ["17", "региональных контуров"],
-  ["1400", "контактный центр"]
+  ["6", "ведомств"],
+  ["20", "территориальных органов КНБ"],
+  ["press@knb.kz", "e-mail пресс-службы"]
 ];
+
+const trustStatsKk = [
+  ["1992", "құрылған жылы"],
+  ["6", "ведомство"],
+  ["20", "ҰҚК аумақтық органы"],
+  ["press@knb.kz", "баспасөз қызметінің e-mail"]
+];
+
+const homeCopy = {
+  ru: {
+    heroTitle: "ПРИЕМ НА СЛУЖБУ В КОМИТЕТ НАЦИОНАЛЬНОЙ БЕЗОПАСНОСТИ РК",
+    heroDescription: "Непосредственно подчиненный и подотчетный Президенту РК специальный государственный орган, осуществляющий руководство в пределах своих полномочий единой системой органов национальной безопасности РК",
+    topShort: "КНБ РК",
+    topFullLine1: "Комитет национальной безопасности",
+    topFullLine2: "Республики Казахстан",
+    search: "Поиск по порталу",
+    quickEyebrow: "Быстрая навигация",
+    quickTitle: "Основные разделы портала",
+    activitiesEyebrow: "Компетенции",
+    careerEyebrow: "Карьера",
+    careerTitle: "Поступление на службу",
+    careerDescription: "Последовательность отбора вынесена в плотную визуальную линию, чтобы кандидат сразу видел весь маршрут.",
+    psychEyebrow: "Самопроверка",
+    psychTitle: "Психологическое тестирование",
+    psychDescription: "Демо-разделы помогают кандидату оценить базовые навыки до официальных этапов отбора. Результаты не являются официальным заключением.",
+    pressEyebrow: "Пресс-центр",
+    pressDescription: "Официальные сообщения, заявления и полезные материалы для граждан и СМИ.",
+    contactBadge: "Контактный центр",
+    contactTitle: "Нужна официальная информация?",
+    contactText: "Используйте поиск по порталу, документы или региональные контакты, чтобы быстро найти официальную информацию.",
+    location: "Астана, Республика Казахстан",
+    audience: "гражданам и кандидатам",
+    sources: "официальные источники",
+    find: "Найти информацию",
+    contacts: "Контакты"
+  },
+  kk: {
+    heroTitle: "ҚР ҰЛТТЫҚ ҚАУІПСІЗДІК КОМИТЕТІНЕ ҚЫЗМЕТКЕ ҚАБЫЛДАУ",
+    heroDescription: "ҚР Президентіне тікелей бағынатын және есеп беретін, өз өкілеттіктері шегінде ҚР ұлттық қауіпсіздік органдарының бірыңғай жүйесіне басшылықты жүзеге асыратын арнайы мемлекеттік орган",
+    topShort: "ҚР ҰҚК",
+    topFullLine1: "Ұлттық қауіпсіздік комитеті",
+    topFullLine2: "Қазақстан Республикасы",
+    search: "Порталдан іздеу",
+    quickEyebrow: "Жылдам навигация",
+    quickTitle: "Порталдың негізгі бөлімдері",
+    activitiesEyebrow: "Құзыреттер",
+    careerEyebrow: "Мансап",
+    careerTitle: "Қызметке қабылдау",
+    careerDescription: "Іріктеу кезеңдері кандидат бүкіл маршрутты бірден көруі үшін көрнекі желі түрінде берілген.",
+    psychEyebrow: "Өзін-өзі тексеру",
+    psychTitle: "Психологиялық тестілеу",
+    psychDescription: "Демо-бөлімдер кандидатқа ресми іріктеу кезеңдеріне дейін базалық дағдыларын бағалауға көмектеседі. Нәтижелер ресми қорытынды болып табылмайды.",
+    pressEyebrow: "Баспасөз орталығы",
+    pressDescription: "Азаматтар мен БАҚ үшін ресми хабарламалар, мәлімдемелер және пайдалы материалдар.",
+    contactBadge: "Байланыс орталығы",
+    contactTitle: "Ресми ақпарат қажет пе?",
+    contactText: "Ресми ақпаратты жылдам табу үшін порталдағы іздеуді, құжаттарды немесе өңірлік байланыстарды пайдаланыңыз.",
+    location: "Астана, Қазақстан Республикасы",
+    audience: "азаматтар мен кандидаттарға",
+    sources: "ресми дереккөздер",
+    find: "Ақпарат табу",
+    contacts: "Байланыс"
+  }
+};
 
 export default async function HomePage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
+  const copy = homeCopy[locale];
+  const trustStats = locale === "kk" ? trustStatsKk : trustStatsRu;
+  const activities = getActivities(locale);
+  const news = getNews(locale);
+  const psychologicalTests = getPsychologicalTests(locale);
+  const quickActions = getQuickActions(locale);
 
   return (
     <>
@@ -40,18 +110,30 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(0,169,155,0.35),transparent_30rem),radial-gradient(circle_at_80%_8%,rgba(248,177,51,0.18),transparent_28rem),linear-gradient(115deg,rgba(6,24,45,0.96),rgba(5,36,55,0.8)_48%,rgba(0,125,115,0.62))]" />
         <div className="absolute left-1/2 top-12 hidden h-[42rem] w-[42rem] -translate-x-1/2 rounded-full border border-state-gold/15 lg:block" />
 
-        <Container className="relative grid min-h-[calc(100vh-76px)] items-center gap-12 py-14 lg:grid-cols-[0.92fr_1.08fr]">
+        <Container className="relative grid min-h-[calc(100vh-76px)] items-center gap-10 py-12 lg:grid-cols-[1.08fr_0.92fr] xl:gap-14">
           <Reveal>
             <div className="flex items-center gap-4">
               <KnbEmblem className="h-20 w-20" />
-              <div className="h-px flex-1 bg-gradient-to-r from-state-gold/70 via-white/25 to-transparent" />
+              <div className="flex flex-1 flex-col gap-2">
+                <span className="text-sm font-bold uppercase tracking-[0.22em] text-state-gold">{copy.topShort}</span>
+                <div className="h-px bg-gradient-to-r from-state-gold/70 via-white/25 to-transparent" />
+                <span className="text-xs font-medium uppercase leading-5 tracking-[0.16em] text-white/62 sm:text-sm">
+                  {copy.topFullLine1}
+                  <br />
+                  {copy.topFullLine2}
+                </span>
+              </div>
             </div>
-            <h1 className="mt-8 max-w-5xl text-balance text-5xl font-bold leading-[1.02] md:text-7xl">Комитет национальной безопасности Республики Казахстан</h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/76 md:text-xl">Специальный государственный орган, обеспечивающий национальную безопасность, защиту конституционного строя, суверенитета, государственной границы и интересов Республики Казахстан.</p>
-            <div className="mt-9 flex flex-wrap gap-4">
+            <h1 className="mt-7 max-w-5xl text-balance text-4xl font-bold leading-[1.08] tracking-normal md:text-5xl xl:text-[3.75rem]">
+              {copy.heroTitle}
+            </h1>
+            <p className="mt-6 max-w-3xl text-pretty text-base leading-8 text-white/78 md:text-lg">
+              {copy.heroDescription}
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
               <Button href={`/${locale}/careers/admission`} variant="gold">{dict.submitAppeal}</Button>
               <Button href={`/${locale}/psychological-testing`} variant="primary">{dict.reportThreat}</Button>
-              <Button href={`/${locale}/search`} variant="ghost">Поиск по порталу</Button>
+              <Button href={`/${locale}/search`} variant="ghost">{copy.search}</Button>
             </div>
           </Reveal>
 
@@ -65,8 +147,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         <Container>
           <Reveal>
             <div className="mb-7 max-w-2xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-gold">Быстрая навигация</p>
-              <h2 className="mt-2 text-3xl font-bold text-white md:text-4xl">Основные разделы портала</h2>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-gold">{copy.quickEyebrow}</p>
+              <h2 className="mt-2 text-3xl font-bold text-white md:text-4xl">{copy.quickTitle}</h2>
             </div>
           </Reveal>
           <div className="grid gap-4 md:grid-cols-4">
@@ -79,8 +161,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         </Container>
       </section>
 
-      <Section eyebrow="Компетенции" title={dict.activities} description="Каждое направление оформлено как часть единой операционной карты, а не как разрозненный список карточек." className="bg-white">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Section eyebrow={copy.activitiesEyebrow} title={dict.activities} className="bg-white">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {activities.map((item, index) => (
             <Reveal delay={index * 0.035} key={item.slug}>
               <Link href={`/${locale}/activities#${item.slug}`}>
@@ -99,11 +181,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         </div>
       </Section>
 
-      <Section eyebrow="Карьера" title="Поступление на службу" description="Последовательность отбора вынесена в плотную визуальную линию, чтобы кандидат сразу видел весь маршрут." dark>
+      <Section eyebrow={copy.careerEyebrow} title={copy.careerTitle} description={copy.careerDescription} dark>
         <AdmissionJourney locale={locale} />
       </Section>
 
-      <Section eyebrow="Самопроверка" title="Психологическое тестирование" description="Демо-разделы помогают кандидату оценить базовые навыки до официальных этапов отбора. Результаты не являются официальным заключением.">
+      <Section eyebrow={copy.psychEyebrow} title={copy.psychTitle} description={copy.psychDescription}>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {psychologicalTests.map((item, index) => (
             <Reveal delay={index * 0.05} key={item.slug}>
@@ -123,7 +205,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         </div>
       </Section>
 
-      <Section eyebrow="Пресс-центр" title={dict.news} description="Официальные сообщения, заявления и полезные материалы для граждан и СМИ." dark>
+      <Section eyebrow={copy.pressEyebrow} title={dict.news} description={copy.pressDescription} dark>
         <div className="grid gap-6 md:grid-cols-3">
           {news.map((item, index) => (
             <Reveal delay={index * 0.06} key={item.title}>
@@ -136,18 +218,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
       <section className="paper-grid relative overflow-hidden bg-transparent py-16 text-state-navy">
         <Container className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <Badge>Контактный центр</Badge>
-            <h2 className="mt-4 text-3xl font-bold">Нужна официальная информация?</h2>
-            <p className="mt-3 max-w-2xl text-slate-600">Используйте поиск по порталу, документы или региональные контакты, чтобы быстро найти официальную информацию.</p>
+            <Badge>{copy.contactBadge}</Badge>
+            <h2 className="mt-4 text-3xl font-bold">{copy.contactTitle}</h2>
+            <p className="mt-3 max-w-2xl text-slate-600">{copy.contactText}</p>
             <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-600">
-              <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4 text-state-gold" /> Астана, Республика Казахстан</span>
-              <span className="inline-flex items-center gap-2"><UsersRound className="h-4 w-4 text-state-gold" /> гражданам и кандидатам</span>
-              <span className="inline-flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-state-gold" /> официальные источники</span>
+              <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4 text-state-gold" /> {copy.location}</span>
+              <span className="inline-flex items-center gap-2"><UsersRound className="h-4 w-4 text-state-gold" /> {copy.audience}</span>
+              <span className="inline-flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-state-gold" /> {copy.sources}</span>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button href={`/${locale}/search`} variant="secondary"><Search className="h-4 w-4" /> Найти информацию</Button>
-            <Button href={`/${locale}/contacts`} variant="gold">Контакты</Button>
+            <Button href={`/${locale}/search`} variant="secondary"><Search className="h-4 w-4" /> {copy.find}</Button>
+            <Button href={`/${locale}/contacts`} variant="gold">{copy.contacts}</Button>
           </div>
         </Container>
       </section>

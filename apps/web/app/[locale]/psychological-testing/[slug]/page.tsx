@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { PremiumCard } from "@/components/ui/PremiumCard";
 import { Section } from "@/components/ui/Section";
-import { psychologicalTests } from "@/lib/data";
+import { getPsychologicalTests } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
 
 const examples = {
@@ -15,55 +15,98 @@ const examples = {
   "stress-resilience": ["Оцените реакцию на дефицит времени", "Выберите действие в конфликтной ситуации", "Определите приоритеты при перегрузке"]
 };
 
+const examplesKk = {
+  attention: ["Матрицадағы өзгеше таңбаны табыңыз", "Қайталанатын реттіліктерді белгілеңіз", "Екі сан тобын дәлдікке салыстырыңыз"],
+  memory: ["Сөздер реттілігін есте сақтаңыз", "Нысандар тәртібін қалпына келтіріңіз", "Қысқа үзілістен кейін жұптарды сәйкестендіріңіз"],
+  logic: ["Қатар заңдылығын анықтаңыз", "Сызбадағы жетіспейтін элементті таңдаңыз", "Шарттарды салыстырып, қорытынды жасаңыз"],
+  "stress-resilience": ["Уақыт тапшылығындағы реакцияны бағалаңыз", "Қақтығыс жағдайындағы әрекетті таңдаңыз", "Артық жүктеме кезіндегі басымдықтарды анықтаңыз"]
+};
+
+const copy = {
+  ru: {
+    badge: "Психотестирование",
+    params: "Параметры",
+    checks: "Что проверяется",
+    time: "Время",
+    timeText: "Рекомендуется проходить без отвлечений.",
+    skill: "Навык",
+    skillText: "Основная зона самопроверки:",
+    format: "Формат",
+    formatText: "Демо-задания, рекомендации и примерная шкала самооценки.",
+    examples: "Примеры",
+    taskTypes: "Типы заданий",
+    placeholder: "В полной версии здесь будет интерактивное задание с таймером и автоматическим подсчетом результата.",
+    back: "К списку тестов"
+  },
+  kk: {
+    badge: "Психотестілеу",
+    params: "Параметрлер",
+    checks: "Не тексеріледі",
+    time: "Уақыт",
+    timeText: "Алаңдамай өту ұсынылады.",
+    skill: "Дағды",
+    skillText: "Өзін-өзі тексерудің негізгі аймағы:",
+    format: "Формат",
+    formatText: "Демо-тапсырмалар, ұсынымдар және өзін-өзі бағалаудың шамамен шкаласы.",
+    examples: "Мысалдар",
+    taskTypes: "Тапсырма түрлері",
+    placeholder: "Толық нұсқада мұнда таймері және нәтижені автоматты есептеуі бар интерактивті тапсырма болады.",
+    back: "Тесттер тізіміне"
+  }
+};
+
 export default async function PsychologicalTestPage({ params }: { params: Promise<{ locale: Locale; slug: string }> }) {
   const { locale, slug } = await params;
+  const psychologicalTests = getPsychologicalTests(locale);
   const test = psychologicalTests.find((item) => item.slug === slug);
   if (!test) notFound();
-  const testExamples = examples[test.slug as keyof typeof examples];
+  const t = copy[locale];
+  const localizedExamples = locale === "kk" ? examplesKk : examples;
+  const testExamples = localizedExamples[test.slug as keyof typeof localizedExamples];
 
   return (
     <>
       <section className="relative overflow-hidden bg-brand-gradient text-white">
         <Container className="relative py-20">
-          <Badge className="border-white/20 bg-white/10 text-state-gold backdrop-blur">Психотестирование</Badge>
+          <Badge className="border-white/20 bg-white/10 text-state-gold backdrop-blur">{t.badge}</Badge>
           <test.icon className="mt-8 h-12 w-12" />
           <h1 className="mt-5 max-w-4xl text-balance text-5xl font-bold leading-tight md:text-6xl">{test.title}</h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-white/78">{test.text}</p>
         </Container>
       </section>
 
-      <Section eyebrow="Параметры" title="Что проверяется" className="bg-white">
+      <Section eyebrow={t.params} title={t.checks} className="bg-white">
         <div className="grid gap-5 md:grid-cols-3">
           <PremiumCard>
             <Clock className="h-8 w-8 text-state-teal" />
-            <h3 className="mt-5 text-xl font-bold text-state-navy">Время</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{test.duration}. Рекомендуется проходить без отвлечений.</p>
+            <h3 className="mt-5 text-xl font-bold text-state-navy">{t.time}</h3>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{test.duration}. {t.timeText}</p>
           </PremiumCard>
           <PremiumCard>
             <Target className="h-8 w-8 text-state-teal" />
-            <h3 className="mt-5 text-xl font-bold text-state-navy">Навык</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-600">Основная зона самопроверки: {test.metric}.</p>
+            <h3 className="mt-5 text-xl font-bold text-state-navy">{t.skill}</h3>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{t.skillText} {test.metric}.</p>
           </PremiumCard>
           <PremiumCard>
             <CheckCircle2 className="h-8 w-8 text-state-teal" />
-            <h3 className="mt-5 text-xl font-bold text-state-navy">Формат</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-600">Демо-задания, рекомендации и примерная шкала самооценки.</p>
+            <h3 className="mt-5 text-xl font-bold text-state-navy">{t.format}</h3>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{t.formatText}</p>
           </PremiumCard>
         </div>
       </Section>
 
-      <Section eyebrow="Примеры" title="Типы заданий">
+      <Section eyebrow={t.examples} title={t.taskTypes}>
         <div className="grid gap-5 md:grid-cols-3">
           {testExamples.map((item, index) => (
             <PremiumCard key={item}>
               <span className="grid h-11 w-11 place-items-center rounded-2xl bg-state-teal text-white font-bold">{index + 1}</span>
               <h3 className="mt-5 text-lg font-bold text-state-navy">{item}</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">В полной версии здесь будет интерактивное задание с таймером и автоматическим подсчетом результата.</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{t.placeholder}</p>
             </PremiumCard>
           ))}
         </div>
         <div className="mt-8">
-          <Button href={`/${locale}/psychological-testing`}>К списку тестов</Button>
+          <Button href={`/${locale}/psychological-testing`}>{t.back}</Button>
         </div>
       </Section>
     </>

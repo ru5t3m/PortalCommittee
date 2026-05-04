@@ -2,13 +2,13 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "КНБ РК | Официальный портал",
-  description: "Информационный портал по вопросам национальной безопасности Республики Казахстан"
+  title: "ҚР ҰҚК | Ресми портал",
+  description: "Қазақстан Республикасының ұлттық қауіпсіздігі мәселелері бойынша ақпараттық портал"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru">
+    <html lang="kk">
       <body>{children}</body>
     </html>
   );

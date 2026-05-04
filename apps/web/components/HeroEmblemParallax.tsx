@@ -33,13 +33,17 @@ export function HeroEmblemParallax({ stats }: { stats: string[][] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {stats.map(([value, label]) => (
-          <div className="group/card rounded-[1.15rem] border border-white/12 bg-white/[0.06] p-4 backdrop-blur transition hover:-translate-y-1 hover:border-state-gold/45 hover:bg-white/[0.1]" key={label}>
-            <p className="text-2xl font-bold text-state-gold">{value}</p>
-            <p className="mt-2 text-xs leading-5 text-white/58">{label}</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {stats.map(([value, label]) => {
+          const isEmail = value.includes("@");
+
+          return (
+          <div className="group/card min-w-0 rounded-[1.05rem] border border-white/12 bg-white/[0.06] px-5 py-3.5 backdrop-blur transition hover:-translate-y-1 hover:border-state-gold/45 hover:bg-white/[0.1]" key={label}>
+            <p className={`${isEmail ? "text-lg" : "text-2xl"} whitespace-nowrap font-bold leading-tight text-state-gold`}>{value}</p>
+            <p className="mt-1.5 text-xs leading-5 text-white/58">{label}</p>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

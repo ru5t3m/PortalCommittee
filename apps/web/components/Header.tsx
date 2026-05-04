@@ -41,7 +41,7 @@ export function Header({ locale, dict }: { locale: Locale; dict: { brand: string
           </Link>
           <AccessibilityToggle />
           <div className="hidden gap-1 sm:flex">
-            {(["kk", "ru", "en"] as const).map((item) => (
+            {(["kk", "ru"] as const).map((item) => (
               <Link key={item} className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase transition ${item === locale ? "bg-state-gold text-state-navy" : "text-white/55 hover:bg-white/10 hover:text-white"}`} href={`/${item}`}>
                 {item}
               </Link>

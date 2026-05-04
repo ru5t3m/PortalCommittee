@@ -1,109 +1,279 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, CheckCircle2, ClipboardList, FileText, HeartPulse, SearchCheck, ShieldCheck, UserCheck } from "lucide-react";
-import { useState, useTransition } from "react";
+import { ArrowUpRight, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, Dumbbell, FileText, HeartPulse, SearchCheck, ShieldCheck, Trophy, UserCheck, UsersRound } from "lucide-react";
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
 
-const journeySteps = [
+const journeyStepsRu = [
   {
-    title: "Заявка",
-    label: "Подать документы",
+    title: "Заявление",
+    label: "Первичное обращение",
     icon: ClipboardList,
-    summary: "Первичный вход кандидата: заполнение анкеты, передача базовых сведений и подтверждение готовности пройти отбор.",
+    summary: "Подать заявление с необходимыми документами в территориальный орган КНБ или территориальные подразделения Пограничной службы КНБ.",
     details: [
-      "Заявка подается через раздел поступления или при личном обращении в уполномоченное подразделение.",
-      "Кандидат указывает контактные данные, образование, опыт, желаемое направление службы и прикладывает первичные документы.",
-      "На этом этапе важно не оставлять пустых полей и указывать только достоверные сведения."
+      "Кандидат обращается в территориальный орган КНБ или подразделение Пограничной службы КНБ.",
+      "В заявлении указываются контактные данные, образование, опыт и выбранное направление службы.",
+      "На этом этапе важно предоставить достоверные сведения и полный первичный пакет документов."
     ],
-    checks: ["анкета кандидата", "удостоверение личности", "диплом или справка об обучении"],
+    checks: ["заявление", "территориальный орган", "первичный пакет"],
     accent: "from-state-gold/28 via-white/10 to-state-teal/16"
   },
   {
-    title: "Отбор",
-    label: "Оценка соответствия",
-    icon: SearchCheck,
-    summary: "Специалисты оценивают, подходит ли кандидат по базовым требованиям должности и службы.",
+    title: "Необходимые документы",
+    label: "Пакет кандидата",
+    icon: FileText,
+    summary: "Кандидат готовит документы, подтверждающие личность, образование, семейное положение, воинский учет, трудовой опыт и сведения о близких родственниках.",
     details: [
-      "Проверяются образование, возрастные условия, физическая готовность, мотивация и соответствие профилю выбранного направления.",
-      "С кандидатами могут проводить собеседование, уточнять опыт, служебную дисциплину и готовность к ограничениям государственной службы.",
-      "Итог этапа определяет, допускается ли кандидат к медицинским, психологическим и специальным проверкам."
+      "Удостоверение личности, свидетельство о рождении, аттестат или диплом о среднем/техническом образовании.",
+      "Диплом о высшем образовании, свидетельство о заключении брака при наличии, военный билет или приписное свидетельство при наличии.",
+      "Трудовая книжка при наличии, цветные фотографии 9х12 - 2 шт., 3х4 - 4 шт., копии документов близких родственников."
     ],
-    checks: ["квалификация", "мотивация", "физическая готовность"],
+    checks: ["личные документы", "образование", "родственники"],
     accent: "from-state-teal/28 via-white/10 to-state-blue/18"
   },
   {
-    title: "Медкомиссия",
-    label: "Проверка здоровья",
-    icon: HeartPulse,
-    summary: "Медицинская комиссия определяет, позволяет ли состояние здоровья проходить службу с учетом нагрузки и режима.",
+    title: "Собеседование",
+    label: "Оценка мотивации",
+    icon: UsersRound,
+    summary: "Классическое собеседование с руководством и уполномоченными сотрудниками помогает оценить мотивацию, зрелость решений и понимание требований службы.",
     details: [
-      "Кандидат проходит врачебные осмотры, лабораторные обследования и предоставляет медицинские сведения по запросу комиссии.",
-      "Оцениваются общие показатели здоровья, противопоказания, устойчивость к нагрузкам и соответствие требованиям конкретной должности.",
-      "При необходимости комиссия может запросить дополнительные обследования или уточняющие документы."
+      "Обсуждаются образование, опыт, профессиональные интересы, дисциплина и готовность соблюдать ограничения службы.",
+      "Руководство оценивает мотивацию кандидата, коммуникативность, ответственность и понимание будущих обязанностей.",
+      "По итогам собеседования уточняется дальнейшее прохождение этапов отбора."
     ],
-    checks: ["осмотры врачей", "анализы", "заключение комиссии"],
+    checks: ["мотивация", "ответственность", "готовность к службе"],
     accent: "from-cyan-300/24 via-white/10 to-state-teal/18"
   },
   {
-    title: "Психотест",
-    label: "Профиль кандидата",
-    icon: UserCheck,
-    summary: "Психологическое тестирование помогает оценить внимание, память, устойчивость к стрессу и надежность решений.",
+    title: "Специальная проверка",
+    label: "Сведения о кандидате",
+    icon: SearchCheck,
+    summary: "В отношении кандидата и близких родственников проводится специальная проверка сведений, влияющих на допуск к службе.",
     details: [
-      "Кандидат выполняет задания на концентрацию, логику, память, эмоциональную устойчивость и работу в условиях давления.",
-      "Результаты рассматриваются вместе с собеседованием и другими этапами, а не как единственный критерий допуска.",
-      "До официального этапа можно пройти демо-самопроверку на портале, чтобы понять формат задач."
+      "Уточняются биографические данные, документы, правовые ограничения и обстоятельства, имеющие значение для службы.",
+      "Проверка охватывает сведения о кандидате и близких родственниках в рамках установленных процедур.",
+      "Полнота и достоверность предоставленной информации снижает риск задержек на этом этапе."
     ],
-    checks: ["внимание", "логика", "стрессоустойчивость"],
+    checks: ["биография", "родственники", "ограничения"],
     accent: "from-state-blue/22 via-white/10 to-state-gold/18"
   },
   {
-    title: "Полиграф",
-    label: "Уточнение данных",
+    title: "Медицинское и психофизиологическое освидетельствование",
+    label: "Здоровье и устойчивость",
+    icon: HeartPulse,
+    summary: "Оценивается состояние здоровья, психофизиологическая устойчивость и соответствие кандидата требованиям службы.",
+    details: [
+      "Кандидат проходит медицинские осмотры, обследования и предоставляет сведения по запросу комиссии.",
+      "Психофизиологическое освидетельствование помогает оценить устойчивость к нагрузкам, внимательность и надежность поведения.",
+      "Заключение рассматривается вместе с результатами остальных этапов отбора."
+    ],
+    checks: ["здоровье", "нагрузки", "заключение"],
+    accent: "from-cyan-300/18 via-white/10 to-state-teal/18"
+  },
+  {
+    title: "Полиграфологическое исследование",
+    label: "Проверка достоверности",
     icon: ShieldCheck,
-    summary: "Полиграф применяется для проверки достоверности значимых сведений и снижения рисков для службы.",
+    summary: "Полиграфологическое исследование проводится для уточнения достоверности значимых сведений и выявления факторов риска.",
     details: [
       "Перед процедурой кандидату разъясняют порядок прохождения и перечень тем, связанных с требованиями службы.",
       "Внимание уделяется достоверности анкеты, возможным конфликтам интересов, нарушениям закона и факторам риска.",
       "Результаты рассматриваются в совокупности с материалами проверки и не заменяют решение комиссии."
     ],
     checks: ["достоверность анкеты", "факторы риска", "служебная надежность"],
-    accent: "from-state-gold/20 via-white/10 to-state-navy/24"
-  },
-  {
-    title: "Проверка",
-    label: "Специальные сведения",
-    icon: FileText,
-    summary: "Проводится специальная проверка документов, биографии и сведений, влияющих на допуск к службе.",
-    details: [
-      "Уточняются документы, образование, трудовая биография, соблюдение законодательства и отсутствие ограничений для службы.",
-      "Могут запрашиваться дополнительные сведения в рамках полномочий и действующих процедур.",
-      "Чем полнее и точнее документы кандидата, тем меньше задержек возникает на этом этапе."
-    ],
-    checks: ["документы", "биография", "правовые ограничения"],
     accent: "from-white/18 via-state-teal/16 to-state-blue/20"
   },
   {
-    title: "Решение",
-    label: "Итог комиссии",
-    icon: CheckCircle2,
-    summary: "После завершения этапов комиссия принимает решение о дальнейшем оформлении или отказе.",
+    title: "Оценка профессиональных компетенций",
+    label: "Деловые качества",
+    icon: UserCheck,
+    summary: "Проверяются знания, навыки, аналитическое мышление, дисциплина и способность выполнять задачи по выбранному направлению службы.",
     details: [
-      "Комиссия рассматривает результаты всех этапов: заявку, отбор, медицинское заключение, тестирование и проверки.",
-      "При положительном решении кандидату сообщают дальнейший порядок оформления, сроки и необходимые действия.",
-      "При отказе кандидат получает разъяснение в допустимом объеме и может повторно обратиться после устранения причин, если это возможно."
+      "Кандидату могут предложить ситуационные вопросы, практические задания или оценку профильных знаний.",
+      "Учитываются образование, опыт, способность работать с информацией, точность решений и служебная дисциплина.",
+      "Результат помогает определить соответствие кандидата конкретной должности или направлению."
     ],
-    checks: ["итоги этапов", "решение комиссии", "следующие действия"],
+    checks: ["знания", "аналитика", "профиль должности"],
     accent: "from-state-teal/24 via-white/10 to-state-gold/22"
+  },
+  {
+    title: "Проверка физической подготовленности",
+    label: "Нормативы",
+    icon: Dumbbell,
+    summary: "Кандидат подтверждает уровень физической подготовленности, необходимый для прохождения службы и выполнения служебных задач.",
+    details: [
+      "Проверяются базовые физические качества: выносливость, сила, скорость и общая готовность к нагрузкам.",
+      "Нормативы зависят от требований службы и оцениваются уполномоченными специалистами.",
+      "Результаты фиксируются и учитываются при дальнейшем конкурсном рассмотрении."
+    ],
+    checks: ["выносливость", "сила", "нормативы"],
+    accent: "from-state-blue/22 via-white/10 to-state-gold/18"
+  },
+  {
+    title: "Конкурсный отбор",
+    label: "Итоговое решение",
+    icon: Trophy,
+    summary: "На конкурсном этапе сравниваются результаты кандидатов и принимается решение о дальнейшем оформлении на службу.",
+    details: [
+      "Комиссия рассматривает документы, собеседование, проверки, освидетельствование, полиграф, компетенции и физическую подготовку.",
+      "Преимущество получают кандидаты, лучше соответствующие требованиям конкретной должности и направления службы.",
+      "По итогам кандидату сообщают дальнейший порядок оформления или разъясняют решение в допустимом объеме."
+    ],
+    checks: ["итоги этапов", "конкурс", "решение комиссии"],
+    accent: "from-state-gold/28 via-white/10 to-state-teal/16"
   }
 ];
 
+const journeyStepsKk = [
+  {
+    title: "Өтініш",
+    label: "Алғашқы жүгіну",
+    icon: ClipboardList,
+    summary: "Қажетті құжаттармен бірге ҰҚК аумақтық органына немесе ҰҚК Шекара қызметінің аумақтық бөлімшелеріне өтініш беру.",
+    details: [
+      "Кандидат ҰҚК аумақтық органына немесе Шекара қызметінің бөлімшесіне жүгінеді.",
+      "Өтініште байланыс деректері, білім, тәжірибе және таңдалған қызмет бағыты көрсетіледі.",
+      "Бұл кезеңде толық әрі шынайы бастапқы құжаттар пакетін ұсыну маңызды."
+    ],
+    checks: ["өтініш", "аумақтық орган", "бастапқы пакет"],
+    accent: "from-state-gold/28 via-white/10 to-state-teal/16"
+  },
+  {
+    title: "Қажетті құжаттар",
+    label: "Кандидат пакеті",
+    icon: FileText,
+    summary: "Кандидат жеке басын, білімін, отбасылық жағдайын, әскери есебін, еңбек тәжірибесін және жақын туыстары туралы мәліметтерді растайтын құжаттарды дайындайды.",
+    details: [
+      "Жеке куәлік, туу туралы куәлік, орта немесе техникалық білім туралы аттестат не диплом.",
+      "Жоғары білім туралы диплом, некеге тұру туралы куәлік болса, әскери билет немесе тіркеу куәлігі болса.",
+      "Еңбек кітапшасы болса, 9х12 - 2 дана, 3х4 - 4 дана түрлі түсті фото, жақын туыстар құжаттарының көшірмелері."
+    ],
+    checks: ["жеке құжаттар", "білім", "туыстар"],
+    accent: "from-state-teal/28 via-white/10 to-state-blue/18"
+  },
+  {
+    title: "Әңгімелесу",
+    label: "Уәжді бағалау",
+    icon: UsersRound,
+    summary: "Басшылықпен және уәкілетті қызметкерлермен әңгімелесу кандидаттың уәжін, шешім қабылдау жетіктігін және қызмет талаптарын түсінуін бағалауға көмектеседі.",
+    details: [
+      "Білім, тәжірибе, кәсіби қызығушылық, тәртіп және қызмет шектеулерін сақтауға дайындық талқыланады.",
+      "Басшылық кандидаттың уәжін, жауапкершілігін және болашақ міндеттерді түсінуін бағалайды.",
+      "Әңгімелесу қорытындысы бойынша іріктеудің келесі кезеңдері нақтыланады."
+    ],
+    checks: ["уәж", "жауапкершілік", "қызметке дайындық"],
+    accent: "from-cyan-300/24 via-white/10 to-state-teal/18"
+  },
+  {
+    title: "Арнайы тексеру",
+    label: "Кандидат туралы мәліметтер",
+    icon: SearchCheck,
+    summary: "Кандидат пен жақын туыстарына қатысты қызметке жіберілуге әсер ететін мәліметтер бойынша арнайы тексеру жүргізіледі.",
+    details: [
+      "Өмірбаян деректері, құжаттар, құқықтық шектеулер және қызмет үшін маңызды мән-жайлар нақтыланады.",
+      "Тексеру белгіленген рәсімдер аясында кандидат пен жақын туыстары туралы мәліметтерді қамтиды.",
+      "Ақпараттың толықтығы мен дұрыстығы осы кезеңдегі кідірістерді азайтады."
+    ],
+    checks: ["өмірбаян", "туыстар", "шектеулер"],
+    accent: "from-state-blue/22 via-white/10 to-state-gold/18"
+  },
+  {
+    title: "Медициналық және психофизиологиялық куәландыру",
+    label: "Денсаулық және тұрақтылық",
+    icon: HeartPulse,
+    summary: "Кандидаттың денсаулық жағдайы, психофизиологиялық тұрақтылығы және қызмет талаптарына сәйкестігі бағаланады.",
+    details: [
+      "Кандидат медициналық тексерулерден өтіп, комиссия сұраған мәліметтерді ұсынады.",
+      "Психофизиологиялық куәландыру жүктемеге төзімділікті, зейінді және мінез-құлық сенімділігін бағалауға көмектеседі.",
+      "Қорытынды іріктеудің басқа кезеңдерімен бірге қаралады."
+    ],
+    checks: ["денсаулық", "жүктеме", "қорытынды"],
+    accent: "from-cyan-300/18 via-white/10 to-state-teal/18"
+  },
+  {
+    title: "Полиграфологиялық зерттеу",
+    label: "Мәліметтердің дұрыстығы",
+    icon: ShieldCheck,
+    summary: "Полиграфологиялық зерттеу маңызды мәліметтердің дұрыстығын нақтылау және тәуекел факторларын анықтау үшін жүргізіледі.",
+    details: [
+      "Процедура алдында кандидатқа өту тәртібі және қызмет талаптарына байланысты тақырыптар түсіндіріледі.",
+      "Анкетаның дұрыстығына, ықтимал мүдделер қақтығысына, заң бұзушылықтар мен тәуекел факторларына назар аударылады.",
+      "Нәтижелер тексеру материалдарымен бірге қаралады және комиссия шешімін алмастырмайды."
+    ],
+    checks: ["анкета дұрыстығы", "тәуекелдер", "қызметтік сенімділік"],
+    accent: "from-white/18 via-state-teal/16 to-state-blue/20"
+  },
+  {
+    title: "Кәсіби құзыреттерді бағалау",
+    label: "Іскерлік қасиеттер",
+    icon: UserCheck,
+    summary: "Білім, дағды, аналитикалық ойлау, тәртіп және таңдалған бағыт бойынша міндеттерді орындау қабілеті тексеріледі.",
+    details: [
+      "Кандидатқа жағдайлық сұрақтар, практикалық тапсырмалар немесе бейіндік білімді бағалау ұсынылуы мүмкін.",
+      "Білім, тәжірибе, ақпаратпен жұмыс істеу қабілеті, шешім дәлдігі және қызметтік тәртіп ескеріледі.",
+      "Нәтиже кандидаттың нақты лауазымға немесе бағытқа сәйкестігін анықтауға көмектеседі."
+    ],
+    checks: ["білім", "талдау", "лауазым бейіні"],
+    accent: "from-state-teal/24 via-white/10 to-state-gold/22"
+  },
+  {
+    title: "Дене даярлығы деңгейін тексеру",
+    label: "Нормативтер",
+    icon: Dumbbell,
+    summary: "Кандидат қызметті өткеру және қызметтік міндеттерді орындау үшін қажетті дене даярлығы деңгейін растайды.",
+    details: [
+      "Төзімділік, күш, жылдамдық және жалпы жүктемеге дайындық сияқты негізгі физикалық қасиеттер тексеріледі.",
+      "Нормативтер қызмет талаптарына байланысты және уәкілетті мамандармен бағаланады.",
+      "Нәтижелер тіркеліп, конкурстық қарау кезінде ескеріледі."
+    ],
+    checks: ["төзімділік", "күш", "нормативтер"],
+    accent: "from-state-blue/22 via-white/10 to-state-gold/18"
+  },
+  {
+    title: "Конкурстық іріктеу",
+    label: "Қорытынды шешім",
+    icon: Trophy,
+    summary: "Конкурстық кезеңде кандидаттардың нәтижелері салыстырылып, қызметке одан әрі ресімдеу туралы шешім қабылданады.",
+    details: [
+      "Комиссия құжаттарды, әңгімелесуді, тексерулерді, куәландыруды, полиграфты, құзыреттерді және дене даярлығын қарайды.",
+      "Нақты лауазым мен қызмет бағыты талаптарына көбірек сәйкес келетін кандидаттарға басымдық беріледі.",
+      "Қорытынды бойынша кандидатқа одан әрі ресімдеу тәртібі хабарланады немесе шешім рұқсат етілген көлемде түсіндіріледі."
+    ],
+    checks: ["кезең қорытындысы", "конкурс", "комиссия шешімі"],
+    accent: "from-state-gold/28 via-white/10 to-state-teal/16"
+  }
+];
+
+const copy = {
+  ru: {
+    left: "Прокрутить этапы влево",
+    right: "Прокрутить этапы вправо",
+    selected: "Выбранный этап",
+    happens: "Что происходит",
+    openAdmission: "Открыть раздел поступления",
+    documents: "Документы",
+    psych: "Демо-психотест"
+  },
+  kk: {
+    left: "Кезеңдерді солға айналдыру",
+    right: "Кезеңдерді оңға айналдыру",
+    selected: "Таңдалған кезең",
+    happens: "Не болады",
+    openAdmission: "Қабылдау бөлімін ашу",
+    documents: "Құжаттар",
+    psych: "Демо-психотест"
+  }
+};
+
 export function AdmissionJourney({ locale }: { locale: Locale }) {
+  const scrollRef = useRef<HTMLOListElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
+  const journeySteps = locale === "kk" ? journeyStepsKk : journeyStepsRu;
+  const t = copy[locale];
   const active = journeySteps[activeIndex];
   const ActiveIcon = active.icon;
 
@@ -113,32 +283,58 @@ export function AdmissionJourney({ locale }: { locale: Locale }) {
     });
   }
 
+  function scrollSteps(direction: "left" | "right") {
+    scrollRef.current?.scrollBy({
+      left: direction === "left" ? -320 : 320,
+      behavior: "smooth"
+    });
+  }
+
   return (
     <div className="grid gap-7">
       <div className="relative overflow-hidden rounded-[1.7rem] border border-white/10 bg-white/[0.07] p-5 shadow-premium backdrop-blur">
         <div className="absolute inset-0 security-grid opacity-35" />
-        <ol className="relative grid gap-5 md:grid-cols-7 md:gap-3">
+        <button
+          type="button"
+          onClick={() => scrollSteps("left")}
+          aria-label={t.left}
+          className="absolute left-4 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-state-gold/45 bg-state-gold text-state-navy shadow-lg shadow-black/20 transition hover:bg-[#f0c65a] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-state-gold"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollSteps("right")}
+          aria-label={t.right}
+          className="absolute right-4 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-state-gold/45 bg-state-gold text-state-navy shadow-lg shadow-black/20 transition hover:bg-[#f0c65a] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-state-gold"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+        <ol
+          ref={scrollRef}
+          className="relative flex gap-3 overflow-x-scroll px-14 pb-5 pt-2 [scrollbar-color:#d6a83a_rgba(255,255,255,0.14)] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-state-gold [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-white/15"
+        >
           {journeySteps.map((step, index) => {
             const selected = index === activeIndex;
             const completed = index < activeIndex;
             return (
-              <li key={step.title} className="relative">
-                {index < journeySteps.length - 1 ? <div className="absolute left-6 top-12 h-full w-px bg-state-gold/35 md:left-1/2 md:top-6 md:h-px md:w-full" /> : null}
+              <li key={step.title} className="relative w-[15rem] shrink-0">
+                {index < journeySteps.length - 1 ? <div className="absolute left-1/2 top-6 h-px w-full bg-state-gold/35" /> : null}
                 <button
                   type="button"
                   onClick={() => selectStep(index)}
                   aria-pressed={selected}
                   className={cn(
-                    "relative flex h-full w-full flex-col rounded-[1.25rem] border p-5 text-left shadow-sm transition-all duration-300 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-state-gold",
+                    "relative flex h-full min-h-[10.5rem] w-full flex-col rounded-[1.25rem] border p-4 text-left shadow-sm transition-all duration-300 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-state-gold",
                     selected
                       ? "border-state-gold bg-white shadow-lift ring-4 ring-state-gold/10"
                       : "border-white/15 bg-white/[0.92] hover:-translate-y-1 hover:border-state-gold/50 hover:bg-white hover:shadow-lift"
                   )}
                 >
-                  <span className={cn("grid h-12 w-12 place-items-center rounded-2xl font-bold", selected ? "bg-state-gold text-state-navy" : "bg-state-teal/10 text-state-tealDark")}>
+                  <span className={cn("grid h-11 w-11 place-items-center rounded-2xl font-bold", selected ? "bg-state-gold text-state-navy" : "bg-state-teal/10 text-state-tealDark")}>
                     {completed ? <CheckCircle2 className="h-6 w-6" /> : index + 1}
                   </span>
-                  <span className="mt-4 text-sm font-semibold leading-5 text-state-navy">{step.title}</span>
+                  <span className="mt-3 text-sm font-semibold leading-5 text-state-navy">{step.title}</span>
                   <span className="mt-1 text-xs leading-4 text-slate-500">{step.label}</span>
                 </button>
               </li>
@@ -152,11 +348,11 @@ export function AdmissionJourney({ locale }: { locale: Locale }) {
         <div className="relative grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div>
             <div className="flex items-center gap-4">
-              <span className="grid h-14 w-14 place-items-center rounded-2xl bg-state-gold text-state-navy shadow-lg">
+              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-state-gold text-state-navy shadow-lg">
                 <ActiveIcon className="h-7 w-7" />
               </span>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-state-gold">Выбранный этап</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-state-gold">{t.selected}</p>
                 <h3 className="mt-1 text-3xl font-bold text-white md:text-4xl">{active.title}</h3>
               </div>
             </div>
@@ -171,7 +367,7 @@ export function AdmissionJourney({ locale }: { locale: Locale }) {
           </div>
 
           <div className="rounded-[1.4rem] border border-white/12 bg-[#06182d]/56 p-5">
-            <p className="text-sm font-semibold uppercase tracking-wide text-state-gold">Что происходит</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-state-gold">{t.happens}</p>
             <ul className="mt-4 grid gap-4">
               {active.details.map((detail) => (
                 <li key={detail} className="flex gap-3 text-sm leading-6 text-white/72">
@@ -184,10 +380,10 @@ export function AdmissionJourney({ locale }: { locale: Locale }) {
         </div>
 
         <div className="relative mt-8 flex flex-wrap items-center gap-4 border-t border-white/10 pt-6">
-          <Button href={`/${locale}/careers/admission`} variant="gold">Открыть раздел поступления</Button>
-          <Button href={`/${locale}/documents`} variant="ghost">Документы</Button>
+          <Button href={`/${locale}/careers/admission`} variant="gold">{t.openAdmission}</Button>
+          <Button href={`/${locale}/documents`} variant="ghost">{t.documents}</Button>
           <Link href={`/${locale}/psychological-testing`} className="inline-flex items-center gap-2 text-sm font-semibold text-white/72 transition hover:text-state-gold">
-            Демо-психотест <ArrowUpRight className="h-4 w-4" />
+            {t.psych} <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
