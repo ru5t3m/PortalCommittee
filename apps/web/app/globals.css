@@ -110,3 +110,32 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+.leaflet-container {
+  font-family: Inter, Roboto, "Noto Sans", Arial, sans-serif;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 1rem;
+  box-shadow: 0 24px 70px rgba(6, 27, 51, 0.2);
+}
+
+.leaflet-popup-content {
+  margin: 1rem;
+}
+
+.leaflet-popup-tip {
+  box-shadow: 0 12px 28px rgba(6, 27, 51, 0.14);
+}
+
+.leaflet-control-zoom {
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.55) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 10px 30px rgba(6, 27, 51, 0.12) !important;
+}
+
+.leaflet-control-zoom a {
+  border-color: rgba(148, 163, 184, 0.45) !important;
+  color: #061b33 !important;
+}
