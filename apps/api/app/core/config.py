@@ -23,10 +23,20 @@ class Settings(BaseSettings):
     telegram_login_challenge_minutes: int = 10
     telegram_admin_ids: list[str] = []
     telegram_moderator_ids: list[str] = []
+    email_admin_addresses: list[str] = []
+    email_moderator_addresses: list[str] = []
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    @field_validator("cors_origins", "allowed_hosts", "telegram_admin_ids", "telegram_moderator_ids", mode="before")
+    @field_validator(
+        "cors_origins",
+        "allowed_hosts",
+        "telegram_admin_ids",
+        "telegram_moderator_ids",
+        "email_admin_addresses",
+        "email_moderator_addresses",
+        mode="before",
+    )
     @classmethod
     def parse_list_env(cls, value: Any) -> Any:
         if isinstance(value, int):

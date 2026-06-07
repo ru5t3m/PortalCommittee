@@ -16,7 +16,7 @@ In scope:
 - Public first-contact applications for people who want to work or study with the Committee.
 - Candidate registration as the public registration flow.
 - Candidate account cabinet.
-- Telegram authentication with phone confirmation as the first active login/registration method.
+- Telegram authentication with phone confirmation and email/password authentication as active login/registration methods.
 - Admin and Moderator roles for administration/moderation.
 - Candidate role for public authenticated users.
 - Admin panel for appeals, candidate applications, and required content CRUD.
@@ -90,7 +90,7 @@ Status: in progress
 
 Tasks:
 
-- Replace frontend demo/password login with backend Telegram authentication. Done for the first Telegram provider flow.
+- Replace frontend demo login with backend provider authentication. Done for Telegram and email/password providers.
 - Define auth model for users. Done.
 - Implement candidate account creation through Telegram login. Done for Telegram-authenticated users.
 - Keep candidate application data separate from authentication. In progress.
@@ -99,10 +99,11 @@ Tasks:
 - Implement refresh-token sessions. Done with HttpOnly refresh cookie and server-side `RefreshSession`.
 - Add access-token expiration. Done.
 - Add refresh-token rotation. Done.
-- Remove password login/register from active user flow. Done for current frontend/auth routes.
+- Add password login/register as an explicit secondary provider. Done, without email ownership confirmation.
 - Add account active/blocked status. Schema done, behavior in progress.
 - Add Telegram webhook secret validation. Done; production requires a strong secret.
 - Add Telegram phone confirmation ownership check. Done through `contact.user_id == message.from.id`.
+- Reconsider email-code verification before final security review if email/password remains enabled for production.
 - Add login attempt logging. Done.
 - Add failed login throttling/brute-force protection. Done for previous login failures and basic Telegram challenge creation throttling; broaden as needed.
 - Add admin-only user management endpoints. Pending.

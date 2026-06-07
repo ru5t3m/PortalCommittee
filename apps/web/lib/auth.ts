@@ -104,6 +104,26 @@ export async function completeTelegramLogin(challengeId: number, nonce: string) 
   return storeTokenFromResponse(response);
 }
 
+export async function loginWithPassword(email: string, password: string) {
+  const response = await fetch(`${API_URL}/auth/password/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ email, password })
+  });
+  return storeTokenFromResponse(response);
+}
+
+export async function registerWithPassword(payload: { email: string; password: string; full_name: string }) {
+  const response = await fetch(`${API_URL}/auth/password/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload)
+  });
+  return storeTokenFromResponse(response);
+}
+
 export async function refreshSession() {
   const response = await fetch(`${API_URL}/auth/refresh`, {
     method: "POST",

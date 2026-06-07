@@ -32,6 +32,7 @@ Out of scope unless explicitly changed later:
 - Citizen first-contact work/study application submission through the backend.
 - Appeal tracking/status lookup.
 - Telegram login/registration flow backed by the API and Telegram bot webhook.
+- Email/password login and registration as a secondary provider.
 - Phone confirmation through Telegram contact sharing.
 - Logout and refresh-token sessions using an HttpOnly refresh cookie.
 - Candidate account cabinet using `/auth/me`.
@@ -109,6 +110,8 @@ Public:
 
 Auth/account:
 
+- `POST /api/v1/auth/password/register`
+- `POST /api/v1/auth/password/login`
 - `POST /api/v1/auth/telegram/start`
 - `GET /api/v1/auth/telegram/status/{challenge_id}`
 - `POST /api/v1/auth/telegram/complete`
@@ -181,6 +184,8 @@ CORS_ORIGINS=https://knb-portal.vercel.app
 ALLOWED_HOSTS=knb-portal-api.onrender.com
 TELEGRAM_ADMIN_IDS=["123456789"]
 TELEGRAM_MODERATOR_IDS=
+EMAIL_ADMIN_ADDRESSES=admin@example.kz
+EMAIL_MODERATOR_ADDRESSES=
 ```
 
 Multiple values are also valid:
@@ -189,6 +194,7 @@ Multiple values are also valid:
 CORS_ORIGINS=https://knb-portal.vercel.app,http://localhost:3000
 ALLOWED_HOSTS=knb-portal-api.onrender.com,localhost
 TELEGRAM_ADMIN_IDS=123456789,987654321
+EMAIL_ADMIN_ADDRESSES=admin@example.kz,moderator@example.kz
 ```
 
 Render Postgres migration troubleshooting:

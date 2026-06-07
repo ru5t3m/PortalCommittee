@@ -53,7 +53,7 @@ No English routes are in scope.
 
 Core entities:
 
-- `User`: authenticated identity for Admin, Moderator, and Candidate users; includes role, active/blocked state, Telegram identity, and verified phone fields.
+- `User`: authenticated identity for Admin, Moderator, and Candidate users; includes role, active/blocked state, optional Telegram identity, optional verified phone fields, optional email, and optional hashed password.
 - `CandidateApplication`: candidate registration/application data linked to candidate account flows.
 - `RefreshSession`: server-side refresh-token session rows used with the HttpOnly refresh cookie.
 - `LoginAttempt`: login success/failure journal and throttling support.
@@ -79,6 +79,7 @@ Auth/account examples:
 
 - Telegram login start/status/complete.
 - Telegram webhook for bot updates and phone contact confirmation.
+- Email/password register and login.
 - Refresh.
 - Logout.
 - Current user/account data.
@@ -102,6 +103,7 @@ Current or intended controls:
 - HttpOnly refresh cookie backed by server-side `RefreshSession` rows.
 - Telegram bot webhook secret validation.
 - Telegram phone ownership check through `contact.user_id == message.from.id`.
+- Server-side password hashing and rate-limited password login.
 - Login attempt logging and throttling.
 - Pydantic validation on public and admin forms.
 - Audit logging for admin actions.

@@ -5,14 +5,25 @@ from urllib import request as urllib_request
 from urllib.error import URLError
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_user
 from app.core.config import get_settings
-from app.core.security import create_access_token, create_refresh_token, hash_token
+from app.core.security import create_access_token, create_refresh_token, hash_password, hash_token, verify_password
 from app.db.session import get_db
 from app.models.entities import CandidateApplication, LoginAttempt, RefreshSession, Role, TelegramLoginChallenge, User
-from app.schemas.dto import AuthMeOut, CandidateApplicationOut, TelegramLoginCompleteIn, TelegramLoginStartOut, TelegramLoginStatusOut, TokenOut, UserOut
+from app.schemas.dto import (
+    AuthMeOut,
+    CandidateApplicationOut,
+    PasswordLoginIn,
+    PasswordRegisterIn,
+    TelegramLoginCompleteIn,
+    TelegramLoginStartOut,
+    TelegramLoginStatusOut,
+    TokenOut,
+    UserOut,
+)
 
 router = APIRouter()
 
@@ -20,6 +31,7 @@ REFRESH_COOKIE_NAME = "knb_refresh_token"
 LOCKOUT_WINDOW_MINUTES = 15
 TELEGRAM_START_PREFIX = "/start"
 MAX_TELEGRAM_CHALLENGES_PER_WINDOW = 5
+MAX_FAILED_ATTEMPTS = 5
 
 
 def client_ip(request: Request) -> str | None:
@@ -133,6 +145,17 @@ def record_telegram_attempt(
     )
 
 
+def too_many_recent_failures(db: Session, identifier: str, request: Request) -> bool:
+    since = datetime.now(timezone.utc) - timedelta(minutes=LOCKOUT_WINDOW_MINUTES)
+    ip = client_ip(request)
+    query = db.query(LoginAttempt).filter(LoginAttempt.success.is_(False), LoginAttempt.created_at >= since)
+    if ip:
+        query = query.filter(or_(LoginAttempt.email == identifier.lower(), LoginAttempt.ip_address == ip))
+    else:
+        query = query.filter(LoginAttempt.email == identifier.lower())
+    return query.count() >= MAX_FAILED_ATTEMPTS
+
+
 def create_refresh_session(db: Session, user: User, request: Request, response: Response) -> None:
     settings = get_settings()
     raw_token = create_refresh_token()
@@ -200,6 +223,104 @@ def telegram_full_name(first_name: str | None, last_name: str | None, username: 
     if username:
         return f"Telegram @{username}"[:255]
     return "Telegram user"
+
+
+def role_for_email(email: str) -> Role:
+    normalized = email.lower()
+    settings = get_settings()
+    admin_emails = {item.lower() for item in getattr(settings, "email_admin_addresses", [])}
+    moderator_emails = {item.lower() for item in getattr(settings, "email_moderator_addresses", [])}
+    if normalized in admin_emails:
+        return Role.admin
+    if normalized in moderator_emails:
+        return Role.moderator
+    return Role.candidate
+
+
+def validate_password_policy(password: str) -> None:
+    has_lower = any(char.islower() for char in password)
+    has_upper = any(char.isupper() for char in password)
+    has_digit = any(char.isdigit() for char in password)
+    if len(password) < 10 or not (has_lower and has_upper and has_digit):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Password must be at least 10 characters and include uppercase, lowercase, and digit characters",
+        )
+
+
+@router.post("/auth/password/register", response_model=TokenOut, status_code=201)
+def register_with_password(payload: PasswordRegisterIn, request: Request, response: Response, db: Session = Depends(get_db)):
+    email = payload.email.lower()
+    if too_many_recent_failures(db, email, request):
+        record_login_attempt(db, email=email, request=request, user=None, success=False, reason="rate_limited")
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many login attempts")
+    validate_password_policy(payload.password)
+
+    user = db.query(User).filter(User.email == email).first()
+    now = datetime.now(timezone.utc)
+    if user and user.hashed_password:
+        record_login_attempt(db, email=email, request=request, user=user, success=False, reason="account_exists")
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Account already exists")
+    if user and (not user.is_active or user.is_blocked):
+        record_login_attempt(db, email=email, request=request, user=user, success=False, reason="blocked_or_inactive")
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is not active")
+
+    if not user:
+        user = User(
+            email=email,
+            full_name=payload.full_name.strip(),
+            hashed_password=hash_password(payload.password),
+            role=role_for_email(email),
+            password_changed_at=now,
+        )
+        db.add(user)
+        db.flush()
+    else:
+        user.full_name = payload.full_name.strip()
+        user.hashed_password = hash_password(payload.password)
+        user.password_changed_at = now
+        role = role_for_email(email)
+        if role in {Role.admin, Role.moderator}:
+            user.role = role
+
+    user.failed_login_count = 0
+    user.last_login_at = now
+    record_login_attempt(db, email=email, request=request, user=user, success=True, reason="password_registered")
+    create_refresh_session(db, user, request, response)
+    db.commit()
+    db.refresh(user)
+    return token_out(user)
+
+
+@router.post("/auth/password/login", response_model=TokenOut)
+def login_with_password(payload: PasswordLoginIn, request: Request, response: Response, db: Session = Depends(get_db)):
+    email = payload.email.lower()
+    if too_many_recent_failures(db, email, request):
+        record_login_attempt(db, email=email, request=request, user=None, success=False, reason="rate_limited")
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many login attempts")
+
+    user = db.query(User).filter(User.email == email, User.is_active.is_(True), User.is_blocked.is_(False)).first()
+    if not user or not user.hashed_password or not verify_password(payload.password, user.hashed_password):
+        if user:
+            user.failed_login_count += 1
+        record_login_attempt(db, email=email, request=request, user=user, success=False, reason="invalid_credentials")
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    role = role_for_email(email)
+    if role in {Role.admin, Role.moderator}:
+        user.role = role
+    user.failed_login_count = 0
+    user.last_login_at = datetime.now(timezone.utc)
+    record_login_attempt(db, email=email, request=request, user=user, success=True, reason="password_login")
+    create_refresh_session(db, user, request, response)
+    db.commit()
+    db.refresh(user)
+    return token_out(user)
 
 
 @router.post("/auth/telegram/start", response_model=TelegramLoginStartOut, status_code=201)

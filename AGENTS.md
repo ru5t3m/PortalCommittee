@@ -47,7 +47,7 @@ Backend:
 - Pydantic.
 - PostgreSQL in Docker/production.
 - SQLite only as the local development fallback.
-- Telegram-first authentication with phone confirmation through a Telegram bot webhook.
+- Authentication providers: Telegram with phone confirmation and email/password.
 - JWT access tokens plus refresh-token sessions backed by `RefreshSession` rows and an HttpOnly refresh cookie.
 
 Infrastructure:
@@ -88,10 +88,12 @@ The frontend is visually developed and partly connected to the FastAPI backend.
 
 Implemented or partially implemented:
 
-- Password login/register is being replaced by provider-based login. The first implemented provider is Telegram.
+- Authentication is provider-based. Implemented providers are Telegram and email/password.
 - Telegram login uses `/auth/telegram/start`, a bot deep link, `/auth/telegram/webhook`, and `/auth/telegram/complete`.
 - Telegram phone confirmation is done by the user sharing their own contact with the bot. The backend checks `contact.user_id == message.from.id`.
 - Telegram-authenticated users are created without passwords. `TELEGRAM_ADMIN_IDS` and `TELEGRAM_MODERATOR_IDS` assign staff roles; other Telegram users default to `candidate`.
+- Email/password uses `/auth/password/register` and `/auth/password/login`. Passwords must be hashed server-side, rate-limited, and logged through `LoginAttempt`.
+- Email ownership is not confirmed in the current password flow. Treat this as a weaker secondary option unless the user later restores email-code verification.
 - Candidate registration/application data is separate from authentication. After Telegram auth, a candidate may still need to complete candidate application data.
 - Refresh tokens are stored as HttpOnly cookies; access tokens are kept in browser session storage.
 - Refresh-token sessions use `RefreshSession` rows.
@@ -113,7 +115,7 @@ Known remaining gaps:
 
 - Content CRUD for active site sections is pending.
 - Some frontend datasets may still be static in `apps/web/lib/data.ts`.
-- Email and Google auth are planned future provider options, but are not implemented yet.
+- Google auth is a planned future provider option, but is not implemented yet.
 - Test coverage for backend and frontend behavior is incomplete.
 - Security hardening remains incomplete.
 - Production environment validation and deployment hardening remain incomplete.
@@ -209,7 +211,7 @@ Preferred approach:
 - Prefer existing project patterns and keep changes scoped.
 - Inspect the current code before assuming a feature is absent or complete.
 - Do not reintroduce demo auth behavior or hardcoded frontend credentials.
-- Do not reintroduce password login/register unless the user explicitly changes scope.
+- Do not add hardcoded password users or demo credentials.
 - Do not add integrations that the user explicitly excluded.
 - Do not add document/file upload unless the user asks later.
 - Remove or hide search rather than investing in it unless scope changes.
