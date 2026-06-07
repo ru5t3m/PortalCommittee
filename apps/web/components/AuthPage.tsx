@@ -74,10 +74,12 @@ export function AuthPage({ locale }: { locale: Locale; mode: AuthMode }) {
   }
 
   useEffect(() => {
-    if (!challenge || isCompleting) return;
+    if (!challenge) return;
 
     let cancelled = false;
+    let completionStarted = false;
     const interval = window.setInterval(async () => {
+      if (completionStarted) return;
       try {
         const current = await getTelegramLoginStatus(challenge.challenge_id);
         if (cancelled) return;
@@ -91,6 +93,7 @@ export function AuthPage({ locale }: { locale: Locale; mode: AuthMode }) {
         }
 
         if (current.status === "verified") {
+          completionStarted = true;
           setStatus(t.verified);
           setIsCompleting(true);
           window.clearInterval(interval);
@@ -113,6 +116,8 @@ export function AuthPage({ locale }: { locale: Locale; mode: AuthMode }) {
       } catch (caught) {
         if (!cancelled) {
           setError(caught instanceof Error ? humanizeAuthError(caught.message, locale) : t.error);
+          setStatus("");
+          setIsCompleting(false);
         }
       }
     }, 2500);
@@ -121,7 +126,7 @@ export function AuthPage({ locale }: { locale: Locale; mode: AuthMode }) {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [challenge, isCompleting, locale, router, t.error, t.expired, t.verified, t.waiting]);
+  }, [challenge, locale, router, t.error, t.expired, t.verified, t.waiting]);
 
   return (
     <section className="relative min-h-[calc(100vh-77px)] overflow-hidden bg-[#06182d] text-white">
