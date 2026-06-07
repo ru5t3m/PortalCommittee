@@ -1,6 +1,7 @@
 "use client";
 
 import { LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AdminPanel } from "@/components/AdminPanel";
 import { Container } from "@/components/ui/Container";
@@ -60,15 +61,7 @@ export function AdminEntryPage() {
   }
 
   if (accessState === "denied") {
-    return (
-      <main className="grid min-h-screen place-items-center bg-slate-950 px-5 text-white">
-        <div className="max-w-md text-center">
-          <p className="text-7xl font-bold text-white">404</p>
-          <h1 className="mt-5 text-2xl font-bold">Страница не найдена</h1>
-          <p className="mt-3 text-sm leading-6 text-white/60">Запрошенный раздел недоступен для текущей учетной записи.</p>
-        </div>
-      </main>
-    );
+    notFound();
   }
 
   if (accessState === "panel") {

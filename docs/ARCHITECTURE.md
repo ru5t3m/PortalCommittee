@@ -38,6 +38,7 @@ No English routes are in scope.
 - Some datasets may still be static in `apps/web/lib/data.ts`; active site sections should move to backend-backed content CRUD where required.
 - Mobile UX may diverge substantially from desktop UX while keeping the same `/ru` and `/kk` routes.
 - Mobile and desktop components should share data loading, validation, translations, and API contracts rather than duplicating business logic.
+- Psychological testing currently uses `/[locale]/psychological-testing` as the public intro page for the static imported `primary-selection` question bank, then `/[locale]/psychological-testing/primary-selection` for a full-screen authenticated sequential runner without the normal portal header/footer. The runner checks `/auth/me`, has a one-hour active timer, pauses during section instructions, paginates questions by 10, and uses local component state only. Results are not yet persisted to the backend.
 
 ## Backend Architecture Notes
 

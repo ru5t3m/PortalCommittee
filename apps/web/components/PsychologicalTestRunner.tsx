@@ -1,21 +1,33 @@
 "use client";
 
-import { CheckCircle2, Circle, RotateCcw } from "lucide-react";
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { CheckCircle2, Circle, Clock3, RotateCcw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
+import { primaryPsychologicalSections, type PrimaryPsychologicalQuestion } from "@/lib/primary-psychological-test";
+import { getMe } from "@/lib/auth";
 
-type TestSlug = "attention" | "memory" | "logic" | "stress-resilience";
+type TestSlug = "primary-selection" | "attention" | "memory" | "logic" | "stress-resilience";
 
 type Question = {
   prompt: string;
+  stimulus?: string;
+  image?: string;
   options: Array<{
     text: string;
     score: number;
   }>;
 };
+type OpenQuestion = {
+  prompt: string;
+  stimulus?: string;
+  image?: string;
+  options?: never;
+};
 
-type TestBank = Record<TestSlug, Question[]>;
+type RunnerQuestion = Question | OpenQuestion;
+type TestBank = Record<Exclude<TestSlug, "primary-selection">, Question[]>;
 
 const testBanks: Record<Locale, TestBank> = {
   ru: {
@@ -408,7 +420,11 @@ const copy = {
     complete: "Завершить тест",
     restart: "Пройти заново",
     choose: "Выберите один вариант ответа.",
+    answer: "Ваш ответ",
+    answerPlaceholder: "Введите ответ",
     score: "Результат",
+    submitted: "Ответы заполнены",
+    submittedText: "Первые 50 заданий импортированы из документа. Автоматическая оценка будет включена после добавления ключей ответов.",
     low: "Есть зоны для тренировки. Повторите базовые упражнения и попробуйте пройти тест позже.",
     medium: "Хороший базовый уровень. Для устойчивого результата продолжайте регулярную самопроверку.",
     high: "Высокий результат в рамках демо-теста. Поддерживайте навык регулярной практикой."
@@ -420,28 +436,128 @@ const copy = {
     complete: "Тестті аяқтау",
     restart: "Қайта өту",
     choose: "Бір жауап нұсқасын таңдаңыз.",
+    answer: "Жауабыңыз",
+    answerPlaceholder: "Жауапты енгізіңіз",
     score: "Нәтиже",
+    submitted: "Жауаптар толтырылды",
+    submittedText: "Алғашқы 50 тапсырма құжаттан импортталды. Автоматты бағалау жауап кілттері қосылғаннан кейін іске қосылады.",
     low: "Жаттығуды қажет ететін аймақтар бар. Негізгі тапсырмаларды қайталап, кейін қайта өтіп көріңіз.",
     medium: "Базалық деңгей жақсы. Тұрақты нәтиже үшін өзін-өзі тексеруді жалғастырыңыз.",
     high: "Демо-тест аясында жоғары нәтиже. Дағдыны тұрақты тәжірибемен сақтаңыз."
   }
 };
 
+const primaryCopy = {
+  ru: {
+    testTitle: "Первичный психологический тест",
+    section: "Раздел",
+    question: "Вопрос",
+    questions: "Вопросы",
+    of: "из",
+    timer: "Осталось",
+    instructions: "Инструкция",
+    timerPaused: "Таймер начнется после перехода к вопросам этого раздела.",
+    startSection: "Начать раздел",
+    nextTen: "Следующие 10 вопросов",
+    previousTen: "Предыдущие 10 вопросов",
+    nextSection: "Следующий раздел",
+    finish: "Завершить тестирование",
+    finished: "Тестирование завершено",
+    finishedText: "Ответы сохранены в текущей сессии. Передача результатов в личный кабинет будет подключена после серверного сохранения результатов.",
+    checkingAuth: "Проверяем вход",
+    authRequired: "Для прохождения теста нужен вход",
+    authRequiredText: "Психологическое тестирование доступно только пользователям, которые вошли на портал. Войдите через Telegram или почту, затем вернитесь к тесту.",
+    login: "Войти",
+    incompletePage: "Ответьте на все вопросы этой страницы, чтобы перейти дальше.",
+    textAnswer: "Ваш ответ",
+    textPlaceholder: "Введите ответ",
+    sectionInstructions: {
+      numeric: [
+        "В этом разделе 50 заданий на числовые закономерности, пропущенные числа и логические связи.",
+        "Введите ответ в поле под заданием. Если на изображении требуется несколько чисел, укажите их в одном поле через пробел или запятую.",
+        "Раздел разбит на страницы по 10 вопросов. Переход дальше доступен после заполнения всех вопросов текущей страницы."
+      ],
+      visual: [
+        "В этом разделе 50 заданий с фигурами и наглядными закономерностями.",
+        "Выберите номер фигуры или несколько номеров, если в формулировке требуется указать две или три лишние фигуры.",
+        "Внимательно смотрите на изображение: варианты ответа находятся внутри самого задания."
+      ],
+      memory: ["Раздел на память будет добавлен отдельным этапом."],
+      interpretation: ["Итоговая интерпретация будет включена после добавления ключей и шкал оценки."]
+    }
+  },
+  kk: {
+    testTitle: "Бастапқы психологиялық тест",
+    section: "Бөлім",
+    question: "Сұрақ",
+    questions: "Сұрақтар",
+    of: "ішінен",
+    timer: "Қалды",
+    instructions: "Нұсқаулық",
+    timerPaused: "Таймер осы бөлімнің сұрақтарына өткеннен кейін басталады.",
+    startSection: "Бөлімді бастау",
+    nextTen: "Келесі 10 сұрақ",
+    previousTen: "Алдыңғы 10 сұрақ",
+    nextSection: "Келесі бөлім",
+    finish: "Тестілеуді аяқтау",
+    finished: "Тестілеу аяқталды",
+    finishedText: "Жауаптар ағымдағы сессияда сақталды. Нәтижелерді жеке кабинетке жіберу серверлік сақтау қосылғаннан кейін іске асады.",
+    checkingAuth: "Кіру тексерілуде",
+    authRequired: "Тесттен өту үшін кіру қажет",
+    authRequiredText: "Психологиялық тестілеу порталға кірген пайдаланушыларға ғана қолжетімді. Telegram немесе пошта арқылы кіріп, тестке қайта оралыңыз.",
+    login: "Кіру",
+    incompletePage: "Әрі қарай өту үшін осы беттегі барлық сұраққа жауап беріңіз.",
+    textAnswer: "Жауабыңыз",
+    textPlaceholder: "Жауапты енгізіңіз",
+    sectionInstructions: {
+      numeric: [
+        "Бұл бөлімде сандық заңдылықтар, жетіспейтін сандар және логикалық байланыстар бойынша 50 тапсырма бар.",
+        "Жауапты тапсырма астындағы өріске енгізіңіз. Егер суретте бірнеше сан керек болса, оларды бір өріске бос орынмен немесе үтірмен жазыңыз.",
+        "Бөлім 10 сұрақтан тұратын беттерге бөлінген. Келесі бетке өту ағымдағы беттегі барлық сұрақ толтырылғаннан кейін қолжетімді."
+      ],
+      visual: [
+        "Бұл бөлімде фигуралар және көрнекі заңдылықтар бойынша 50 тапсырма бар.",
+        "Егер тұжырымда екі немесе үш артық фигураны көрсету қажет болса, бір немесе бірнеше нөмірді таңдаңыз.",
+        "Суретке мұқият қараңыз: жауап нұсқалары тапсырманың ішінде орналасқан."
+      ],
+      memory: ["Жад бөлімі бөлек кезеңде қосылады."],
+      interpretation: ["Қорытынды интерпретация жауап кілттері мен бағалау шкалалары қосылғаннан кейін іске қосылады."]
+    }
+  }
+};
+
+const PRIMARY_TEST_SECONDS = 60 * 60;
+const PRIMARY_PAGE_SIZE = 10;
+
 export function PsychologicalTestRunner({ locale, slug }: { locale: Locale; slug: string }) {
-  const questions = testBanks[locale][slug as TestSlug] ?? [];
+  if (slug === "primary-selection") {
+    return <PrimarySelectionRunner locale={locale} />;
+  }
+
+  const questions: RunnerQuestion[] = slug === "primary-selection"
+    ? []
+    : testBanks[locale][slug as Exclude<TestSlug, "primary-selection">] ?? [];
   const t = copy[locale];
-  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [answers, setAnswers] = useState<Record<number, number | string>>({});
   const [isComplete, setIsComplete] = useState(false);
+  const hasScoredOptions = questions.some((question) => "options" in question && Array.isArray(question.options));
 
   const maxScore = useMemo(
-    () => questions.reduce((sum, question) => sum + Math.max(...question.options.map((option) => option.score)), 0),
+    () => questions.reduce((sum, question) => {
+      if (!("options" in question) || !question.options) return sum;
+      return sum + Math.max(...question.options.map((option) => option.score));
+    }, 0),
     [questions]
   );
   const score = questions.reduce((sum, question, index) => {
     const answerIndex = answers[index];
+    if (!("options" in question) || !question.options) return sum;
     return sum + (typeof answerIndex === "number" ? question.options[answerIndex]?.score ?? 0 : 0);
   }, 0);
-  const answeredCount = Object.keys(answers).length;
+  const answeredCount = questions.filter((_, index) => {
+    const value = answers[index];
+    return typeof value === "number" || (typeof value === "string" && value.trim().length > 0);
+  }).length;
   const percent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
   const resultText = percent >= 80 ? t.high : percent >= 50 ? t.medium : t.low;
 
@@ -461,44 +577,69 @@ export function PsychologicalTestRunner({ locale, slug }: { locale: Locale; slug
 
       <div className="grid gap-4 p-6 md:p-8">
         {questions.map((question, questionIndex) => (
-          <fieldset key={question.prompt} className="rounded-2xl border border-slate-200 bg-white p-5">
+          <fieldset key={`${question.prompt}-${questionIndex}`} className="rounded-2xl border border-slate-200 bg-white p-5">
             <legend className="px-1 text-sm font-bold uppercase tracking-[0.16em] text-state-tealDark">
               {t.question} {questionIndex + 1}
             </legend>
             <p className="mt-3 text-lg font-bold leading-7 text-state-navy">{question.prompt}</p>
-            <p className="mt-2 text-sm text-slate-500">{t.choose}</p>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {question.options.map((option, optionIndex) => {
-                const selected = answers[questionIndex] === optionIndex;
-                return (
-                  <button
-                    key={option.text}
-                    type="button"
-                    onClick={() => setAnswers((current) => ({ ...current, [questionIndex]: optionIndex }))}
-                    className={cn(
-                      "flex min-h-12 items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition",
-                      selected
-                        ? "border-state-teal bg-state-teal/10 text-state-navy"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-state-teal/40 hover:bg-state-teal/5"
-                    )}
-                    aria-pressed={selected}
-                  >
-                    {selected ? <CheckCircle2 className="h-5 w-5 shrink-0 text-state-tealDark" /> : <Circle className="h-5 w-5 shrink-0 text-slate-300" />}
-                    {option.text}
-                  </button>
-                );
-              })}
-            </div>
+            {question.stimulus ? <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 text-xl font-bold tracking-wide text-state-navy">{question.stimulus}</p> : null}
+            {question.image ? (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <img src={question.image} alt={`${t.question} ${questionIndex + 1}`} className="mx-auto max-h-[22rem] w-auto max-w-full object-contain" />
+              </div>
+            ) : null}
+            {"options" in question && question.options ? (
+              <>
+                <p className="mt-2 text-sm text-slate-500">{t.choose}</p>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {question.options.map((option, optionIndex) => {
+                    const selected = answers[questionIndex] === optionIndex;
+                    return (
+                      <button
+                        key={option.text}
+                        type="button"
+                        onClick={() => setAnswers((current) => ({ ...current, [questionIndex]: optionIndex }))}
+                        className={cn(
+                          "flex min-h-12 items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition",
+                          selected
+                            ? "border-state-teal bg-state-teal/10 text-state-navy"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-state-teal/40 hover:bg-state-teal/5"
+                        )}
+                        aria-pressed={selected}
+                      >
+                        {selected ? <CheckCircle2 className="h-5 w-5 shrink-0 text-state-tealDark" /> : <Circle className="h-5 w-5 shrink-0 text-slate-300" />}
+                        {option.text}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <label className="mt-4 grid gap-2 text-sm font-semibold text-state-navy">
+                {t.answer}
+                <input
+                  value={typeof answers[questionIndex] === "string" ? answers[questionIndex] : ""}
+                  onChange={(event) => setAnswers((current) => ({ ...current, [questionIndex]: event.target.value }))}
+                  className="min-h-12 rounded-xl border border-slate-200 px-4 text-base font-semibold outline-none transition focus:border-state-teal focus:ring-4 focus:ring-state-teal/10"
+                  placeholder={t.answerPlaceholder}
+                />
+              </label>
+            )}
           </fieldset>
         ))}
       </div>
 
       <div className="grid gap-4 border-t border-slate-200 bg-[#f7fbf9] p-6 md:grid-cols-[1fr_auto] md:items-center md:p-8">
-        {isComplete ? (
+        {isComplete && hasScoredOptions ? (
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-gold">{t.score}</p>
             <p className="mt-2 text-4xl font-bold text-state-navy">{percent}%</p>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{resultText}</p>
+          </div>
+        ) : isComplete ? (
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-gold">{t.submitted}</p>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{t.submittedText}</p>
           </div>
         ) : (
           <p className="text-sm font-semibold text-slate-600">
@@ -522,6 +663,328 @@ export function PsychologicalTestRunner({ locale, slug }: { locale: Locale; slug
               {t.complete}
             </button>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PrimarySelectionRunner({ locale }: { locale: Locale }) {
+  const t = primaryCopy[locale];
+  const readySections = primaryPsychologicalSections.filter((section) => section.status === "ready");
+  const [sectionIndex, setSectionIndex] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [mode, setMode] = useState<"instructions" | "questions" | "finished">("instructions");
+  const [authStatus, setAuthStatus] = useState<"checking" | "allowed" | "denied">("checking");
+  const [remainingSeconds, setRemainingSeconds] = useState(PRIMARY_TEST_SECONDS);
+  const [sectionAnswers, setSectionAnswers] = useState<Record<string, Record<string, string | string[]>>>({});
+  const activeSection = readySections[sectionIndex] ?? readySections[0];
+  const activeAnswers = sectionAnswers[activeSection.id] ?? {};
+  const totalQuestions = readySections.reduce((sum, section) => sum + section.questions.length, 0);
+  const completedBeforeActive = readySections.slice(0, sectionIndex).reduce((sum, section) => sum + section.questions.length, 0);
+  const pageStart = pageIndex * PRIMARY_PAGE_SIZE;
+  const pageQuestions = activeSection.questions.slice(pageStart, pageStart + PRIMARY_PAGE_SIZE);
+  const pageEnd = pageStart + pageQuestions.length;
+  const totalPages = Math.ceil(activeSection.questions.length / PRIMARY_PAGE_SIZE);
+  const pageAnsweredCount = pageQuestions.filter((question) => {
+    const answer = activeAnswers[question.id];
+    return Array.isArray(answer) ? answer.length > 0 : typeof answer === "string" && answer.trim().length > 0;
+  }).length;
+  const answeredTotal = readySections.reduce((sum, section) => {
+    const answers = sectionAnswers[section.id] ?? {};
+    return sum + section.questions.filter((question) => {
+      const answer = answers[question.id];
+      return Array.isArray(answer) ? answer.length > 0 : typeof answer === "string" && answer.trim().length > 0;
+    }).length;
+  }, 0);
+  const isPageComplete = pageQuestions.length > 0 && pageAnsweredCount === pageQuestions.length;
+  const isLastPage = pageIndex >= totalPages - 1;
+  const isLastSection = sectionIndex >= readySections.length - 1;
+
+  useEffect(() => {
+    let active = true;
+    getMe()
+      .then(() => {
+        if (active) setAuthStatus("allowed");
+      })
+      .catch(() => {
+        if (active) setAuthStatus("denied");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (authStatus !== "allowed" || mode !== "questions") return;
+    const timerId = window.setInterval(() => {
+      setRemainingSeconds((current) => {
+        if (current <= 1) {
+          window.clearInterval(timerId);
+          setMode("finished");
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
+  }, [authStatus, mode]);
+
+  const formattedTime = useMemo(() => {
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }, [remainingSeconds]);
+
+  function setQuestionAnswer(question: PrimaryPsychologicalQuestion, value: string) {
+    setSectionAnswers((current) => {
+      const currentSection = current[activeSection.id] ?? {};
+      if (question.answerMode === "multi") {
+        const currentValues = Array.isArray(currentSection[question.id]) ? currentSection[question.id] as string[] : [];
+        const nextValues = currentValues.includes(value) ? currentValues.filter((item) => item !== value) : [...currentValues, value];
+        return { ...current, [activeSection.id]: { ...currentSection, [question.id]: nextValues } };
+      }
+      return { ...current, [activeSection.id]: { ...currentSection, [question.id]: value } };
+    });
+  }
+
+  function goNext() {
+    if (!isPageComplete) return;
+    if (!isLastPage) {
+      setPageIndex((current) => current + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (!isLastSection) {
+      setSectionIndex((current) => current + 1);
+      setPageIndex(0);
+      setMode("instructions");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    setMode("finished");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goPreviousPage() {
+    setPageIndex((current) => Math.max(0, current - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  if (authStatus === "checking") {
+    return (
+      <div className="min-h-screen bg-[#f3f7f6] px-4 py-6 text-state-navy md:px-8">
+        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-3xl items-center">
+          <section className="w-full rounded-[1.5rem] border border-slate-200 bg-white p-8 text-center shadow-[0_22px_70px_rgba(6,24,45,0.08)] md:p-10">
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-state-tealDark">{t.testTitle}</p>
+            <h1 className="mt-4 text-3xl font-bold text-state-navy">{t.checkingAuth}</h1>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  if (authStatus === "denied") {
+    return (
+      <div className="min-h-screen bg-[#f3f7f6] px-4 py-6 text-state-navy md:px-8">
+        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-3xl items-center">
+          <section className="w-full rounded-[1.5rem] border border-slate-200 bg-white p-8 shadow-[0_22px_70px_rgba(6,24,45,0.08)] md:p-10">
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-state-tealDark">{t.testTitle}</p>
+            <h1 className="mt-4 text-3xl font-bold text-state-navy md:text-4xl">{t.authRequired}</h1>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">{t.authRequiredText}</p>
+            <div className="mt-8">
+              <Link
+                href={`/${locale}/login`}
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-state-navy px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-state-tealDark"
+              >
+                {t.login}
+              </Link>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === "finished") {
+    return (
+      <div className="min-h-screen bg-[#f3f7f6] px-4 py-6 text-state-navy md:px-8">
+        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-4xl items-center">
+          <section className="w-full rounded-[1.5rem] border border-slate-200 bg-white p-8 shadow-[0_22px_70px_rgba(6,24,45,0.08)] md:p-10">
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-state-tealDark">{t.testTitle}</p>
+            <h1 className="mt-4 text-4xl font-bold text-state-navy">{t.finished}</h1>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">{t.finishedText}</p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl bg-slate-50 p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t.questions}</p>
+                <p className="mt-2 text-3xl font-bold">{answeredTotal}/{totalQuestions}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t.timer}</p>
+                <p className="mt-2 text-3xl font-bold">{formattedTime}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t.section}</p>
+                <p className="mt-2 text-3xl font-bold">{Math.min(sectionIndex + 1, readySections.length)}/{readySections.length}</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === "instructions") {
+    return (
+      <div className="min-h-screen bg-[#f3f7f6] px-4 py-6 text-state-navy md:px-8">
+        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-5xl items-center">
+          <section className="w-full overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_22px_70px_rgba(6,24,45,0.08)]">
+            <div className="border-b border-slate-200 bg-[#f7fbf9] p-6 md:p-8">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-[0.18em] text-state-tealDark">{t.instructions}</p>
+                  <h1 className="mt-3 text-3xl font-bold text-state-navy md:text-4xl">{activeSection.title}</h1>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-state-navy shadow-sm">
+                  <Clock3 className="h-4 w-4 text-state-tealDark" />
+                  {t.timer}: {formattedTime}
+                </div>
+              </div>
+              <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">{activeSection.description}</p>
+              <p className="mt-2 text-sm font-semibold text-state-tealDark">{t.timerPaused}</p>
+            </div>
+
+            <div className="grid gap-4 p-6 md:p-8">
+              {t.sectionInstructions[activeSection.id].map((instruction, index) => (
+                <div className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-5" key={instruction}>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-state-navy text-sm font-bold text-white">{index + 1}</span>
+                  <p className="text-sm leading-6 text-slate-700">{instruction}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 bg-[#f7fbf9] p-6 md:p-8">
+              <p className="text-sm font-semibold text-slate-600">
+                {t.section} {sectionIndex + 1} {t.of} {readySections.length}
+              </p>
+              <button
+                type="button"
+                onClick={() => setMode("questions")}
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-state-navy px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-state-tealDark"
+              >
+                {t.startSection}
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f3f7f6] text-state-navy">
+      <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur md:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-state-tealDark">
+              {t.section} {sectionIndex + 1} {t.of} {readySections.length}
+            </p>
+            <h1 className="text-lg font-bold text-state-navy md:text-xl">{activeSection.title}</h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-bold text-state-navy">
+              {t.questions} {completedBeforeActive + pageStart + 1}-{completedBeforeActive + pageEnd} {t.of} {totalQuestions}
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-2xl bg-state-navy px-4 py-2 text-sm font-bold text-white">
+              <Clock3 className="h-4 w-4 text-state-gold" />
+              {formattedTime}
+            </div>
+            <button
+              type="button"
+              onClick={() => setMode("finished")}
+              className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
+            >
+              {t.finish}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto grid max-w-7xl gap-4 px-4 py-6 md:px-8">
+        {pageQuestions.map((question, questionIndex) => {
+          const absoluteQuestionNumber = pageStart + questionIndex + 1;
+          const answer = activeAnswers[question.id];
+          return (
+            <fieldset key={question.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <legend className="px-1 text-sm font-bold uppercase tracking-[0.16em] text-state-tealDark">
+                {t.question} {absoluteQuestionNumber}
+              </legend>
+              <p className="mt-3 text-lg font-bold leading-7 text-state-navy">{question.prompt}</p>
+              {question.stimulus ? <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 text-xl font-bold tracking-wide text-state-navy">{question.stimulus}</p> : null}
+              {question.image ? (
+                <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                  <img src={question.image} alt={`${t.question} ${absoluteQuestionNumber}`} className="mx-auto max-h-[24rem] w-auto max-w-full object-contain" />
+                </div>
+              ) : null}
+
+              {question.choices?.length ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {question.choices.map((choice) => {
+                    const selected = Array.isArray(answer) ? answer.includes(choice) : answer === choice;
+                    return (
+                      <button
+                        key={choice}
+                        type="button"
+                        onClick={() => setQuestionAnswer(question, choice)}
+                        className={cn(
+                          "grid h-11 min-w-11 place-items-center rounded-xl border px-4 text-sm font-bold transition",
+                          selected ? "border-state-teal bg-state-teal/10 text-state-navy" : "border-slate-200 bg-white text-slate-600 hover:border-state-teal/40"
+                        )}
+                        aria-pressed={selected}
+                      >
+                        {choice}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <label className="mt-4 grid gap-2 text-sm font-semibold text-state-navy">
+                  {t.textAnswer}
+                  <input
+                    value={typeof answer === "string" ? answer : ""}
+                    onChange={(event) => setQuestionAnswer(question, event.target.value)}
+                    className="min-h-12 rounded-xl border border-slate-200 px-4 text-base font-semibold outline-none transition focus:border-state-teal focus:ring-4 focus:ring-state-teal/10"
+                    placeholder={t.textPlaceholder}
+                  />
+                </label>
+              )}
+            </fieldset>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-slate-200 bg-white px-4 py-4 md:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
+          <p className="text-sm font-semibold text-slate-600">
+            {pageAnsweredCount}/{pageQuestions.length}. {!isPageComplete ? t.incompletePage : null}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {pageIndex > 0 ? (
+              <button type="button" onClick={goPreviousPage} className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-state-teal/25 bg-white px-5 py-3 text-sm font-semibold text-state-tealDark transition hover:border-state-gold/50 hover:text-state-navy">
+                {t.previousTen}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              disabled={!isPageComplete}
+              onClick={goNext}
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-state-navy px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-state-tealDark disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {!isLastPage ? t.nextTen : isLastSection ? t.finish : t.nextSection}
+            </button>
+          </div>
         </div>
       </div>
     </div>

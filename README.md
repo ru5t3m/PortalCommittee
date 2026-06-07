@@ -32,13 +32,14 @@ Out of scope unless explicitly changed later:
 - Citizen first-contact work/study application submission through the backend.
 - Appeal tracking/status lookup.
 - Telegram login/registration flow backed by the API and Telegram bot webhook.
-- Email/password login and registration as a secondary provider. First-time email registration collects name, birth date, phone, email, and password, then creates the candidate account/application.
+- Email/password login and registration as a secondary provider. The registration page currently allows only email/password registration. First-time email registration collects name, birth date, phone, email, and password, then creates the candidate account/application.
 - Phone confirmation through Telegram contact sharing.
 - Logout and refresh-token sessions using an HttpOnly refresh cookie.
 - Candidate account cabinet using `/auth/me`.
 - Admin/moderator dashboard for appeals and candidate applications.
 - Admin/moderator status changes for appeals and candidate applications.
 - Separate `/admin` entry gate: ordinary portal session must match `ADMIN_PORTAL_ALLOWED_USER_EMAIL`, then a second admin-panel login issues an admin-session token.
+- Imported psychological test `primary-selection` from the provided DOCX. `/[locale]/psychological-testing` is now the public intro page that explains the sections and starts the flow; `/[locale]/psychological-testing/primary-selection` is a full-screen authenticated test mode without the normal portal header/footer. It checks `/auth/me` before showing questions, shows section instructions with the one-hour timer paused, then runs 50 numeric questions followed by 50 visual/figure-selection questions in pages of 10. Memory and interpretation sections are prepared as placeholders. It currently collects answers without automatic scoring until answer keys are added.
 - Static legal reference page at `/documents`, named `Нормативная база` / `Нормативтік база`.
 - Alembic migrations instead of startup table creation.
 

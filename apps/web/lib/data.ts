@@ -96,6 +96,7 @@ const admissionFaqKk = [
 export const admissionFaq = admissionFaqRu;
 
 const psychologicalTestsRu = [
+  { slug: "primary-selection", title: "Первичный психологический отбор", text: "Первые 50 заданий из методики: числовые ряды, закономерности и задачи с изображениями.", icon: Brain, duration: "10 минут", metric: "логическое мышление" },
   { slug: "attention", title: "Тест внимания", text: "Проверьте скорость концентрации, устойчивость фокуса и точность восприятия деталей.", icon: Eye, duration: "7 минут", metric: "концентрация" },
   { slug: "memory", title: "Тест памяти", text: "Оцените кратковременную память, удержание последовательностей и воспроизведение информации.", icon: Brain, duration: "9 минут", metric: "память" },
   { slug: "logic", title: "Логическое мышление", text: "Проверьте анализ закономерностей, причинно-следственные связи и структурное мышление.", icon: Network, duration: "10 минут", metric: "логика" },
@@ -103,6 +104,7 @@ const psychologicalTestsRu = [
 ];
 
 const psychologicalTestsKk = [
+  { slug: "primary-selection", title: "Бастапқы психологиялық іріктеу", text: "Әдістеменің алғашқы 50 тапсырмасы: сандық қатарлар, заңдылықтар және суреті бар тапсырмалар.", icon: Brain, duration: "10 минут", metric: "логикалық ойлау" },
   { slug: "attention", title: "Зейін тесті", text: "Шоғырлану жылдамдығын, назар тұрақтылығын және бөлшектерді қабылдау дәлдігін тексеріңіз.", icon: Eye, duration: "7 минут", metric: "зейін" },
   { slug: "memory", title: "Жад тесті", text: "Қысқа мерзімді жадты, реттілікті есте сақтауды және ақпаратты қайта жаңғыртуды бағалаңыз.", icon: Brain, duration: "9 минут", metric: "жад" },
   { slug: "logic", title: "Логикалық ойлау", text: "Заңдылықтарды талдау, себеп-салдар байланыстары және құрылымдық ойлау қабілетін тексеріңіз.", icon: Network, duration: "10 минут", metric: "логика" },

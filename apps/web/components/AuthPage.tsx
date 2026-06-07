@@ -22,6 +22,8 @@ const copy = {
   ru: {
     title: "Вход в личный кабинет",
     subtitle: "Используйте Telegram с подтверждением телефона или вход по email и паролю.",
+    registerTitle: "Регистрация кандидата",
+    registerSubtitle: "Создайте аккаунт по email и паролю. Эти данные будут использоваться для входа в личный кабинет и прохождения доступных сервисов портала.",
     telegram: "Telegram",
     email: "Email",
     emailTitle: "Вход по email",
@@ -39,6 +41,8 @@ const copy = {
     passwordPlaceholder: "Введите пароль",
     emailSubmit: "Войти",
     registerSubmit: "Создать аккаунт",
+    goRegister: "Зарегистрироваться",
+    goLogin: "Уже есть аккаунт? Войти",
     start: "Начать вход через Telegram",
     openTelegram: "Открыть Telegram",
     starting: "Создаем защищенную заявку...",
@@ -50,11 +54,14 @@ const copy = {
     secureTitle: "Защищенная авторизация",
     dataProtection: "Данные используются только для идентификации, авторизации и работы с сервисами портала.",
     features: ["Telegram с подтверждением телефона", "Email и пароль как дополнительный способ", "Защищенная сессия портала"],
+    registerFeatures: ["Регистрация только по email", "Данные кандидата сохраняются в анкете", "Защищенная сессия портала"],
     steps: ["Нажмите кнопку входа", "Откройте бота в Telegram", "Нажмите «Поделиться номером телефона»"]
   },
   kk: {
     title: "Жеке кабинетке кіру",
     subtitle: "Телефонды растаумен Telegram немесе email және құпия сөз арқылы кіріңіз.",
+    registerTitle: "Кандидатты тіркеу",
+    registerSubtitle: "Email және құпия сөз арқылы аккаунт жасаңыз. Бұл деректер жеке кабинетке кіру және портал сервистерін пайдалану үшін қолданылады.",
     telegram: "Telegram",
     email: "Email",
     emailTitle: "Email арқылы кіру",
@@ -72,6 +79,8 @@ const copy = {
     passwordPlaceholder: "Құпия сөзді енгізіңіз",
     emailSubmit: "Кіру",
     registerSubmit: "Аккаунт жасау",
+    goRegister: "Тіркелу",
+    goLogin: "Аккаунтыңыз бар ма? Кіру",
     start: "Telegram арқылы кіруді бастау",
     openTelegram: "Telegram ашу",
     starting: "Қорғалған сұрау жасалуда...",
@@ -83,6 +92,7 @@ const copy = {
     secureTitle: "Қорғалған авторизация",
     dataProtection: "Деректер тек жеке басты тексеру, авторизация және портал сервистерімен жұмыс істеу үшін пайдаланылады.",
     features: ["Телефон растауы бар Telegram", "Email және құпия сөз қосымша тәсіл ретінде", "Порталдың қорғалған сессиясы"],
+    registerFeatures: ["Тіркелу тек email арқылы", "Кандидат деректері анкетаға сақталады", "Порталдың қорғалған сессиясы"],
     steps: ["Кіру батырмасын басыңыз", "Ботты Telegram ішінде ашыңыз", "«Телефон нөмірімен бөлісу» батырмасын басыңыз"]
   }
 };
@@ -96,7 +106,7 @@ function humanizeAuthError(message: string, locale: Locale) {
 
 export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
   const router = useRouter();
-  const [provider, setProvider] = useState<Provider>("telegram");
+  const [provider, setProvider] = useState<Provider>(mode === "register" ? "email" : "telegram");
   const [challenge, setChallenge] = useState<TelegramLoginStart | null>(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
@@ -105,6 +115,9 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
   const t = copy[locale];
   const isRegister = mode === "register";
+  const pageTitle = isRegister ? t.registerTitle : t.title;
+  const pageSubtitle = isRegister ? t.registerSubtitle : t.subtitle;
+  const pageFeatures = isRegister ? t.registerFeatures : t.features;
 
   async function beginTelegramLogin() {
     setError("");
@@ -220,11 +233,11 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
               <div className="mt-2 h-px w-44 bg-gradient-to-r from-state-gold/70 via-white/25 to-transparent" />
             </div>
           </div>
-          <h1 className="mt-8 text-balance text-4xl font-bold leading-tight tracking-normal md:text-5xl">{t.title}</h1>
-          <p className="mt-5 max-w-lg text-base leading-8 text-white/74 md:text-lg">{t.subtitle}</p>
+          <h1 className="mt-8 text-balance text-4xl font-bold leading-tight tracking-normal md:text-5xl">{pageTitle}</h1>
+          <p className="mt-5 max-w-lg text-base leading-8 text-white/74 md:text-lg">{pageSubtitle}</p>
 
           <div className="mt-8 grid gap-3">
-            {t.features.map((feature) => (
+            {pageFeatures.map((feature) => (
               <div key={feature} className="flex items-center gap-3 text-sm font-semibold text-white/78">
                 <CheckCircle2 className="h-5 w-5 text-state-gold" />
                 {feature}
@@ -235,22 +248,24 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
 
         <div className="mx-auto w-full max-w-xl">
           <div className="rounded-[1.35rem] border border-white/20 bg-white/[0.96] p-6 text-state-navy shadow-[0_30px_90px_rgba(0,0,0,0.24)] md:p-8">
-            <div className="mb-6 grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
-              {(["telegram", "email"] as Provider[]).map((item) => (
-                <button
-                  key={item}
-                  className={`min-h-11 rounded-xl text-sm font-bold transition ${provider === item ? "bg-white text-state-navy shadow-sm" : "text-slate-500 hover:text-state-navy"}`}
-                  type="button"
-                  onClick={() => {
-                    setProvider(item);
-                    setError("");
-                    setStatus("");
-                  }}
-                >
-                  {item === "telegram" ? t.telegram : t.email}
-                </button>
-              ))}
-            </div>
+            {!isRegister ? (
+              <div className="mb-6 grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+                {(["telegram", "email"] as Provider[]).map((item) => (
+                  <button
+                    key={item}
+                    className={`min-h-11 rounded-xl text-sm font-bold transition ${provider === item ? "bg-white text-state-navy shadow-sm" : "text-slate-500 hover:text-state-navy"}`}
+                    type="button"
+                    onClick={() => {
+                      setProvider(item);
+                      setError("");
+                      setStatus("");
+                    }}
+                  >
+                    {item === "telegram" ? t.telegram : t.email}
+                  </button>
+                ))}
+              </div>
+            ) : null}
 
             {provider === "telegram" ? (
               <>
@@ -381,6 +396,13 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
                 </div>
               </div>
             </div>
+
+            <a
+              className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-state-teal/25 bg-white px-5 text-sm font-bold text-state-tealDark transition hover:border-state-gold hover:text-state-navy"
+              href={`/${locale}/${isRegister ? "login" : "register"}`}
+            >
+              {isRegister ? t.goLogin : t.goRegister}
+            </a>
           </div>
         </div>
       </Container>

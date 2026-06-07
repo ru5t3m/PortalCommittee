@@ -10,6 +10,7 @@ import { getPsychologicalTests } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
 
 const examples = {
+  "primary-selection": ["Числовые ряды", "Пропущенные числа", "Задания с изображениями"],
   attention: ["Найдите отличающийся символ в матрице", "Отметьте повторяющиеся последовательности", "Сравните две группы чисел на точность"],
   memory: ["Запомните последовательность слов", "Восстановите порядок объектов", "Сопоставьте пары после короткой паузы"],
   logic: ["Определите закономерность ряда", "Выберите недостающий элемент схемы", "Сравните условия и сделайте вывод"],
@@ -17,6 +18,7 @@ const examples = {
 };
 
 const examplesKk = {
+  "primary-selection": ["Сандық қатарлар", "Жетпейтін сандар", "Суреті бар тапсырмалар"],
   attention: ["Матрицадағы өзгеше таңбаны табыңыз", "Қайталанатын реттіліктерді белгілеңіз", "Екі сан тобын дәлдікке салыстырыңыз"],
   memory: ["Сөздер реттілігін есте сақтаңыз", "Нысандар тәртібін қалпына келтіріңіз", "Қысқа үзілістен кейін жұптарды сәйкестендіріңіз"],
   logic: ["Қатар заңдылығын анықтаңыз", "Сызбадағы жетіспейтін элементті таңдаңыз", "Шарттарды салыстырып, қорытынды жасаңыз"],
@@ -33,11 +35,11 @@ const copy = {
     skill: "Навык",
     skillText: "Основная зона самопроверки:",
     format: "Формат",
-    formatText: "Демо-задания, рекомендации и примерная шкала самооценки.",
+    formatText: "Задания, рекомендации и шкала самооценки для доступных разделов.",
     examples: "Примеры",
     taskTypes: "Типы заданий",
     training: "Самопроверка",
-    trainingTitle: "Пройдите базовый демо-тест",
+    trainingTitle: "Пройдите тест",
     back: "К списку тестов"
   },
   kk: {
@@ -49,11 +51,11 @@ const copy = {
     skill: "Дағды",
     skillText: "Өзін-өзі тексерудің негізгі аймағы:",
     format: "Формат",
-    formatText: "Демо-тапсырмалар, ұсынымдар және өзін-өзі бағалаудың шамамен шкаласы.",
+    formatText: "Қолжетімді бөлімдерге арналған тапсырмалар, ұсынымдар және өзін-өзі бағалау шкаласы.",
     examples: "Мысалдар",
     taskTypes: "Тапсырма түрлері",
     training: "Өзін-өзі тексеру",
-    trainingTitle: "Базалық демо-тесттен өтіңіз",
+    trainingTitle: "Тесттен өтіңіз",
     back: "Тесттер тізіміне"
   }
 };
@@ -63,6 +65,20 @@ export default async function PsychologicalTestPage({ params }: { params: Promis
   const psychologicalTests = getPsychologicalTests(locale);
   const test = psychologicalTests.find((item) => item.slug === slug);
   if (!test) notFound();
+
+  if (slug === "primary-selection") {
+    return (
+      <>
+        <style
+          dangerouslySetInnerHTML={{
+            __html: "body > header, body > footer { display: none !important; }"
+          }}
+        />
+        <PsychologicalTestRunner locale={locale} slug={test.slug} />
+      </>
+    );
+  }
+
   const t = copy[locale];
   const localizedExamples = locale === "kk" ? examplesKk : examples;
   const testExamples = localizedExamples[test.slug as keyof typeof localizedExamples];

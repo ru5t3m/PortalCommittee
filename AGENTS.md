@@ -93,7 +93,7 @@ Implemented or partially implemented:
 - Telegram login uses `/auth/telegram/start`, a bot deep link, `/auth/telegram/webhook`, and `/auth/telegram/complete`.
 - Telegram phone confirmation is done by the user sharing their own contact with the bot. The backend checks `contact.user_id == message.from.id`.
 - Telegram-authenticated users are created without passwords and default to `candidate`; staff access is no longer granted through ordinary Telegram login.
-- Email/password uses `/auth/password/register` and `/auth/password/login`. Password registration collects first name, last name, birth date, phone, email, and password, then creates `User(role=candidate)` plus `CandidateApplication` for regular candidate users.
+- Email/password uses `/auth/password/register` and `/auth/password/login`. The public registration page shows only the email/password registration form. Password registration collects first name, last name, birth date, phone, email, and password, then creates `User(role=candidate)` plus `CandidateApplication` for regular candidate users.
 - Email ownership is not confirmed in the current password flow. Treat this as a weaker secondary option unless the user later restores email-code verification.
 - Candidate registration/application data is separate from authentication. After Telegram auth, a candidate may still need to complete candidate application data.
 - Refresh tokens are stored as HttpOnly cookies; access tokens are kept in browser session storage.
@@ -108,6 +108,7 @@ Implemented or partially implemented:
 - Admin/moderator status changes are implemented for appeals and candidate applications.
 - Admin panel access is separated from ordinary auth. `/admin` first requires the ordinary portal user email configured by `ADMIN_PORTAL_ALLOWED_USER_EMAIL`, then requires a second admin-panel login configured by `ADMIN_PANEL_EMAIL` and `ADMIN_PANEL_PASSWORD_HASH`.
 - Admin APIs require an `admin_session` JWT claim and no longer trust ordinary user role alone.
+- `/[locale]/psychological-testing` is the public intro page for the imported `primary-selection` test from `Первичный психологический отбор.docx`. It explains the sequential sections and links to `/[locale]/psychological-testing/primary-selection`. The `primary-selection` route is a full-screen test mode without the normal portal header/footer and requires an authenticated portal session via `/auth/me` before showing questions. It shows instructions before each section, pauses the one-hour timer while instructions are visible, and presents questions in pages of 10. The runner currently has 50 numeric questions and 50 visual/figure-selection questions. Related images live in `apps/web/public/psychological-tests/primary-selection`. Memory and interpretation sections are planned placeholders. Automatic scoring is intentionally disabled until answer keys are provided.
 - Audit logging exists for current moderation status changes.
 - API uses Alembic migrations and must not create tables at application startup.
 - Local SQLite development uses `apps/api/knb_portal.dev.db` through `apps/api/.env`.
