@@ -1,4 +1,4 @@
-import { authFetch } from "@/lib/auth";
+import { adminAuthFetch } from "@/lib/auth";
 import { API_URL, parseApiError } from "@/lib/api";
 
 export type AdminDashboard = {
@@ -11,6 +11,7 @@ export type AdminDashboard = {
     phone: string | null;
     phone_verified: boolean;
   };
+  users: number;
   pages: number;
   appeals: number;
   candidates: number;
@@ -66,20 +67,20 @@ async function readJson<T>(response: Response) {
 }
 
 export async function getAdminDashboard() {
-  return readJson<AdminDashboard>(await authFetch(`${API_URL}/admin/dashboard`));
+  return readJson<AdminDashboard>(await adminAuthFetch(`${API_URL}/admin/dashboard`));
 }
 
 export async function listAdminAppeals() {
-  return readJson<AdminAppeal[]>(await authFetch(`${API_URL}/admin/appeals`));
+  return readJson<AdminAppeal[]>(await adminAuthFetch(`${API_URL}/admin/appeals`));
 }
 
 export async function listAdminCandidates() {
-  return readJson<AdminCandidate[]>(await authFetch(`${API_URL}/admin/candidates`));
+  return readJson<AdminCandidate[]>(await adminAuthFetch(`${API_URL}/admin/candidates`));
 }
 
 export async function updateAdminAppealStatus(id: number, status: AdminAppeal["status"]) {
   return readJson<AdminAppeal>(
-    await authFetch(`${API_URL}/admin/appeals/${id}/status`, {
+    await adminAuthFetch(`${API_URL}/admin/appeals/${id}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status })
@@ -89,7 +90,7 @@ export async function updateAdminAppealStatus(id: number, status: AdminAppeal["s
 
 export async function updateAdminCandidateStatus(id: number, status: AdminCandidate["status"], moderatorComment: string | null) {
   return readJson<AdminCandidate>(
-    await authFetch(`${API_URL}/admin/candidates/${id}/status`, {
+    await adminAuthFetch(`${API_URL}/admin/candidates/${id}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status, moderator_comment: moderatorComment })

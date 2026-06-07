@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session, joinedload
 
-from app.api.deps import require_roles
+from app.api.deps import current_admin_session_user
 from app.db.session import get_db
-from app.models.entities import Appeal, AppealStatus, AuditLog, CandidateApplication, CandidateStatus, News, Page, RegionOffice, Role, User
+from app.models.entities import Appeal, AppealStatus, AuditLog, CandidateApplication, CandidateStatus, News, Page, RegionOffice, User
 from app.schemas.dto import (
     AdminAppealOut,
     AdminAppealStatusUpdate,
@@ -13,7 +13,7 @@ from app.schemas.dto import (
     UserOut,
 )
 
-router = APIRouter(prefix="/admin", dependencies=[Depends(require_roles(Role.admin, Role.moderator))])
+router = APIRouter(prefix="/admin", dependencies=[Depends(current_admin_session_user)])
 
 
 def client_ip(request: Request) -> str | None:
@@ -85,9 +85,10 @@ def record_audit(db: Session, request: Request, actor: User, action: str, entity
 
 
 @router.get("/dashboard", response_model=AdminDashboardOut)
-def dashboard(db: Session = Depends(get_db), user: User = Depends(require_roles(Role.admin, Role.moderator))):
+def dashboard(db: Session = Depends(get_db), user: User = Depends(current_admin_session_user)):
     return AdminDashboardOut(
         actor=serialize_user(user),
+        users=db.query(User).count(),
         news=db.query(News).count(),
         pages=db.query(Page).count(),
         appeals=db.query(Appeal).count(),
@@ -116,7 +117,7 @@ def update_appeal_status(
     payload: AdminAppealStatusUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(Role.admin, Role.moderator)),
+    user: User = Depends(current_admin_session_user),
 ):
     row = db.get(Appeal, appeal_id)
     if not row:
@@ -149,7 +150,7 @@ def update_candidate_status(
     payload: AdminCandidateStatusUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(Role.admin, Role.moderator)),
+    user: User = Depends(current_admin_session_user),
 ):
     row = db.get(CandidateApplication, application_id)
     if not row:

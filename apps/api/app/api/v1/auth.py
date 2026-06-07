@@ -15,6 +15,7 @@ from app.db.session import get_db
 from app.models.entities import CandidateApplication, LoginAttempt, RefreshSession, Role, TelegramLoginChallenge, User
 from app.schemas.dto import (
     AuthMeOut,
+    AdminPanelLoginIn,
     CandidateApplicationOut,
     PasswordLoginIn,
     PasswordRegisterIn,
@@ -24,6 +25,7 @@ from app.schemas.dto import (
     TokenOut,
     UserOut,
 )
+from app.services.tracking import make_tracking_code
 
 router = APIRouter()
 
@@ -74,6 +76,19 @@ def token_out(user: User) -> TokenOut:
     return TokenOut(
         access_token=create_access_token(str(user.id), user.role.value),
         expires_in=settings.access_token_minutes * 60,
+    )
+
+
+def admin_token_out(user: User) -> TokenOut:
+    settings = get_settings()
+    return TokenOut(
+        access_token=create_access_token(
+            str(user.id),
+            "admin",
+            extra_claims={"admin_session": True},
+            expires_minutes=settings.admin_access_token_minutes,
+        ),
+        expires_in=settings.admin_access_token_minutes * 60,
     )
 
 
@@ -208,11 +223,6 @@ def expire_challenge_if_needed(challenge: TelegramLoginChallenge, now: datetime)
 
 
 def role_for_telegram_id(telegram_id: str) -> Role:
-    settings = get_settings()
-    if telegram_id in settings.telegram_admin_ids:
-        return Role.admin
-    if telegram_id in settings.telegram_moderator_ids:
-        return Role.moderator
     return Role.candidate
 
 
@@ -226,14 +236,6 @@ def telegram_full_name(first_name: str | None, last_name: str | None, username: 
 
 
 def role_for_email(email: str) -> Role:
-    normalized = email.lower()
-    settings = get_settings()
-    admin_emails = {item.lower() for item in getattr(settings, "email_admin_addresses", [])}
-    moderator_emails = {item.lower() for item in getattr(settings, "email_moderator_addresses", [])}
-    if normalized in admin_emails:
-        return Role.admin
-    if normalized in moderator_emails:
-        return Role.moderator
     return Role.candidate
 
 
@@ -269,22 +271,43 @@ def register_with_password(payload: PasswordRegisterIn, request: Request, respon
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is not active")
 
     if not user:
+        role = role_for_email(email)
         user = User(
             email=email,
-            full_name=payload.full_name.strip(),
+            full_name=f"{payload.first_name.strip()} {payload.last_name.strip()}",
             hashed_password=hash_password(payload.password),
-            role=role_for_email(email),
+            role=role,
             password_changed_at=now,
         )
         db.add(user)
         db.flush()
+        if role == Role.candidate:
+            db.add(
+                CandidateApplication(
+                    user_id=user.id,
+                    tracking_code=make_tracking_code("CAN"),
+                    first_name=payload.first_name.strip(),
+                    last_name=payload.last_name.strip(),
+                    birth_date=payload.birth_date,
+                    phone=payload.phone.strip(),
+                )
+            )
     else:
-        user.full_name = payload.full_name.strip()
+        user.full_name = f"{payload.first_name.strip()} {payload.last_name.strip()}"
         user.hashed_password = hash_password(payload.password)
         user.password_changed_at = now
         role = role_for_email(email)
-        if role in {Role.admin, Role.moderator}:
-            user.role = role
+        if not user.candidate_application:
+            db.add(
+                CandidateApplication(
+                    user_id=user.id,
+                    tracking_code=make_tracking_code("CAN"),
+                    first_name=payload.first_name.strip(),
+                    last_name=payload.last_name.strip(),
+                    birth_date=payload.birth_date,
+                    phone=payload.phone.strip(),
+                )
+            )
 
     user.failed_login_count = 0
     user.last_login_at = now
@@ -321,6 +344,37 @@ def login_with_password(payload: PasswordLoginIn, request: Request, response: Re
     db.commit()
     db.refresh(user)
     return token_out(user)
+
+
+@router.post("/auth/admin/login", response_model=TokenOut)
+def login_admin_panel(
+    payload: AdminPanelLoginIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    settings = get_settings()
+    if (user.email or "").lower() != settings.admin_portal_allowed_user_email.lower():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    if not settings.admin_panel_email or not settings.admin_panel_password_hash:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Admin panel login is not configured")
+
+    admin_identifier = f"admin-panel:{payload.email.lower()}"
+    if too_many_recent_failures(db, admin_identifier, request):
+        record_login_attempt(db, email=admin_identifier, request=request, user=user, success=False, reason="rate_limited")
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many login attempts")
+
+    is_valid_email = payload.email.lower() == settings.admin_panel_email.lower()
+    is_valid_password = verify_password(payload.password, settings.admin_panel_password_hash)
+    if not is_valid_email or not is_valid_password:
+        record_login_attempt(db, email=admin_identifier, request=request, user=user, success=False, reason="invalid_admin_credentials")
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    record_login_attempt(db, email=admin_identifier, request=request, user=user, success=True, reason="admin_panel_login")
+    db.commit()
+    return admin_token_out(user)
 
 
 @router.post("/auth/telegram/start", response_model=TelegramLoginStartOut, status_code=201)
@@ -415,8 +469,6 @@ def complete_telegram_login(payload: TelegramLoginCompleteIn, request: Request, 
         user.phone = challenge.phone
         user.phone_verified = True
         user.full_name = telegram_full_name(challenge.first_name, challenge.last_name, challenge.telegram_username)
-        if role in {Role.admin, Role.moderator}:
-            user.role = role
 
     if not user.is_active or user.is_blocked:
         record_telegram_attempt(db, telegram_id=challenge.telegram_id, request=request, user=user, success=False, reason="blocked_or_inactive")

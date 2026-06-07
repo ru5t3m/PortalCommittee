@@ -32,12 +32,13 @@ Out of scope unless explicitly changed later:
 - Citizen first-contact work/study application submission through the backend.
 - Appeal tracking/status lookup.
 - Telegram login/registration flow backed by the API and Telegram bot webhook.
-- Email/password login and registration as a secondary provider.
+- Email/password login and registration as a secondary provider. First-time email registration collects name, birth date, phone, email, and password, then creates the candidate account/application.
 - Phone confirmation through Telegram contact sharing.
 - Logout and refresh-token sessions using an HttpOnly refresh cookie.
 - Candidate account cabinet using `/auth/me`.
 - Admin/moderator dashboard for appeals and candidate applications.
 - Admin/moderator status changes for appeals and candidate applications.
+- Separate `/admin` entry gate: ordinary portal session must match `ADMIN_PORTAL_ALLOWED_USER_EMAIL`, then a second admin-panel login issues an admin-session token.
 - Static legal reference page at `/documents`, named `Нормативная база` / `Нормативтік база`.
 - Alembic migrations instead of startup table creation.
 
@@ -79,7 +80,7 @@ Open:
 - API docs: http://localhost:8000/docs
 - Health: http://localhost:8000/health
 
-Staff access after seeding is controlled by Telegram IDs in `TELEGRAM_ADMIN_IDS` and `TELEGRAM_MODERATOR_IDS`. Password demo accounts are no longer part of the active auth flow.
+Staff access is controlled by the separate `/admin` gate and admin-panel credentials. Password demo accounts are no longer part of the active auth flow.
 
 ## Main Routes
 
@@ -112,6 +113,7 @@ Auth/account:
 
 - `POST /api/v1/auth/password/register`
 - `POST /api/v1/auth/password/login`
+- `POST /api/v1/auth/admin/login`
 - `POST /api/v1/auth/telegram/start`
 - `GET /api/v1/auth/telegram/status/{challenge_id}`
 - `POST /api/v1/auth/telegram/complete`
@@ -182,10 +184,10 @@ Render environment variables can use single comma-separated values or JSON array
 ```env
 CORS_ORIGINS=https://knb-portal.vercel.app
 ALLOWED_HOSTS=knb-portal-api.onrender.com
-TELEGRAM_ADMIN_IDS=["123456789"]
-TELEGRAM_MODERATOR_IDS=
-EMAIL_ADMIN_ADDRESSES=admin@example.kz
-EMAIL_MODERATOR_ADDRESSES=
+ADMIN_PORTAL_ALLOWED_USER_EMAIL=test@gmail.com
+ADMIN_PANEL_EMAIL=rustemadmin@gmail.com
+ADMIN_PANEL_PASSWORD_HASH=<bcrypt-hash>
+ADMIN_ACCESS_TOKEN_MINUTES=60
 ```
 
 Multiple values are also valid:
@@ -193,8 +195,13 @@ Multiple values are also valid:
 ```env
 CORS_ORIGINS=https://knb-portal.vercel.app,http://localhost:3000
 ALLOWED_HOSTS=knb-portal-api.onrender.com,localhost
-TELEGRAM_ADMIN_IDS=123456789,987654321
-EMAIL_ADMIN_ADDRESSES=admin@example.kz,moderator@example.kz
+ADMIN_PORTAL_ALLOWED_USER_EMAIL=test@gmail.com
+```
+
+Admin-panel credentials must not be committed. Generate a bcrypt hash for the admin-panel password and store only the hash in Render:
+
+```bash
+python -c "from app.core.security import hash_password; print(hash_password('YOUR_PASSWORD'))"
 ```
 
 Render Postgres migration troubleshooting:
@@ -207,7 +214,7 @@ Render Postgres migration troubleshooting:
 
 - Replace `JWT_SECRET`, database credentials, cookie secrets, and CORS origins.
 - Configure `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, and strong `TELEGRAM_WEBHOOK_SECRET`.
-- Configure staff Telegram IDs through `TELEGRAM_ADMIN_IDS` and `TELEGRAM_MODERATOR_IDS`.
+- Configure the separate `/admin` gate through `ADMIN_PORTAL_ALLOWED_USER_EMAIL`, `ADMIN_PANEL_EMAIL`, and `ADMIN_PANEL_PASSWORD_HASH`.
 - Set allowed hosts explicitly for the deployed domain and ingress.
 - Terminate HTTPS at a trusted ingress or reverse proxy.
 - Enable HSTS in production.

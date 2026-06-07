@@ -57,10 +57,18 @@ class TelegramLoginCompleteIn(BaseModel):
 class PasswordRegisterIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=10, max_length=128)
-    full_name: str = Field(min_length=2, max_length=255)
+    first_name: str = Field(min_length=2, max_length=120)
+    last_name: str = Field(min_length=2, max_length=120)
+    birth_date: date | None = None
+    phone: str = Field(min_length=5, max_length=60)
 
 
 class PasswordLoginIn(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
+
+
+class AdminPanelLoginIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
 
@@ -96,6 +104,7 @@ class TrackingOut(BaseModel):
 
 class AdminDashboardOut(BaseModel):
     actor: UserOut
+    users: int
     news: int
     pages: int
     appeals: int

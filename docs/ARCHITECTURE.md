@@ -79,7 +79,8 @@ Auth/account examples:
 
 - Telegram login start/status/complete.
 - Telegram webhook for bot updates and phone contact confirmation.
-- Email/password register and login.
+- Email/password register and login. First-time candidate email registration creates both `User` and `CandidateApplication`.
+- Admin-panel login is a separate second step at `/admin`. It requires an ordinary allowed portal user first, then separate admin credentials, and issues an `admin_session` token.
 - Refresh.
 - Logout.
 - Current user/account data.
@@ -104,6 +105,7 @@ Current or intended controls:
 - Telegram bot webhook secret validation.
 - Telegram phone ownership check through `contact.user_id == message.from.id`.
 - Server-side password hashing and rate-limited password login.
+- Admin APIs require the `admin_session` JWT claim; ordinary user role alone is not sufficient for admin API access.
 - Login attempt logging and throttling.
 - Pydantic validation on public and admin forms.
 - Audit logging for admin actions.

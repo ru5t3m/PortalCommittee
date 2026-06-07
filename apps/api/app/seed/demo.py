@@ -1,40 +1,13 @@
 from datetime import datetime, timezone
 
-from app.core.config import get_settings
 from app.db.session import SessionLocal
-from app.models.entities import News, Page, RegionOffice, Role, Status, User
+from app.models.entities import News, Page, RegionOffice, Status
 
 
 def seed() -> None:
     db = SessionLocal()
-    settings = get_settings()
     try:
-        staff_users: list[User] = []
-        for telegram_id in settings.telegram_admin_ids:
-            if not db.query(User).filter(User.telegram_id == telegram_id).first():
-                staff_users.append(
-                    User(
-                        email=None,
-                        full_name=f"Telegram admin {telegram_id}",
-                        hashed_password=None,
-                        telegram_id=telegram_id,
-                        role=Role.admin,
-                    )
-                )
-        for telegram_id in settings.telegram_moderator_ids:
-            if not db.query(User).filter(User.telegram_id == telegram_id).first():
-                staff_users.append(
-                    User(
-                        email=None,
-                        full_name=f"Telegram moderator {telegram_id}",
-                        hashed_password=None,
-                        telegram_id=telegram_id,
-                        role=Role.moderator,
-                    )
-                )
-        db.add_all(staff_users)
         if db.query(News).first():
-            db.commit()
             return
 
         db.add_all([

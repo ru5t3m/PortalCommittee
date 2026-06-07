@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, ExternalLink, Loader2, LockKeyhole, Mail, MessageCircle, ShieldCheck, Smartphone, UserRound } from "lucide-react";
+import { CalendarDays, CheckCircle2, ExternalLink, Loader2, LockKeyhole, Mail, MessageCircle, Phone, ShieldCheck, Smartphone, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Container } from "@/components/ui/Container";
@@ -26,10 +26,15 @@ const copy = {
     email: "Email",
     emailTitle: "Вход по email",
     emailRegisterTitle: "Создание аккаунта",
-    fullName: "ФИО",
+    firstName: "Имя",
+    lastName: "Фамилия",
+    birthDate: "Дата рождения",
+    phone: "Номер телефона",
     emailLabel: "Email",
     password: "Пароль",
-    fullNamePlaceholder: "Введите ФИО",
+    firstNamePlaceholder: "Введите имя",
+    lastNamePlaceholder: "Введите фамилию",
+    phonePlaceholder: "+7 700 000 00 00",
     emailPlaceholder: "name@example.kz",
     passwordPlaceholder: "Введите пароль",
     emailSubmit: "Войти",
@@ -54,10 +59,15 @@ const copy = {
     email: "Email",
     emailTitle: "Email арқылы кіру",
     emailRegisterTitle: "Аккаунт жасау",
-    fullName: "ТАӘ",
+    firstName: "Аты",
+    lastName: "Тегі",
+    birthDate: "Туған күні",
+    phone: "Телефон нөмірі",
     emailLabel: "Email",
     password: "Құпия сөз",
-    fullNamePlaceholder: "ТАӘ енгізіңіз",
+    firstNamePlaceholder: "Атыңызды енгізіңіз",
+    lastNamePlaceholder: "Тегіңізді енгізіңіз",
+    phonePlaceholder: "+7 700 000 00 00",
     emailPlaceholder: "name@example.kz",
     passwordPlaceholder: "Құпия сөзді енгізіңіз",
     emailSubmit: "Кіру",
@@ -121,11 +131,14 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
-    const fullName = String(formData.get("fullName") ?? "").trim();
+    const firstName = String(formData.get("firstName") ?? "").trim();
+    const lastName = String(formData.get("lastName") ?? "").trim();
+    const birthDate = String(formData.get("birthDate") ?? "").trim();
+    const phone = String(formData.get("phone") ?? "").trim();
 
     try {
       if (isRegister) {
-        await registerWithPassword({ email, password, full_name: fullName });
+        await registerWithPassword({ email, password, first_name: firstName, last_name: lastName, birth_date: birthDate, phone });
       } else {
         await loginWithPassword(email, password);
       }
@@ -289,13 +302,40 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
 
                 <form className="grid gap-4" onSubmit={handleEmailSubmit}>
                   {isRegister ? (
-                    <label className="grid gap-2 text-sm font-semibold text-state-navy">
-                      {t.fullName}
-                      <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
-                        <UserRound className="h-5 w-5 text-state-tealDark" />
-                        <input name="fullName" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.fullNamePlaceholder} required />
-                      </span>
-                    </label>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                        {t.firstName}
+                        <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
+                          <UserRound className="h-5 w-5 text-state-tealDark" />
+                          <input name="firstName" autoComplete="given-name" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.firstNamePlaceholder} required />
+                        </span>
+                      </label>
+                      <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                        {t.lastName}
+                        <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
+                          <UserRound className="h-5 w-5 text-state-tealDark" />
+                          <input name="lastName" autoComplete="family-name" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.lastNamePlaceholder} required />
+                        </span>
+                      </label>
+                    </div>
+                  ) : null}
+                  {isRegister ? (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                        {t.birthDate}
+                        <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
+                          <CalendarDays className="h-5 w-5 text-state-tealDark" />
+                          <input name="birthDate" type="date" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" required />
+                        </span>
+                      </label>
+                      <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                        {t.phone}
+                        <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
+                          <Phone className="h-5 w-5 text-state-tealDark" />
+                          <input name="phone" type="tel" autoComplete="tel" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.phonePlaceholder} required />
+                        </span>
+                      </label>
+                    </div>
                   ) : null}
                   <label className="grid gap-2 text-sm font-semibold text-state-navy">
                     {t.emailLabel}

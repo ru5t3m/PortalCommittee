@@ -48,6 +48,7 @@ export type TelegramLoginStatus = {
 };
 
 const ACCESS_TOKEN_KEY = "knb-access-token";
+const ADMIN_ACCESS_TOKEN_KEY = "knb-admin-access-token";
 
 function getStoredAccessToken() {
   if (typeof window === "undefined") return null;
@@ -61,6 +62,7 @@ function setStoredAccessToken(token: string) {
 
 function clearStoredAccessToken() {
   window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  window.sessionStorage.removeItem(ADMIN_ACCESS_TOKEN_KEY);
   window.dispatchEvent(new CustomEvent("knb-auth-changed"));
 }
 
@@ -114,7 +116,14 @@ export async function loginWithPassword(email: string, password: string) {
   return storeTokenFromResponse(response);
 }
 
-export async function registerWithPassword(payload: { email: string; password: string; full_name: string }) {
+export async function registerWithPassword(payload: {
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  birth_date: string;
+  phone: string;
+}) {
   const response = await fetch(`${API_URL}/auth/password/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -122,6 +131,30 @@ export async function registerWithPassword(payload: { email: string; password: s
     body: JSON.stringify(payload)
   });
   return storeTokenFromResponse(response);
+}
+
+export async function loginAdminPanel(email: string, password: string) {
+  const response = await authFetch(`${API_URL}/auth/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  const token = (await response.json()) as TokenResponse;
+  window.sessionStorage.setItem(ADMIN_ACCESS_TOKEN_KEY, token.access_token);
+  return token;
+}
+
+export function clearAdminPanelSession() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(ADMIN_ACCESS_TOKEN_KEY);
+}
+
+export function hasAdminPanelSession() {
+  if (typeof window === "undefined") return false;
+  return Boolean(window.sessionStorage.getItem(ADMIN_ACCESS_TOKEN_KEY));
 }
 
 export async function refreshSession() {
@@ -167,6 +200,18 @@ export async function authFetch(input: string, init: RequestInit = {}, retry = t
   }
 
   return response;
+}
+
+export async function adminAuthFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  const token = typeof window === "undefined" ? null : window.sessionStorage.getItem(ADMIN_ACCESS_TOKEN_KEY);
+  const headers = new Headers(init.headers);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  return fetch(input, {
+    ...init,
+    headers,
+    credentials: "include"
+  });
 }
 
 export async function getMe() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, ShieldCheck, UserRoundCheck } from "lucide-react";
+import { BarChart3, ClipboardCheck, FileText, Search, ShieldCheck, UserRoundCheck, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import type { Locale } from "@/lib/i18n";
@@ -22,6 +22,15 @@ const copy = {
     refresh: "Обновить",
     appeals: "Обращения",
     candidates: "Кандидаты",
+    users: "Пользователи",
+    testing: "Тестирования",
+    candidatePipeline: "Воронка кандидатов",
+    needsReview: "Требуют рассмотрения",
+    approved: "Одобрены",
+    rejected: "Отклонены",
+    searchPlaceholder: "Поиск по ФИО, телефону, email или трек-номеру",
+    allStatuses: "Все статусы",
+    noTestingData: "Результаты психологических тестирований пока не сохраняются в backend. После подключения хранения здесь появятся результаты всех пользователей.",
     emptyAppeals: "Обращений пока нет.",
     emptyCandidates: "Кандидатских заявок пока нет.",
     details: "Детали",
@@ -49,6 +58,15 @@ const copy = {
     refresh: "Жаңарту",
     appeals: "Өтініштер",
     candidates: "Кандидаттар",
+    users: "Пайдаланушылар",
+    testing: "Тестілеу",
+    candidatePipeline: "Кандидаттар воронкасы",
+    needsReview: "Қарауды қажет етеді",
+    approved: "Мақұлданды",
+    rejected: "Қабылданбады",
+    searchPlaceholder: "ТАӘ, телефон, email немесе трек-нөмір бойынша іздеу",
+    allStatuses: "Барлық мәртебелер",
+    noTestingData: "Психологиялық тестілеу нәтижелері әзірге backend ішінде сақталмайды. Сақтау қосылғаннан кейін мұнда барлық пайдаланушы нәтижелері көрсетіледі.",
     emptyAppeals: "Әзірге өтініш жоқ.",
     emptyCandidates: "Әзірге кандидат өтінімдері жоқ.",
     details: "Толығырақ",
@@ -75,7 +93,7 @@ const copy = {
 const appealStatuses: AdminAppeal["status"][] = ["received", "in_review", "answered", "rejected"];
 const candidateStatuses: AdminCandidate["status"][] = ["submitted", "in_review", "approved", "rejected"];
 
-type Tab = "appeals" | "candidates";
+type Tab = "overview" | "candidates" | "appeals" | "testing";
 type StatItem = {
   label: string;
   value: string | number;
@@ -97,6 +115,8 @@ export function AdminPanel({ locale }: { locale: Locale }) {
   const [appeals, setAppeals] = useState<AdminAppeal[]>([]);
   const [candidates, setCandidates] = useState<AdminCandidate[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("appeals");
+  const [candidateQuery, setCandidateQuery] = useState("");
+  const [candidateStatusFilter, setCandidateStatusFilter] = useState<AdminCandidate["status"] | "all">("all");
   const [selectedAppealId, setSelectedAppealId] = useState<number | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null);
   const [candidateComment, setCandidateComment] = useState("");
@@ -105,6 +125,28 @@ export function AdminPanel({ locale }: { locale: Locale }) {
 
   const selectedAppeal = useMemo(() => appeals.find((item) => item.id === selectedAppealId) ?? null, [appeals, selectedAppealId]);
   const selectedCandidate = useMemo(() => candidates.find((item) => item.id === selectedCandidateId) ?? null, [candidates, selectedCandidateId]);
+  const candidateStatusCounts = useMemo(() => ({
+    submitted: candidates.filter((item) => item.status === "submitted").length,
+    in_review: candidates.filter((item) => item.status === "in_review").length,
+    approved: candidates.filter((item) => item.status === "approved").length,
+    rejected: candidates.filter((item) => item.status === "rejected").length
+  }), [candidates]);
+  const filteredCandidates = useMemo(() => {
+    const query = candidateQuery.trim().toLowerCase();
+    return candidates.filter((item) => {
+      if (candidateStatusFilter !== "all" && item.status !== candidateStatusFilter) return false;
+      if (!query) return true;
+      return [
+        item.first_name,
+        item.last_name,
+        item.middle_name ?? "",
+        item.phone,
+        item.tracking_code,
+        item.user.email ?? "",
+        item.user.phone ?? ""
+      ].join(" ").toLowerCase().includes(query);
+    });
+  }, [candidateQuery, candidateStatusFilter, candidates]);
 
   async function loadData() {
     setError("");
@@ -182,13 +224,41 @@ export function AdminPanel({ locale }: { locale: Locale }) {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6 rounded-2xl bg-slate-100 p-4 md:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-[0.16em] text-state-tealDark">Admin dashboard</p>
+          <h2 className="mt-2 text-3xl font-bold text-state-navy">Панель управления</h2>
+        </div>
+        <button type="button" onClick={refresh} disabled={isPending} className="rounded-xl bg-state-gold px-4 py-2 text-sm font-bold text-state-navy transition hover:bg-[#e5bd55] disabled:opacity-60">
+          {t.refresh}
+        </button>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-4">
         {([
           { label: t.appeals, value: dashboard.appeals, icon: FileText },
           { label: t.candidates, value: dashboard.candidates, icon: UserRoundCheck },
-          { label: "Content", value: dashboard.pages, icon: ShieldCheck },
-          { label: t.actor, value: dashboard.actor.role, icon: ShieldCheck }
+          { label: t.users, value: dashboard.users, icon: Users },
+          { label: t.needsReview, value: candidateStatusCounts.submitted + candidateStatusCounts.in_review, icon: ClipboardCheck }
+        ] satisfies StatItem[]).map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <Icon className="h-6 w-6 text-state-teal" />
+              <p className="mt-4 text-sm font-semibold text-slate-500">{item.label}</p>
+              <p className="mt-1 text-2xl font-bold text-state-navy">{item.value}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        {([
+          { label: t.candidatePipeline, value: dashboard.candidates, icon: BarChart3 },
+          { label: statusText(locale, "submitted"), value: candidateStatusCounts.submitted, icon: UserRoundCheck },
+          { label: t.approved, value: candidateStatusCounts.approved, icon: ShieldCheck },
+          { label: t.rejected, value: candidateStatusCounts.rejected, icon: FileText }
         ] satisfies StatItem[]).map((item) => {
           const Icon = item.icon;
           return (
@@ -202,21 +272,44 @@ export function AdminPanel({ locale }: { locale: Locale }) {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
-          {(["appeals", "candidates"] as const).map((tab) => (
+        <div className="inline-flex flex-wrap rounded-xl border border-slate-200 bg-white p-1">
+          {(["overview", "candidates", "appeals", "testing"] as const).map((tab) => (
             <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`rounded-lg px-4 py-2 text-sm font-bold transition ${activeTab === tab ? "bg-state-navy text-white" : "text-slate-600 hover:bg-slate-50"}`}>
-              {tab === "appeals" ? t.appeals : t.candidates}
+              {tab === "overview" ? "Dashboard" : tab === "appeals" ? t.appeals : tab === "candidates" ? t.candidates : t.testing}
             </button>
           ))}
         </div>
-        <button type="button" onClick={refresh} disabled={isPending} className="rounded-xl bg-state-gold px-4 py-2 text-sm font-bold text-state-navy transition hover:bg-[#e5bd55] disabled:opacity-60">
-          {t.refresh}
-        </button>
       </div>
 
       {error ? <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{error}</div> : null}
 
-      {activeTab === "appeals" ? (
+      {activeTab === "overview" ? (
+        <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-xl font-bold text-state-navy">{t.needsReview}</h3>
+            <div className="mt-4 grid gap-3">
+              {candidates.filter((item) => item.status === "submitted" || item.status === "in_review").slice(0, 8).map((item) => (
+                <button key={item.id} type="button" onClick={() => { setActiveTab("candidates"); setSelectedCandidateId(item.id); }} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-left transition hover:border-state-teal/40">
+                  <span>
+                    <span className="block text-sm font-bold text-state-navy">{item.last_name} {item.first_name}</span>
+                    <span className="mt-1 block text-xs text-slate-500">{item.tracking_code} · {item.phone}</span>
+                  </span>
+                  <span className="rounded-full bg-state-teal/10 px-3 py-1 text-xs font-bold text-state-tealDark">{statusText(locale, item.status)}</span>
+                </button>
+              ))}
+              {candidates.filter((item) => item.status === "submitted" || item.status === "in_review").length === 0 ? <p className="text-sm text-slate-500">{t.emptyCandidates}</p> : null}
+            </div>
+          </section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-xl font-bold text-state-navy">{t.actor}</h3>
+            <div className="mt-4 grid gap-3 text-sm text-slate-700">
+              <span className="rounded-xl bg-slate-50 p-3">{dashboard.actor.full_name}</span>
+              <span className="rounded-xl bg-slate-50 p-3">{dashboard.actor.email ?? dashboard.actor.phone ?? "admin"}</span>
+              <span className="rounded-xl bg-slate-50 p-3">Admin session</span>
+            </div>
+          </section>
+        </div>
+      ) : activeTab === "appeals" ? (
         <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             {appeals.length === 0 ? <p className="p-5 text-sm text-slate-500">{t.emptyAppeals}</p> : appeals.map((item) => (
@@ -249,9 +342,20 @@ export function AdminPanel({ locale }: { locale: Locale }) {
           </div>
         </div>
       ) : (
+      activeTab === "candidates" ? (
         <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="lg:col-span-2 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_220px]">
+            <label className="flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 px-3">
+              <Search className="h-5 w-5 text-state-tealDark" />
+              <input value={candidateQuery} onChange={(event) => setCandidateQuery(event.target.value)} className="w-full bg-transparent text-sm font-semibold outline-none" placeholder={t.searchPlaceholder} />
+            </label>
+            <select value={candidateStatusFilter} onChange={(event) => setCandidateStatusFilter(event.target.value as AdminCandidate["status"] | "all")} className="min-h-11 rounded-xl border border-slate-200 px-3 text-sm font-semibold">
+              <option value="all">{t.allStatuses}</option>
+              {candidateStatuses.map((status) => <option key={status} value={status}>{statusText(locale, status)}</option>)}
+            </select>
+          </div>
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            {candidates.length === 0 ? <p className="p-5 text-sm text-slate-500">{t.emptyCandidates}</p> : candidates.map((item) => (
+            {filteredCandidates.length === 0 ? <p className="p-5 text-sm text-slate-500">{t.emptyCandidates}</p> : filteredCandidates.map((item) => (
               <button key={item.id} type="button" onClick={() => setSelectedCandidateId(item.id)} className={`block w-full border-b border-slate-100 p-4 text-left transition last:border-b-0 ${item.id === selectedCandidateId ? "bg-state-teal/10" : "hover:bg-slate-50"}`}>
                 <span className="text-sm font-bold text-state-navy">{item.last_name} {item.first_name}</span>
                 <span className="mt-1 block text-xs text-slate-500">{item.tracking_code} · {statusText(locale, item.status)}</span>
@@ -285,6 +389,12 @@ export function AdminPanel({ locale }: { locale: Locale }) {
             ) : <p className="text-sm text-slate-500">{t.noSelection}</p>}
           </div>
         </div>
+      ) : (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-xl font-bold text-state-navy">{t.testing}</h3>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{t.noTestingData}</p>
+        </section>
+      )
       )}
     </div>
   );

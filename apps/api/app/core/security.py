@@ -18,10 +18,12 @@ def verify_password(password: str, hashed_password: str) -> bool:
     return password_context.verify(password, hashed_password)
 
 
-def create_access_token(subject: str, role: str) -> str:
+def create_access_token(subject: str, role: str, extra_claims: dict | None = None, expires_minutes: int | None = None) -> str:
     settings = get_settings()
-    expires = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_minutes)
+    expires = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes or settings.access_token_minutes)
     payload = {"sub": subject, "role": role, "exp": expires}
+    if extra_claims:
+        payload.update(extra_claims)
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 

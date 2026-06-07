@@ -21,20 +21,16 @@ class Settings(BaseSettings):
     telegram_bot_username: str = ""
     telegram_webhook_secret: str = ""
     telegram_login_challenge_minutes: int = 10
-    telegram_admin_ids: list[str] = []
-    telegram_moderator_ids: list[str] = []
-    email_admin_addresses: list[str] = []
-    email_moderator_addresses: list[str] = []
+    admin_portal_allowed_user_email: str = "test@gmail.com"
+    admin_panel_email: str = ""
+    admin_panel_password_hash: str = ""
+    admin_access_token_minutes: int = 60
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @field_validator(
         "cors_origins",
         "allowed_hosts",
-        "telegram_admin_ids",
-        "telegram_moderator_ids",
-        "email_admin_addresses",
-        "email_moderator_addresses",
         mode="before",
     )
     @classmethod

@@ -27,6 +27,23 @@ def current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_
     return user
 
 
+def current_admin_session_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    settings = get_settings()
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+        user_id = payload.get("sub")
+        is_admin_session = payload.get("admin_session") is True
+        if not user_id or not is_admin_session:
+            raise JWTError("Missing admin session")
+        parsed_user_id = int(user_id)
+    except (JWTError, ValueError) as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid admin session") from exc
+    user = db.query(User).filter(User.id == parsed_user_id, User.is_active.is_(True), User.is_blocked.is_(False)).first()
+    if not user or (user.email or "").lower() != settings.admin_portal_allowed_user_email.lower():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return user
+
+
 def require_roles(*roles: Role):
     def guard(user: User = Depends(current_user)) -> User:
         if user.role not in roles:

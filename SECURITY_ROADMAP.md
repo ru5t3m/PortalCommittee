@@ -99,7 +99,7 @@ Tasks:
 - Implement refresh-token sessions. Done with HttpOnly refresh cookie and server-side `RefreshSession`.
 - Add access-token expiration. Done.
 - Add refresh-token rotation. Done.
-- Add password login/register as an explicit secondary provider. Done, without email ownership confirmation.
+- Add password login/register as an explicit secondary provider. Done, without email ownership confirmation; first-time candidate registration creates a candidate application from name, birth date, phone, email, and password.
 - Add account active/blocked status. Schema done, behavior in progress.
 - Add Telegram webhook secret validation. Done; production requires a strong secret.
 - Add Telegram phone confirmation ownership check. Done through `contact.user_id == message.from.id`.
@@ -127,6 +127,7 @@ Tasks:
 - Add audit logs for login/logout/security-sensitive actions. Pending; login attempts are journaled.
 - Ensure inactive/blocked users cannot authenticate or use sessions. In progress.
 - Add admin dashboard backed by real API data. Done for current counts and actor context.
+- Separate admin-panel login from ordinary user login. Done with `/admin` gate and `admin_session` token.
 - Add CRUD endpoints only for required content. Pending.
 - Validate admin payloads with Pydantic schemas instead of raw `dict`. Done for appeal and candidate status moderation; content CRUD schemas remain pending.
 

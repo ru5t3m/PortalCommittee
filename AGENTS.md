@@ -67,6 +67,7 @@ Infrastructure:
 - `apps/web/components/AccountDashboard.tsx`: candidate account cabinet.
 - `apps/web/components/CitizenAppealForm.tsx`: public first-contact work/study application form; returns tracking information and document-submission instructions.
 - `apps/web/components/AdminPanel.tsx`: authenticated admin/moderator panel for appeals and candidate applications.
+- `apps/web/components/AdminEntryPage.tsx`: root `/admin` entry gate; only the ordinary signed-in user configured by `ADMIN_PORTAL_ALLOWED_USER_EMAIL` may see the second admin login.
 - `apps/web/components/Header.tsx`: main navigation and browser session state handling.
 - `apps/api`: FastAPI backend.
 - `apps/api/app/main.py`: API app factory and route registration.
@@ -91,8 +92,8 @@ Implemented or partially implemented:
 - Authentication is provider-based. Implemented providers are Telegram and email/password.
 - Telegram login uses `/auth/telegram/start`, a bot deep link, `/auth/telegram/webhook`, and `/auth/telegram/complete`.
 - Telegram phone confirmation is done by the user sharing their own contact with the bot. The backend checks `contact.user_id == message.from.id`.
-- Telegram-authenticated users are created without passwords. `TELEGRAM_ADMIN_IDS` and `TELEGRAM_MODERATOR_IDS` assign staff roles; other Telegram users default to `candidate`.
-- Email/password uses `/auth/password/register` and `/auth/password/login`. Passwords must be hashed server-side, rate-limited, and logged through `LoginAttempt`.
+- Telegram-authenticated users are created without passwords and default to `candidate`; staff access is no longer granted through ordinary Telegram login.
+- Email/password uses `/auth/password/register` and `/auth/password/login`. Password registration collects first name, last name, birth date, phone, email, and password, then creates `User(role=candidate)` plus `CandidateApplication` for regular candidate users.
 - Email ownership is not confirmed in the current password flow. Treat this as a weaker secondary option unless the user later restores email-code verification.
 - Candidate registration/application data is separate from authentication. After Telegram auth, a candidate may still need to complete candidate application data.
 - Refresh tokens are stored as HttpOnly cookies; access tokens are kept in browser session storage.
@@ -105,6 +106,8 @@ Implemented or partially implemented:
 - The current document checklist contains only `resume`.
 - Admin page reads real `/api/v1/admin` data for dashboard, appeals, and candidate applications.
 - Admin/moderator status changes are implemented for appeals and candidate applications.
+- Admin panel access is separated from ordinary auth. `/admin` first requires the ordinary portal user email configured by `ADMIN_PORTAL_ALLOWED_USER_EMAIL`, then requires a second admin-panel login configured by `ADMIN_PANEL_EMAIL` and `ADMIN_PANEL_PASSWORD_HASH`.
+- Admin APIs require an `admin_session` JWT claim and no longer trust ordinary user role alone.
 - Audit logging exists for current moderation status changes.
 - API uses Alembic migrations and must not create tables at application startup.
 - Local SQLite development uses `apps/api/knb_portal.dev.db` through `apps/api/.env`.
@@ -212,6 +215,7 @@ Preferred approach:
 - Inspect the current code before assuming a feature is absent or complete.
 - Do not reintroduce demo auth behavior or hardcoded frontend credentials.
 - Do not add hardcoded password users or demo credentials.
+- Do not hardcode admin-panel credentials; use `ADMIN_PANEL_EMAIL` and `ADMIN_PANEL_PASSWORD_HASH`.
 - Do not add integrations that the user explicitly excluded.
 - Do not add document/file upload unless the user asks later.
 - Remove or hide search rather than investing in it unless scope changes.
