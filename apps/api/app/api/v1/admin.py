@@ -1,107 +1,163 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import require_roles
 from app.db.session import get_db
-from app.models.entities import Appeal, AuditLog, Document, News, Page, RegionOffice, Role, ThreatReport, User, Vacancy
+from app.models.entities import Appeal, AppealStatus, AuditLog, CandidateApplication, CandidateStatus, News, Page, RegionOffice, Role, User
+from app.schemas.dto import (
+    AdminAppealOut,
+    AdminAppealStatusUpdate,
+    AdminCandidateOut,
+    AdminCandidateStatusUpdate,
+    AdminDashboardOut,
+    UserOut,
+)
 
-router = APIRouter(prefix="/admin", dependencies=[Depends(require_roles(Role.admin, Role.editor, Role.hr, Role.moderator))])
-
-
-CRUD_MODELS = {
-    "news": News,
-    "pages": Page,
-    "vacancies": Vacancy,
-    "documents": Document,
-    "region-offices": RegionOffice,
-}
-
-
-def record_audit(db: Session, actor: User, action: str, entity: str, entity_id: str) -> None:
-    db.add(AuditLog(actor_id=actor.id, action=action, entity=entity, entity_id=entity_id))
+router = APIRouter(prefix="/admin", dependencies=[Depends(require_roles(Role.admin, Role.moderator))])
 
 
-@router.get("/dashboard")
-def dashboard(db: Session = Depends(get_db), user: User = Depends(require_roles(Role.admin, Role.editor, Role.hr, Role.moderator))):
-    return {
-        "actor": {"email": user.email, "role": user.role.value},
-        "news": db.query(News).count(),
-        "pages": db.query(Page).count(),
-        "appeals": db.query(Appeal).count(),
-        "threatReports": db.query(ThreatReport).count(),
-        "vacancies": db.query(Vacancy).count(),
-        "documents": db.query(Document).count(),
-    }
+def client_ip(request: Request) -> str | None:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",", 1)[0].strip()
+    return request.client.host if request.client else None
 
 
-@router.get("/appeals")
-def appeals(db: Session = Depends(get_db)):
-    return db.query(Appeal).order_by(Appeal.created_at.desc()).limit(100).all()
+def serialize_user(user: User) -> UserOut:
+    return UserOut(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        role=user.role.value,
+        telegram_username=user.telegram_username,
+        phone=user.phone,
+        phone_verified=user.phone_verified,
+    )
 
 
-@router.get("/threat-reports")
-def threat_reports(db: Session = Depends(get_db)):
-    return db.query(ThreatReport).order_by(ThreatReport.created_at.desc()).limit(100).all()
+def serialize_appeal(row: Appeal) -> AdminAppealOut:
+    return AdminAppealOut(
+        id=row.id,
+        tracking_code=row.tracking_code,
+        full_name=row.full_name,
+        iin=row.iin,
+        email=row.email,
+        phone=row.phone,
+        subject=row.subject,
+        message=row.message,
+        status=row.status.value,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
 
 
-@router.get("/content/news")
-def news(db: Session = Depends(get_db)):
-    return db.query(News).order_by(News.created_at.desc()).all()
+def serialize_candidate(row: CandidateApplication) -> AdminCandidateOut:
+    return AdminCandidateOut(
+        id=row.id,
+        tracking_code=row.tracking_code,
+        status=row.status.value,
+        first_name=row.first_name,
+        last_name=row.last_name,
+        middle_name=row.middle_name,
+        iin=row.iin,
+        birth_date=row.birth_date,
+        phone=row.phone,
+        region=row.region,
+        education_level=row.education_level,
+        desired_direction=row.desired_direction,
+        moderator_comment=row.moderator_comment,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+        user=serialize_user(row.user),
+    )
 
 
-@router.get("/content/pages")
-def pages(db: Session = Depends(get_db)):
-    return db.query(Page).order_by(Page.slug.asc()).all()
+def record_audit(db: Session, request: Request, actor: User, action: str, entity: str, entity_id: str) -> None:
+    db.add(
+        AuditLog(
+            actor_id=actor.id,
+            action=action,
+            entity=entity,
+            entity_id=entity_id,
+            ip_address=client_ip(request),
+        )
+    )
 
 
-@router.get("/{entity}")
-def list_entities(entity: str, db: Session = Depends(get_db)):
-    model = CRUD_MODELS.get(entity)
-    if not model:
-        raise HTTPException(status_code=404, detail="Unknown entity")
-    return db.query(model).order_by(model.id.desc()).limit(200).all()
+@router.get("/dashboard", response_model=AdminDashboardOut)
+def dashboard(db: Session = Depends(get_db), user: User = Depends(require_roles(Role.admin, Role.moderator))):
+    return AdminDashboardOut(
+        actor=serialize_user(user),
+        news=db.query(News).count(),
+        pages=db.query(Page).count(),
+        appeals=db.query(Appeal).count(),
+        candidates=db.query(CandidateApplication).count(),
+        region_offices=db.query(RegionOffice).count(),
+    )
 
 
-@router.post("/{entity}", dependencies=[Depends(require_roles(Role.admin, Role.editor, Role.hr))])
-def create_entity(entity: str, payload: dict, db: Session = Depends(get_db), user: User = Depends(require_roles(Role.admin, Role.editor, Role.hr))):
-    model = CRUD_MODELS.get(entity)
-    if not model:
-        raise HTTPException(status_code=404, detail="Unknown entity")
-    row = model(**payload)
-    db.add(row)
-    db.flush()
-    record_audit(db, user, "create", entity, str(row.id))
+@router.get("/appeals", response_model=list[AdminAppealOut])
+def list_appeals(db: Session = Depends(get_db)):
+    rows = db.query(Appeal).order_by(Appeal.created_at.desc()).limit(200).all()
+    return [serialize_appeal(row) for row in rows]
+
+
+@router.get("/appeals/{appeal_id}", response_model=AdminAppealOut)
+def get_appeal(appeal_id: int, db: Session = Depends(get_db)):
+    row = db.get(Appeal, appeal_id)
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Appeal not found")
+    return serialize_appeal(row)
+
+
+@router.patch("/appeals/{appeal_id}/status", response_model=AdminAppealOut)
+def update_appeal_status(
+    appeal_id: int,
+    payload: AdminAppealStatusUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(Role.admin, Role.moderator)),
+):
+    row = db.get(Appeal, appeal_id)
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Appeal not found")
+
+    row.status = AppealStatus(payload.status)
+    record_audit(db, request, user, "update_status", "appeal", str(row.id))
     db.commit()
     db.refresh(row)
-    return row
+    return serialize_appeal(row)
 
 
-@router.patch("/{entity}/{entity_id}", dependencies=[Depends(require_roles(Role.admin, Role.editor, Role.hr, Role.moderator))])
-def update_entity(entity: str, entity_id: int, payload: dict, db: Session = Depends(get_db), user: User = Depends(require_roles(Role.admin, Role.editor, Role.hr, Role.moderator))):
-    model = CRUD_MODELS.get(entity)
-    if not model:
-        raise HTTPException(status_code=404, detail="Unknown entity")
-    row = db.get(model, entity_id)
+@router.get("/candidates", response_model=list[AdminCandidateOut])
+def list_candidates(db: Session = Depends(get_db)):
+    rows = db.query(CandidateApplication).options(joinedload(CandidateApplication.user)).order_by(CandidateApplication.created_at.desc()).limit(200).all()
+    return [serialize_candidate(row) for row in rows]
+
+
+@router.get("/candidates/{application_id}", response_model=AdminCandidateOut)
+def get_candidate(application_id: int, db: Session = Depends(get_db)):
+    row = db.query(CandidateApplication).options(joinedload(CandidateApplication.user)).filter(CandidateApplication.id == application_id).first()
     if not row:
-        raise HTTPException(status_code=404, detail="Not found")
-    for key, value in payload.items():
-        if hasattr(row, key) and key not in {"id", "created_at", "updated_at"}:
-            setattr(row, key, value)
-    record_audit(db, user, "update", entity, str(entity_id))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidate application not found")
+    return serialize_candidate(row)
+
+
+@router.patch("/candidates/{application_id}/status", response_model=AdminCandidateOut)
+def update_candidate_status(
+    application_id: int,
+    payload: AdminCandidateStatusUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(Role.admin, Role.moderator)),
+):
+    row = db.get(CandidateApplication, application_id)
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidate application not found")
+
+    row.status = CandidateStatus(payload.status)
+    row.moderator_comment = payload.moderator_comment.strip() if payload.moderator_comment else None
+    record_audit(db, request, user, "update_status", "candidate_application", str(row.id))
     db.commit()
     db.refresh(row)
-    return row
-
-
-@router.delete("/{entity}/{entity_id}", dependencies=[Depends(require_roles(Role.admin))])
-def delete_entity(entity: str, entity_id: int, db: Session = Depends(get_db), user: User = Depends(require_roles(Role.admin))):
-    model = CRUD_MODELS.get(entity)
-    if not model:
-        raise HTTPException(status_code=404, detail="Unknown entity")
-    row = db.get(model, entity_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="Not found")
-    db.delete(row)
-    record_audit(db, user, "delete", entity, str(entity_id))
-    db.commit()
-    return {"deleted": True}
+    return serialize_candidate(row)

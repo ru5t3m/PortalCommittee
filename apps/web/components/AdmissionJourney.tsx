@@ -254,7 +254,7 @@ const copy = {
     selected: "Выбранный этап",
     happens: "Что происходит",
     openAdmission: "Открыть раздел поступления",
-    documents: "Документы",
+    register: "Регистрация кандидата",
     psych: "Демо-психотест"
   },
   kk: {
@@ -263,7 +263,7 @@ const copy = {
     selected: "Таңдалған кезең",
     happens: "Не болады",
     openAdmission: "Қабылдау бөлімін ашу",
-    documents: "Құжаттар",
+    register: "Кандидатты тіркеу",
     psych: "Демо-психотест"
   }
 };
@@ -381,7 +381,7 @@ export function AdmissionJourney({ locale }: { locale: Locale }) {
 
         <div className="relative mt-8 flex flex-wrap items-center gap-4 border-t border-white/10 pt-6">
           <Button href={`/${locale}/careers/admission`} variant="gold">{t.openAdmission}</Button>
-          <Button href={`/${locale}/documents`} variant="ghost">{t.documents}</Button>
+          <Button href={`/${locale}/register`} variant="ghost">{t.register}</Button>
           <Link href={`/${locale}/psychological-testing`} className="inline-flex items-center gap-2 text-sm font-semibold text-white/72 transition hover:text-state-gold">
             {t.psych} <ArrowUpRight className="h-4 w-4" />
           </Link>

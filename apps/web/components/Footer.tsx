@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { MapPin, Phone } from "lucide-react";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import type { Locale } from "@/lib/i18n";
 import { Container } from "@/components/ui/Container";
@@ -11,7 +11,8 @@ const copy = {
     columns: ["О Комитете", "Безопасность", "Служба"],
     main: "Основной раздел",
     psych: "Психотестирование",
-    docs: "Документы",
+    legal: "Нормативная база",
+    register: "Регистрация кандидата",
     contacts: "Контакты",
     location: "Астана, Республика Казахстан",
     copyright: "© 2026. Demo portal concept."
@@ -22,7 +23,8 @@ const copy = {
     columns: ["Комитет туралы", "Қауіпсіздік", "Қызмет"],
     main: "Негізгі бөлім",
     psych: "Психотестілеу",
-    docs: "Құжаттар",
+    legal: "Нормативтік база",
+    register: "Кандидатты тіркеу",
     contacts: "Байланыс",
     location: "Астана, Қазақстан Республикасы",
     copyright: "© 2026. Портал тұжырымдамасы."
@@ -49,7 +51,8 @@ export function Footer({ locale }: { locale: Locale }) {
             <div className="mt-3 grid gap-2 text-sm text-white/70">
               <Link className="hover:text-state-teal" href={`/${locale}/${index === 0 ? "about" : index === 1 ? "activities" : "careers/admission"}`}>{t.main}</Link>
               <Link className="hover:text-state-teal" href={`/${locale}/psychological-testing`}>{t.psych}</Link>
-              <Link className="hover:text-state-teal" href={`/${locale}/documents`}>{t.docs}</Link>
+              <Link className="hover:text-state-teal" href={`/${locale}/documents`}>{t.legal}</Link>
+              <Link className="hover:text-state-teal" href={`/${locale}/register`}>{t.register}</Link>
             </div>
           </div>
         ))}
@@ -58,7 +61,6 @@ export function Footer({ locale }: { locale: Locale }) {
           <div className="mt-3 grid gap-3 text-sm text-white/70">
             <span className="flex gap-2"><MapPin className="h-4 w-4 text-state-teal" /> {t.location}</span>
             <span className="flex gap-2"><Phone className="h-4 w-4 text-state-teal" /> 1400</span>
-            <span className="flex gap-2"><Mail className="h-4 w-4 text-state-teal" /> press@knb.kz</span>
           </div>
         </div>
       </Container>

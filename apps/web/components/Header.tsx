@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, CircleUserRound, LogIn, Menu, Search } from "lucide-react";
+import { ChevronDown, CircleUserRound, LogIn, Menu } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n";
 import { AccessibilityToggle } from "@/components/AccessibilityToggle";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import { Container } from "@/components/ui/Container";
+import { getMe, type AuthMe } from "@/lib/auth";
 
 const links = {
   ru: [
@@ -16,8 +17,7 @@ const links = {
     ["careers/admission", "Поступление на службу"],
     ["education", "Поступление на учебу"],
     ["psychological-testing", "Психотестирование"],
-    ["press", "Новости"],
-    ["documents", "Документы"],
+    ["documents", "Нормативная база"],
     ["contacts", "Контакты"]
   ],
   kk: [
@@ -27,8 +27,7 @@ const links = {
     ["careers/admission", "Қызметке қабылдау"],
     ["education", "Оқуға қабылдау"],
     ["psychological-testing", "Психотест"],
-    ["press", "Жаңалықтар"],
-    ["documents", "Құжаттар"],
+    ["documents", "Нормативтік база"],
     ["contacts", "Байланыс"]
   ]
 } as const;
@@ -53,21 +52,6 @@ type HeaderDict = {
   nav: string[];
 };
 
-type AuthUser = {
-  firstName: string;
-  lastName: string;
-  phone: string;
-};
-
-function readStoredUser(): AuthUser | null {
-  try {
-    const rawUser = window.localStorage.getItem("knb-auth-user");
-    return rawUser ? (JSON.parse(rawUser) as AuthUser) : null;
-  } catch {
-    return null;
-  }
-}
-
 function HeaderLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link className="whitespace-nowrap rounded-full px-3 py-2 font-medium text-white/72 transition hover:bg-white/10 hover:text-state-gold" href={href}>
@@ -79,7 +63,9 @@ function HeaderLink({ href, children }: { href: string; children: React.ReactNod
 function OverflowNav({ locale, dict }: { locale: Locale; dict: HeaderDict }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
   const [visibleCount, setVisibleCount] = useState<number>(0);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   const navItems = useMemo(
     () => links[locale].map(([href, label]) => ({ href: `/${locale}/${href}`, label })),
@@ -128,6 +114,30 @@ function OverflowNav({ locale, dict }: { locale: Locale; dict: HeaderDict }) {
     };
   }, [navItems]);
 
+  useEffect(() => {
+    if (!isMoreOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!detailsRef.current?.contains(event.target as Node)) {
+        setIsMoreOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMoreOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMoreOpen]);
+
   const visibleItems = navItems.slice(0, visibleCount);
   const hiddenItems = navItems.slice(visibleCount);
 
@@ -140,14 +150,14 @@ function OverflowNav({ locale, dict }: { locale: Locale; dict: HeaderDict }) {
           </HeaderLink>
         ))}
         {hiddenItems.length > 0 ? (
-          <details className="group relative">
+          <details ref={detailsRef} open={isMoreOpen} onToggle={(event) => setIsMoreOpen(event.currentTarget.open)} className="group relative">
             <summary className="flex cursor-pointer list-none items-center gap-1 whitespace-nowrap rounded-full px-3 py-2 font-semibold text-white/76 transition hover:bg-white/10 hover:text-state-gold">
               {moreCopy[locale]}
               <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
             </summary>
             <div className="absolute right-0 top-[calc(100%+0.7rem)] z-50 w-72 overflow-hidden rounded-2xl border border-white/15 bg-[#071f3a] p-2 shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
               {hiddenItems.map((item) => (
-                <Link key={item.href} href={item.href} className="block rounded-xl px-4 py-3 text-sm font-semibold text-white/78 transition hover:bg-white/10 hover:text-state-gold">
+                <Link key={item.href} href={item.href} onClick={() => setIsMoreOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-semibold text-white/78 transition hover:bg-white/10 hover:text-state-gold">
                   {item.label}
                 </Link>
               ))}
@@ -171,7 +181,14 @@ function OverflowNav({ locale, dict }: { locale: Locale; dict: HeaderDict }) {
   );
 }
 
-function MobileMenu({ locale, dict, auth, user }: { locale: Locale; dict: HeaderDict; auth: (typeof authCopy)[Locale]; user: AuthUser | null }) {
+function displayName(authState: AuthMe | null) {
+  if (!authState) return "";
+  const candidate = authState.candidate_application;
+  return candidate ? `${candidate.first_name} ${candidate.last_name}` : authState.user.full_name;
+}
+
+function MobileMenu({ locale, dict, auth, authState }: { locale: Locale; dict: HeaderDict; auth: (typeof authCopy)[Locale]; authState: AuthMe | null }) {
+  const name = displayName(authState);
   return (
     <details className="relative lg:hidden">
       <summary className="grid h-10 w-10 cursor-pointer list-none place-items-center rounded-full text-white/72 transition hover:bg-white/10 hover:text-state-gold" aria-label="Open menu">
@@ -184,10 +201,10 @@ function MobileMenu({ locale, dict, auth, user }: { locale: Locale; dict: Header
           </Link>
         ))}
         <div className="my-2 h-px bg-white/10" />
-        {user ? (
+        {authState ? (
           <Link href={`/${locale}/account`} className="flex items-center gap-2 rounded-xl bg-state-gold px-4 py-3 text-sm font-semibold text-state-navy transition hover:bg-[#e5bd55]">
             <CircleUserRound className="h-4 w-4" />
-            {user.firstName} {user.lastName}
+            {name}
           </Link>
         ) : (
           <Link href={`/${locale}/login`} className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white/82 transition hover:bg-white/10 hover:text-state-gold">
@@ -202,23 +219,35 @@ function MobileMenu({ locale, dict, auth, user }: { locale: Locale; dict: Header
 
 export function Header({ locale, dict }: { locale: Locale; dict: { brand: string; shortBrand: string; nav: string[] } }) {
   const auth = authCopy[locale];
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [authState, setAuthState] = useState<AuthMe | null>(null);
 
   useEffect(() => {
-    setUser(readStoredUser());
+    let isMounted = true;
+    const loadAuthState = async () => {
+      try {
+        const next = await getMe();
+        if (isMounted) setAuthState(next);
+      } catch {
+        if (isMounted) setAuthState(null);
+      }
+    };
 
-    const handleAuthChange = () => setUser(readStoredUser());
+    void loadAuthState();
+    const handleAuthChange = () => void loadAuthState();
     window.addEventListener("storage", handleAuthChange);
     window.addEventListener("knb-auth-changed", handleAuthChange);
 
     return () => {
+      isMounted = false;
       window.removeEventListener("storage", handleAuthChange);
       window.removeEventListener("knb-auth-changed", handleAuthChange);
     };
   }, []);
 
+  const name = displayName(authState);
+
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#06182d] text-white shadow-[0_14px_40px_rgba(6,24,45,0.24)] backdrop-blur-2xl">
+    <header className="sticky top-0 z-[1200] border-b border-white/10 bg-[#06182d] text-white shadow-[0_14px_40px_rgba(6,24,45,0.24)] backdrop-blur-2xl">
       <div className="h-1 bg-[linear-gradient(90deg,#00a99b,#f8b133,#c11724,#00a99b)]" />
       <Container className="flex items-center justify-between gap-3 py-3 xl:gap-4">
         <Link href={`/${locale}`} className="flex shrink-0 items-center gap-3">
@@ -227,9 +256,6 @@ export function Header({ locale, dict }: { locale: Locale; dict: { brand: string
         </Link>
         <OverflowNav locale={locale} dict={dict} />
         <div className="flex shrink-0 items-center gap-2">
-          <Link href={`/${locale}/search`} className="rounded-full p-2 text-white/72 transition hover:bg-white/10 hover:text-state-gold" aria-label="Search">
-            <Search size={20} />
-          </Link>
           <AccessibilityToggle />
           <div className="hidden gap-1 sm:flex">
             {(["kk", "ru"] as const).map((item) => (
@@ -238,9 +264,9 @@ export function Header({ locale, dict }: { locale: Locale; dict: { brand: string
               </Link>
             ))}
           </div>
-          <MobileMenu locale={locale} dict={dict} auth={auth} user={user} />
-          {user ? (
-            <Link href={`/${locale}/account`} className="hidden h-10 w-10 place-items-center rounded-full bg-state-gold text-state-navy shadow-lg shadow-black/10 transition hover:bg-[#e5bd55] sm:grid" aria-label={`${user.firstName} ${user.lastName}`}>
+          <MobileMenu locale={locale} dict={dict} auth={auth} authState={authState} />
+          {authState ? (
+            <Link href={`/${locale}/account`} className="hidden h-10 w-10 place-items-center rounded-full bg-state-gold text-state-navy shadow-lg shadow-black/10 transition hover:bg-[#e5bd55] sm:grid" aria-label={name}>
               <CircleUserRound className="h-5 w-5" />
             </Link>
           ) : (

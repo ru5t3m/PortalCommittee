@@ -3,7 +3,6 @@ import {
   ArrowUpRight,
   BadgeCheck,
   MapPin,
-  Search,
   Sparkles,
   UsersRound
 } from "lucide-react";
@@ -15,25 +14,24 @@ import { ActionCard } from "@/components/ui/ActionCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
-import { NewsCard } from "@/components/ui/NewsCard";
 import { PremiumCard } from "@/components/ui/PremiumCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
-import { getActivities, getNews, getPsychologicalTests, getQuickActions } from "@/lib/data";
+import { getActivities, getPsychologicalTests, getQuickActions } from "@/lib/data";
 import { getDictionary, type Locale } from "@/lib/i18n";
 
 const trustStatsRu = [
   ["1992", "год образования"],
   ["6", "ведомств"],
   ["20", "территориальных органов КНБ"],
-  ["press@knb.kz", "e-mail пресс-службы"]
+  ["1400", "единый контактный номер"]
 ];
 
 const trustStatsKk = [
   ["1992", "құрылған жылы"],
   ["6", "ведомство"],
   ["20", "ҰҚК аумақтық органы"],
-  ["press@knb.kz", "баспасөз қызметінің e-mail"]
+  ["1400", "бірыңғай байланыс нөмірі"]
 ];
 
 const homeCopy = {
@@ -43,7 +41,7 @@ const homeCopy = {
     topShort: "КНБ РК",
     topFullLine1: "Комитет национальной безопасности",
     topFullLine2: "Республики Казахстан",
-    search: "Поиск по порталу",
+    register: "Регистрация кандидата",
     quickEyebrow: "Быстрая навигация",
     quickTitle: "Основные разделы портала",
     activitiesEyebrow: "Компетенции",
@@ -53,15 +51,12 @@ const homeCopy = {
     psychEyebrow: "Самопроверка",
     psychTitle: "Психологическое тестирование",
     psychDescription: "Демо-разделы помогают кандидату оценить базовые навыки до официальных этапов отбора. Результаты не являются официальным заключением.",
-    pressEyebrow: "Пресс-центр",
-    pressDescription: "Официальные сообщения, заявления и полезные материалы для граждан и СМИ.",
     contactBadge: "Контактный центр",
     contactTitle: "Нужна официальная информация?",
-    contactText: "Используйте поиск по порталу, документы или региональные контакты, чтобы быстро найти официальную информацию.",
+    contactText: "Используйте разделы портала или региональные контакты, чтобы быстро найти официальную информацию.",
     location: "Астана, Республика Казахстан",
     audience: "гражданам и кандидатам",
     sources: "официальные источники",
-    find: "Найти информацию",
     contacts: "Контакты"
   },
   kk: {
@@ -70,7 +65,7 @@ const homeCopy = {
     topShort: "ҚР ҰҚК",
     topFullLine1: "Ұлттық қауіпсіздік комитеті",
     topFullLine2: "Қазақстан Республикасы",
-    search: "Порталдан іздеу",
+    register: "Кандидатты тіркеу",
     quickEyebrow: "Жылдам навигация",
     quickTitle: "Порталдың негізгі бөлімдері",
     activitiesEyebrow: "Құзыреттер",
@@ -80,15 +75,12 @@ const homeCopy = {
     psychEyebrow: "Өзін-өзі тексеру",
     psychTitle: "Психологиялық тестілеу",
     psychDescription: "Демо-бөлімдер кандидатқа ресми іріктеу кезеңдеріне дейін базалық дағдыларын бағалауға көмектеседі. Нәтижелер ресми қорытынды болып табылмайды.",
-    pressEyebrow: "Баспасөз орталығы",
-    pressDescription: "Азаматтар мен БАҚ үшін ресми хабарламалар, мәлімдемелер және пайдалы материалдар.",
     contactBadge: "Байланыс орталығы",
     contactTitle: "Ресми ақпарат қажет пе?",
-    contactText: "Ресми ақпаратты жылдам табу үшін порталдағы іздеуді, құжаттарды немесе өңірлік байланыстарды пайдаланыңыз.",
+    contactText: "Ресми ақпаратты жылдам табу үшін портал бөлімдерін немесе өңірлік байланыстарды пайдаланыңыз.",
     location: "Астана, Қазақстан Республикасы",
     audience: "азаматтар мен кандидаттарға",
     sources: "ресми дереккөздер",
-    find: "Ақпарат табу",
     contacts: "Байланыс"
   }
 };
@@ -99,7 +91,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
   const copy = homeCopy[locale];
   const trustStats = locale === "kk" ? trustStatsKk : trustStatsRu;
   const activities = getActivities(locale);
-  const news = getNews(locale);
   const psychologicalTests = getPsychologicalTests(locale);
   const quickActions = getQuickActions(locale);
 
@@ -133,7 +124,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
             <div className="mt-8 flex flex-wrap gap-4">
               <Button href={`/${locale}/careers/admission`} variant="gold">{dict.submitAppeal}</Button>
               <Button href={`/${locale}/psychological-testing`} variant="primary">{dict.reportThreat}</Button>
-              <Button href={`/${locale}/search`} variant="ghost">{copy.search}</Button>
+              <Button href={`/${locale}/register`} variant="ghost">{copy.register}</Button>
             </div>
           </Reveal>
 
@@ -205,16 +196,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         </div>
       </Section>
 
-      <Section eyebrow={copy.pressEyebrow} title={dict.news} description={copy.pressDescription} dark>
-        <div className="grid gap-6 md:grid-cols-3">
-          {news.map((item, index) => (
-            <Reveal delay={index * 0.06} key={item.title}>
-              <NewsCard {...item} />
-            </Reveal>
-          ))}
-        </div>
-      </Section>
-
       <section className="paper-grid relative overflow-hidden bg-transparent py-16 text-state-navy">
         <Container className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
           <div>
@@ -228,7 +209,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button href={`/${locale}/search`} variant="secondary"><Search className="h-4 w-4" /> {copy.find}</Button>
             <Button href={`/${locale}/contacts`} variant="gold">{copy.contacts}</Button>
           </div>
         </Container>

@@ -8,17 +8,20 @@ from app.db.session import get_db
 from app.models.entities import Role, User
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/telegram/complete")
 
 
 def current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     settings = get_settings()
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-        email = payload.get("sub")
-    except JWTError as exc:
+        user_id = payload.get("sub")
+        if not user_id:
+            raise JWTError("Missing subject")
+        parsed_user_id = int(user_id)
+    except (JWTError, ValueError) as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials") from exc
-    user = db.query(User).filter(User.email == email, User.is_active.is_(True)).first()
+    user = db.query(User).filter(User.id == parsed_user_id, User.is_active.is_(True), User.is_blocked.is_(False)).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     return user

@@ -1,152 +1,118 @@
 "use client";
 
-import Link from "next/link";
-import { CheckCircle2, LockKeyhole, Phone, ShieldCheck, UserRound } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { CheckCircle2, ExternalLink, Loader2, MessageCircle, ShieldCheck, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import type { Locale } from "@/lib/i18n";
+import { completeTelegramLogin, getTelegramLoginStatus, startTelegramLogin, type TelegramLoginStart } from "@/lib/auth";
 
 type AuthMode = "login" | "register";
 
 const copy = {
   ru: {
-    login: {
-      title: "Вход в личный кабинет",
-      subtitle: "Введите номер телефона и пароль, чтобы продолжить работу с сервисами портала.",
-      submit: "Войти",
-      switchText: "Нет аккаунта?",
-      switchAction: "Зарегистрироваться"
-    },
-    register: {
-      title: "Регистрация кандидата",
-      subtitle: "Заполните данные, чтобы создать учетную запись для дальнейшей работы с порталом.",
-      submit: "Создать аккаунт",
-      switchText: "Уже есть аккаунт?",
-      switchAction: "Войти"
-    },
-    phone: "Номер телефона",
-    firstName: "Имя",
-    lastName: "Фамилия",
-    password: "Пароль",
-    phonePlaceholder: "+7 700 000 00 00",
-    firstNamePlaceholder: "Введите имя",
-    lastNamePlaceholder: "Введите фамилию",
-    passwordPlaceholder: "Введите пароль",
-    remember: "Запомнить меня",
-    consent: "Согласен на обработку персональных данных",
-    forgot: "Забыли пароль?",
-    error: "Проверьте данные: неверный номер телефона или пароль.",
-    secureTitle: "Защищенный доступ",
-    dataProtection: "Данные защищены и используются только для проверки личности, авторизации и работы с сервисами портала.",
-    features: ["Единый кабинет кандидата", "Статусы заявок и уведомления", "Доступ к сервисам портала"]
+    title: "Вход через Telegram",
+    subtitle: "Для входа и регистрации подтвердите Telegram-аккаунт и номер телефона через официальный бот портала.",
+    start: "Начать вход через Telegram",
+    openTelegram: "Открыть Telegram",
+    starting: "Создаем защищенную заявку...",
+    waiting: "Ожидаем подтверждение номера в Telegram",
+    verified: "Номер подтвержден. Завершаем вход...",
+    expired: "Срок подтверждения истек. Начните вход заново.",
+    error: "Не удалось выполнить вход через Telegram. Повторите попытку.",
+    secureTitle: "Подтверждение телефона",
+    dataProtection: "Номер телефона передается только после вашего согласия в Telegram и используется для идентификации, авторизации и работы с сервисами портала.",
+    features: ["Без пароля", "Подтверждение текущего Telegram-аккаунта", "Защищенная сессия портала"],
+    steps: ["Нажмите кнопку входа", "Откройте бота в Telegram", "Нажмите «Поделиться номером телефона»"]
   },
   kk: {
-    login: {
-      title: "Жеке кабинетке кіру",
-      subtitle: "Портал сервистерін жалғастыру үшін телефон нөмірі мен құпия сөзді енгізіңіз.",
-      submit: "Кіру",
-      switchText: "Аккаунтыңыз жоқ па?",
-      switchAction: "Тіркелу"
-    },
-    register: {
-      title: "Кандидатты тіркеу",
-      subtitle: "Порталмен әрі қарай жұмыс істеу үшін есептік жазба жасау деректерін толтырыңыз.",
-      submit: "Аккаунт жасау",
-      switchText: "Аккаунтыңыз бар ма?",
-      switchAction: "Кіру"
-    },
-    phone: "Телефон нөмірі",
-    firstName: "Аты",
-    lastName: "Тегі",
-    password: "Құпия сөз",
-    phonePlaceholder: "+7 700 000 00 00",
-    firstNamePlaceholder: "Атыңызды енгізіңіз",
-    lastNamePlaceholder: "Тегіңізді енгізіңіз",
-    passwordPlaceholder: "Құпия сөзді енгізіңіз",
-    remember: "Мені есте сақтау",
-    consent: "Жеке деректерді өңдеуге келісемін",
-    forgot: "Құпия сөзді ұмыттыңыз ба?",
-    error: "Деректерді тексеріңіз: телефон нөмірі немесе құпия сөз қате.",
-    secureTitle: "Қорғалған қолжетімділік",
-    dataProtection: "Деректер қорғалған және тек жеке басты тексеру, авторизация және портал сервистерімен жұмыс істеу үшін пайдаланылады.",
-    features: ["Кандидаттың бірыңғай кабинеті", "Өтінім мәртебелері мен хабарламалар", "Портал сервистеріне қолжетімділік"]
+    title: "Telegram арқылы кіру",
+    subtitle: "Кіру және тіркелу үшін порталдың ресми боты арқылы Telegram аккаунтыңызды және телефон нөміріңізді растаңыз.",
+    start: "Telegram арқылы кіруді бастау",
+    openTelegram: "Telegram ашу",
+    starting: "Қорғалған сұрау жасалуда...",
+    waiting: "Telegram ішінде телефон нөмірін растауды күтіп тұрмыз",
+    verified: "Нөмір расталды. Кіру аяқталуда...",
+    expired: "Растау мерзімі аяқталды. Кіруді қайта бастаңыз.",
+    error: "Telegram арқылы кіру орындалмады. Қайта көріңіз.",
+    secureTitle: "Телефонды растау",
+    dataProtection: "Телефон нөмірі Telegram ішіндегі келісіміңізден кейін ғана беріледі және жеке басты тексеру, авторизация және портал сервистерімен жұмыс істеу үшін пайдаланылады.",
+    features: ["Құпия сөзсіз", "Ағымдағы Telegram аккаунтын растау", "Порталдың қорғалған сессиясы"],
+    steps: ["Кіру батырмасын басыңыз", "Ботты Telegram ішінде ашыңыз", "«Телефон нөмірімен бөлісу» батырмасын басыңыз"]
   }
 };
 
-const allowedUser = {
-  firstName: "Рустем",
-  lastName: "Жармагамбетов",
-  phone: "+77057578841",
-  password: "1234"
-};
-
-function normalizePhone(value: string) {
-  return value.replace(/[\s()-]/g, "");
+function humanizeAuthError(message: string, locale: Locale) {
+  return message || copy[locale].error;
 }
 
-function normalizeName(value: string) {
-  return value.trim().toLocaleLowerCase("ru-RU");
-}
-
-function Field({ name, label, icon: Icon, type, placeholder, autoComplete, required = true }: { name: string; label: string; icon: LucideIcon; type: string; placeholder: string; autoComplete: string; required?: boolean }) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-semibold text-state-navy">{label}</span>
-      <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-state-teal focus-within:ring-4 focus-within:ring-state-teal/10">
-        <Icon className="h-5 w-5 shrink-0 text-state-tealDark" />
-        <input
-          name={name}
-          className="w-full bg-transparent text-base font-medium text-state-navy outline-none placeholder:text-slate-400"
-          type={type}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          required={required}
-        />
-      </span>
-    </label>
-  );
-}
-
-export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
+export function AuthPage({ locale }: { locale: Locale; mode: AuthMode }) {
   const router = useRouter();
+  const [challenge, setChallenge] = useState<TelegramLoginStart | null>(null);
+  const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [isStarting, setIsStarting] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const t = copy[locale];
-  const page = t[mode];
-  const isRegister = mode === "register";
-  const switchHref = `/${locale}/${isRegister ? "login" : "register"}`;
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const phone = normalizePhone(String(formData.get("phone") ?? ""));
-    const password = String(formData.get("password") ?? "");
-    const firstName = String(formData.get("firstName") ?? "");
-    const lastName = String(formData.get("lastName") ?? "");
-
-    const hasValidLogin = phone === allowedUser.phone && password === allowedUser.password;
-    const hasValidIdentity = !isRegister || (
-      normalizeName(firstName) === normalizeName(allowedUser.firstName) &&
-      normalizeName(lastName) === normalizeName(allowedUser.lastName)
-    );
-
-    if (!hasValidLogin || !hasValidIdentity) {
-      setError(t.error);
-      return;
+  async function beginTelegramLogin() {
+    setError("");
+    setStatus(t.starting);
+    setIsStarting(true);
+    try {
+      const nextChallenge = await startTelegramLogin();
+      setChallenge(nextChallenge);
+      setStatus(t.waiting);
+      window.open(nextChallenge.deep_link, "_blank", "noopener,noreferrer");
+    } catch (caught) {
+      setError(caught instanceof Error ? humanizeAuthError(caught.message, locale) : t.error);
+      setStatus("");
+    } finally {
+      setIsStarting(false);
     }
-
-    const user = {
-      firstName: allowedUser.firstName,
-      lastName: allowedUser.lastName,
-      phone: allowedUser.phone
-    };
-
-    window.localStorage.setItem("knb-auth-user", JSON.stringify(user));
-    window.dispatchEvent(new CustomEvent("knb-auth-changed", { detail: user }));
-    router.push(`/${locale}/account`);
   }
+
+  useEffect(() => {
+    if (!challenge || isCompleting) return;
+
+    let cancelled = false;
+    const interval = window.setInterval(async () => {
+      try {
+        const current = await getTelegramLoginStatus(challenge.challenge_id);
+        if (cancelled) return;
+
+        if (current.status === "expired") {
+          setError(t.expired);
+          setStatus("");
+          setChallenge(null);
+          window.clearInterval(interval);
+          return;
+        }
+
+        if (current.status === "verified") {
+          setStatus(t.verified);
+          setIsCompleting(true);
+          window.clearInterval(interval);
+          await completeTelegramLogin(challenge.challenge_id, challenge.nonce);
+          if (!cancelled) {
+            router.push(`/${locale}/account`);
+          }
+        } else if (current.status === "awaiting_contact") {
+          setStatus(t.waiting);
+        }
+      } catch (caught) {
+        if (!cancelled) {
+          setError(caught instanceof Error ? humanizeAuthError(caught.message, locale) : t.error);
+        }
+      }
+    }, 2500);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [challenge, isCompleting, locale, router, t.error, t.expired, t.verified, t.waiting]);
 
   return (
     <section className="relative min-h-[calc(100vh-77px)] overflow-hidden bg-[#06182d] text-white">
@@ -163,8 +129,8 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
               <div className="mt-2 h-px w-44 bg-gradient-to-r from-state-gold/70 via-white/25 to-transparent" />
             </div>
           </div>
-          <h1 className="mt-8 text-balance text-4xl font-bold leading-tight tracking-normal md:text-5xl">{page.title}</h1>
-          <p className="mt-5 max-w-lg text-base leading-8 text-white/74 md:text-lg">{page.subtitle}</p>
+          <h1 className="mt-8 text-balance text-4xl font-bold leading-tight tracking-normal md:text-5xl">{t.title}</h1>
+          <p className="mt-5 max-w-lg text-base leading-8 text-white/74 md:text-lg">{t.subtitle}</p>
 
           <div className="mt-8 grid gap-3">
             {t.features.map((feature) => (
@@ -179,39 +145,56 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
         <div className="mx-auto w-full max-w-xl">
           <div className="rounded-[1.35rem] border border-white/20 bg-white/[0.96] p-6 text-state-navy shadow-[0_30px_90px_rgba(0,0,0,0.24)] md:p-8">
             <div className="mb-7">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-tealDark">{isRegister ? t.register.submit : t.login.submit}</p>
-                <h2 className="mt-2 text-2xl font-bold">{page.title}</h2>
-              </div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-tealDark">Telegram</p>
+              <h2 className="mt-2 text-2xl font-bold">{t.title}</h2>
             </div>
 
-            <form className="grid gap-5" onSubmit={handleSubmit}>
-              {isRegister ? (
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <Field name="firstName" label={t.firstName} icon={UserRound} type="text" placeholder={t.firstNamePlaceholder} autoComplete="given-name" />
-                  <Field name="lastName" label={t.lastName} icon={UserRound} type="text" placeholder={t.lastNamePlaceholder} autoComplete="family-name" />
+            <div className="grid gap-4">
+              {t.steps.map((step, index) => (
+                <div key={step} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-state-teal/10 text-sm font-bold text-state-tealDark">{index + 1}</span>
+                  <span className="text-sm font-semibold leading-6 text-slate-700">{step}</span>
                 </div>
-              ) : null}
-              <Field name="phone" label={t.phone} icon={Phone} type="tel" placeholder={t.phonePlaceholder} autoComplete="tel" />
-              <Field name="password" label={t.password} icon={LockKeyhole} type="password" placeholder={t.passwordPlaceholder} autoComplete={isRegister ? "new-password" : "current-password"} />
+              ))}
+            </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-                <label className="inline-flex items-center gap-2 font-medium text-slate-600">
-                  <input className="h-4 w-4 rounded border-slate-300 text-state-teal focus:ring-state-teal" type="checkbox" required={isRegister} />
-                  {isRegister ? t.consent : t.remember}
-                </label>
-                {!isRegister ? <Link href={`/${locale}/login`} className="font-semibold text-state-tealDark hover:text-state-gold">{t.forgot}</Link> : null}
-              </div>
-
-              <button className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-button-gradient px-5 py-3 text-sm font-semibold text-white shadow-lift transition hover:-translate-y-0.5 hover:shadow-premium" type="submit">
-                {page.submit}
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                disabled={isStarting || isCompleting}
+                className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-button-gradient px-5 py-3 text-sm font-semibold text-white shadow-lift transition hover:-translate-y-0.5 hover:shadow-premium disabled:cursor-not-allowed disabled:opacity-70"
+                type="button"
+                onClick={beginTelegramLogin}
+              >
+                {isStarting ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
+                {t.start}
               </button>
-              {error ? (
-                <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold leading-6 text-red-700" role="alert">
-                  {error}
-                </p>
-              ) : null}
-            </form>
+
+              <a
+                aria-disabled={!challenge}
+                className={`inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border px-5 py-3 text-sm font-semibold transition ${
+                  challenge ? "border-state-teal/30 bg-state-surface text-state-tealDark hover:border-state-gold hover:text-state-navy" : "pointer-events-none border-slate-200 bg-slate-50 text-slate-400"
+                }`}
+                href={challenge?.deep_link ?? "#"}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <ExternalLink className="h-5 w-5" />
+                {t.openTelegram}
+              </a>
+            </div>
+
+            {status ? (
+              <div className="mt-5 flex items-center gap-3 rounded-2xl border border-state-teal/20 bg-state-surface px-4 py-3 text-sm font-semibold leading-6 text-state-tealDark">
+                {isCompleting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Smartphone className="h-5 w-5" />}
+                {status}
+              </div>
+            ) : null}
+
+            {error ? (
+              <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold leading-6 text-red-700" role="alert">
+                {error}
+              </p>
+            ) : null}
 
             <div className="mt-6 rounded-2xl border border-state-teal/15 bg-state-surface p-4">
               <div className="flex gap-3">
@@ -222,13 +205,6 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
                 </div>
               </div>
             </div>
-
-            <p className="mt-6 text-center text-sm text-slate-600">
-              {page.switchText}{" "}
-              <Link href={switchHref} className="font-bold text-state-tealDark hover:text-state-gold">
-                {page.switchAction}
-              </Link>
-            </p>
           </div>
         </div>
       </Container>

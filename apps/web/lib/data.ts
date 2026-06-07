@@ -1,4 +1,4 @@
-import { Brain, Eye, FileCheck2, FileSearch, FileWarning, Globe2, GraduationCap, LockKeyhole, Network, RadioTower, Route, Shield, ShieldCheck, Smartphone, Timer } from "lucide-react";
+import { Brain, Eye, FileSearch, FileWarning, Globe2, GraduationCap, LockKeyhole, Network, RadioTower, Shield, ShieldCheck, Smartphone, Timer, UserPlus } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 
 const activitiesRu = [
@@ -20,20 +20,6 @@ const activitiesKk = [
 ];
 
 export const activities = activitiesRu;
-
-const newsRu = [
-  { title: "Официальное заявление", date: "28.04.2026", tag: "Заявления", text: "Комитет напоминает о необходимости доверять только официальным источникам и не распространять непроверенные сведения.", gradient: "bg-gradient-to-br from-state-navy via-state-tealDark to-state-teal" },
-  { title: "Памятка по кибербезопасности", date: "24.04.2026", tag: "Безопасность", text: "Практические рекомендации гражданам по защите персональных данных, мессенджеров и учетных записей.", gradient: "bg-gradient-to-br from-state-blue via-state-teal to-cyan-300" },
-  { title: "Аккредитация СМИ", date: "18.04.2026", tag: "Пресс-центр", text: "Открыт прием заявок на аккредитацию представителей средств массовой информации для официальных мероприятий.", gradient: "bg-gradient-to-br from-state-gold via-state-teal to-state-blue" }
-];
-
-const newsKk = [
-  { title: "Ресми мәлімдеме", date: "28.04.2026", tag: "Мәлімдемелер", text: "Комитет тек ресми дереккөздерге сену және тексерілмеген мәліметтерді таратпау қажет екенін еске салады.", gradient: "bg-gradient-to-br from-state-navy via-state-tealDark to-state-teal" },
-  { title: "Киберқауіпсіздік жадынамасы", date: "24.04.2026", tag: "Қауіпсіздік", text: "Жеке деректерді, мессенджерлерді және есептік жазбаларды қорғау бойынша азаматтарға арналған практикалық ұсынымдар.", gradient: "bg-gradient-to-br from-state-blue via-state-teal to-cyan-300" },
-  { title: "БАҚ аккредитациясы", date: "18.04.2026", tag: "Баспасөз орталығы", text: "Ресми іс-шараларға бұқаралық ақпарат құралдары өкілдерін аккредиттеуге өтінімдер қабылдау ашылды.", gradient: "bg-gradient-to-br from-state-gold via-state-teal to-state-blue" }
-];
-
-export const news = newsRu;
 
 const admissionStepsRu = [
   "Заявление",
@@ -62,17 +48,17 @@ const admissionStepsKk = [
 export const admissionSteps = admissionStepsRu;
 
 const quickActionsRu = [
-  { title: "Направления деятельности", text: "Изучите ключевые направления работы через визуальный scroll-story.", href: "activities", icon: Route },
+  { title: "Направления деятельности", text: "Изучите ключевые направления работы через визуальный scroll-story.", href: "activities", icon: Shield },
   { title: "Поступление на службу", text: "Требования, этапы отбора и документы для кандидатов.", href: "careers/admission", icon: ShieldCheck },
   { title: "Поступление на учебу", text: "Выберите Академию КНБ или Пограничную академию КНБ.", href: "education", icon: GraduationCap },
-  { title: "Необходимые документы", text: "Перейдите к разделу документов для дальнейшего обновления перечня.", href: "documents", icon: FileCheck2 }
+  { title: "Регистрация кандидата", text: "Создайте учетную запись и начните кандидатскую анкету.", href: "register", icon: UserPlus }
 ];
 
 const quickActionsKk = [
-  { title: "Қызмет бағыттары", text: "Негізгі қызмет бағыттарын көрнекі бөлім арқылы қараңыз.", href: "activities", icon: Route },
+  { title: "Қызмет бағыттары", text: "Негізгі қызмет бағыттарын көрнекі бөлім арқылы қараңыз.", href: "activities", icon: Shield },
   { title: "Қызметке қабылдау", text: "Кандидаттарға қойылатын талаптар, іріктеу кезеңдері және құжаттар.", href: "careers/admission", icon: ShieldCheck },
   { title: "Оқуға қабылдау", text: "ҰҚК Академиясын немесе ҰҚК Шекара академиясын таңдаңыз.", href: "education", icon: GraduationCap },
-  { title: "Қажетті құжаттар", text: "Құжаттар бөліміне өтіп, қажетті тізімді қараңыз.", href: "documents", icon: FileCheck2 }
+  { title: "Кандидатты тіркеу", text: "Есептік жазба жасап, кандидат анкетасын бастаңыз.", href: "register", icon: UserPlus }
 ];
 
 export const quickActions = quickActionsRu;
@@ -80,14 +66,14 @@ export const quickActions = quickActionsRu;
 const safetyGuidesRu = [
   { title: "Фишинг и мошенничество", text: "Проверяйте адрес отправителя, не открывайте подозрительные ссылки и не сообщайте SMS-коды.", icon: Smartphone },
   { title: "Антитеррор", text: "При обнаружении подозрительных предметов сохраняйте дистанцию и сообщайте в экстренные службы.", icon: Shield },
-  { title: "Информационная гигиена", text: "Сверяйте новости с официальными источниками и не распространяйте неподтвержденные материалы.", icon: Network },
+  { title: "Информационная гигиена", text: "Сверяйте информацию с официальными источниками и не распространяйте неподтвержденные материалы.", icon: Network },
   { title: "Защита документов", text: "Не передавайте копии удостоверений и служебных документов через непроверенные каналы.", icon: FileWarning }
 ];
 
 const safetyGuidesKk = [
   { title: "Фишинг және алаяқтық", text: "Жіберушінің мекенжайын тексеріңіз, күмәнді сілтемелерді ашпаңыз және SMS-кодтарды хабарламаңыз.", icon: Smartphone },
   { title: "Антитеррор", text: "Күдікті заттар табылған жағдайда қашықтық сақтап, шұғыл қызметтерге хабарлаңыз.", icon: Shield },
-  { title: "Ақпараттық гигиена", text: "Жаңалықтарды ресми дереккөздермен салыстырып, расталмаған материалдарды таратпаңыз.", icon: Network },
+  { title: "Ақпараттық гигиена", text: "Ақпаратты ресми дереккөздермен салыстырып, расталмаған материалдарды таратпаңыз.", icon: Network },
   { title: "Құжаттарды қорғау", text: "Жеке куәлік пен қызметтік құжат көшірмелерін тексерілмеген арналар арқылы жібермеңіз.", icon: FileWarning }
 ];
 
@@ -125,10 +111,6 @@ const psychologicalTestsKk = [
 
 export function getActivities(locale: Locale) {
   return locale === "kk" ? activitiesKk : activitiesRu;
-}
-
-export function getNews(locale: Locale) {
-  return locale === "kk" ? newsKk : newsRu;
 }
 
 export function getAdmissionSteps(locale: Locale) {

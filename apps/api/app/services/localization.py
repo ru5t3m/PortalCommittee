@@ -1,4 +1,4 @@
-SUPPORTED_LOCALES = {"kk", "ru", "en"}
+SUPPORTED_LOCALES = {"kk", "ru"}
 
 
 def pick_locale(locale: str | None) -> str:

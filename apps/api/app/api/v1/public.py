@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.entities import Appeal, Document, News, Page, RegionOffice, Status, ThreatReport, Vacancy
-from app.schemas.dto import AppealCreate, DocumentOut, NewsOut, PageOut, RegionOfficeOut, ThreatReportCreate, TrackingOut, VacancyOut
+from app.models.entities import Appeal, News, Page, RegionOffice, Status
+from app.schemas.dto import AppealCreate, NewsOut, PageOut, RegionOfficeOut, TrackingOut
 from app.services.localization import localized, pick_locale
 from app.services.tracking import make_tracking_code
 
@@ -33,33 +33,12 @@ def create_appeal(payload: AppealCreate, db: Session = Depends(get_db)):
     return TrackingOut(tracking_code=row.tracking_code, status=row.status.value)
 
 
-@router.post("/threat", response_model=TrackingOut, status_code=201)
-def create_threat_report(payload: ThreatReportCreate, db: Session = Depends(get_db)):
-    row = ThreatReport(tracking_code=make_tracking_code("THR"), **payload.model_dump())
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    return TrackingOut(tracking_code=row.tracking_code, status=row.status.value)
-
-
 @router.get("/appeals/{tracking_code}", response_model=TrackingOut)
 def get_appeal_status(tracking_code: str, db: Session = Depends(get_db)):
-    row = db.query(Appeal).filter(Appeal.tracking_code == tracking_code).one()
+    row = db.query(Appeal).filter(Appeal.tracking_code == tracking_code).first()
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Appeal not found")
     return TrackingOut(tracking_code=row.tracking_code, status=row.status.value)
-
-
-@router.get("/vacancies", response_model=list[VacancyOut])
-def list_vacancies(locale: str = Query("ru"), db: Session = Depends(get_db)):
-    lang = pick_locale(locale)
-    rows = db.query(Vacancy).filter(Vacancy.status == Status.published).all()
-    return [VacancyOut(id=row.id, title=localized(row, "title", lang), region=row.region, department=row.department, requirements=row.requirements) for row in rows]
-
-
-@router.get("/documents", response_model=list[DocumentOut])
-def list_documents(locale: str = Query("ru"), db: Session = Depends(get_db)):
-    lang = pick_locale(locale)
-    rows = db.query(Document).filter(Document.status == Status.published).all()
-    return [DocumentOut(id=row.id, title=localized(row, "title", lang), document_type=row.document_type, file_url=row.file_url) for row in rows]
 
 
 @router.get("/contacts/regions", response_model=list[RegionOfficeOut])

@@ -158,12 +158,18 @@ const pageCopy = {
     game: "К игре",
     count: "направлений",
     system: "Единая система безопасности",
+    contents: "Навигация",
+    contentsText: "Выберите направление или просмотрите страницу последовательно.",
     descriptionLabel: "Описание",
-    openCard: "Открыть карточку",
+    openCard: "Открыть подробнее",
     interactive: "Интерактив",
     gameTitle: "Понять направления через игру",
     gameText: "Кнопка ведет на обучающую игру по направлениям деятельности.",
-    play: "Сыграть"
+    play: "Сыграть",
+    next: "Далее",
+    of: "из",
+    previous: "Предыдущий слайд",
+    showSlide: "Показать слайд"
   },
   kk: {
     eyebrow: "Қызмет бағыттары",
@@ -173,12 +179,18 @@ const pageCopy = {
     game: "Ойынға",
     count: "бағыт",
     system: "Қауіпсіздіктің бірыңғай жүйесі",
+    contents: "Мазмұны",
+    contentsText: "Бағытты таңдаңыз немесе бетті ретімен қараңыз.",
     descriptionLabel: "Сипаттама",
-    openCard: "Карточканы ашу",
+    openCard: "Толығырақ ашу",
     interactive: "Интерактив",
     gameTitle: "Бағыттарды ойын арқылы түсіну",
-    gameText: "Кнопка қызмет бағыттары бойынша оқыту ойынына апарады.",
-    play: "Ойнау"
+    gameText: "Батырма қызмет бағыттары бойынша оқыту ойынына апарады.",
+    play: "Ойнау",
+    next: "Келесі",
+    of: "ішінен",
+    previous: "Алдыңғы слайд",
+    showSlide: "Слайдты көрсету"
   }
 };
 
@@ -232,57 +244,93 @@ export default async function ActivitiesOverviewPage({ params }: { params: Promi
         </Container>
       </section>
 
-      <section className="bg-[#f6fbf8]">
-        {activities.map((activity, index) => {
-          const detail = activityDetails[index];
-          return (
-            <article id={activity.slug} key={activity.slug} className="relative overflow-hidden text-white" style={{ backgroundImage: detail.background }}>
-              <div className="security-grid absolute inset-0 opacity-45" />
-              <div className="absolute -right-24 top-16 h-[24rem] w-[24rem] rounded-full border border-state-gold/16" />
-              <Container className="relative grid gap-6 py-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,2.08fr)] lg:items-center">
-                <Reveal>
-                  <div>
-                    <Badge className="border-white/20 bg-white/10 text-state-gold">{String(index + 1).padStart(2, "0")} / {activities.length}</Badge>
-                    <div className="mt-4 flex items-start gap-3">
-                      <activity.icon className="mt-1 h-9 w-9 shrink-0 text-state-gold" />
-                      <div>
-                        <h2 className="max-w-[19rem] text-balance text-2xl font-bold leading-tight sm:max-w-none md:text-3xl">{activity.title}</h2>
-                        <p className="mt-3 max-w-xl text-sm leading-6 text-white/68">{activity.text}</p>
+      <section className="bg-[#f7fbf9] py-16 md:py-20">
+        <Container className="grid gap-8 lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
+          <aside className="lg:sticky lg:top-24">
+            <div className="rounded-[1.35rem] border border-state-teal/15 bg-white p-5 shadow-[0_18px_55px_rgba(6,24,45,0.06)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-state-gold">{copy.contents}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{copy.contentsText}</p>
+              <nav className="mt-5 grid gap-1" aria-label={copy.contents}>
+                {activities.map((activity, index) => (
+                  <Link
+                    key={activity.slug}
+                    href={`#${activity.slug}`}
+                    className="group grid grid-cols-[auto_1fr] items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold text-state-navy transition hover:bg-state-teal/10"
+                  >
+                    <span className="text-xs font-bold tabular-nums text-state-tealDark">{String(index + 1).padStart(2, "0")}</span>
+                    <span className="leading-5">{activity.title}</span>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          </aside>
+
+          <div className="grid gap-6">
+            {activities.map((activity, index) => {
+              const detail = activityDetails[index];
+              return (
+                <article
+                  id={activity.slug}
+                  key={activity.slug}
+                  className="scroll-mt-28 overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-[0_22px_70px_rgba(6,24,45,0.07)]"
+                >
+                  <div className="relative overflow-hidden">
+                    <div className="absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,rgba(0,169,155,0.08),transparent)]" />
+                    <Reveal className="relative p-6 pb-0 md:p-8 md:pb-0">
+                      <div className="flex items-start justify-between gap-5">
+                        <div>
+                          <Badge className="border-state-teal/20 bg-state-teal/10 text-state-tealDark">
+                            {index + 1} / {activities.length}
+                          </Badge>
+                          <h2 className="mt-6 max-w-4xl text-balance text-3xl font-bold leading-tight text-state-navy md:text-4xl">{activity.title}</h2>
+                        </div>
+                        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-state-navy text-state-gold">
+                          <activity.icon className="h-6 w-6" />
+                        </span>
                       </div>
-                    </div>
-                    <div className="mt-4 rounded-[1.1rem] border border-white/12 bg-white/[0.07] p-4 backdrop-blur">
-                      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-state-gold">{copy.descriptionLabel}</p>
-                      <p className="mt-2 text-xs leading-6 text-white/72 md:text-sm">{detail.description}</p>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <Link className="inline-flex items-center gap-2 rounded-xl border border-white/18 bg-white/10 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-white/16" href={`/${locale}/activities/${activity.slug}`}>
+
+                      <p className="mt-6 max-w-4xl text-sm leading-7 text-slate-600 md:text-base">{detail.description}</p>
+                    </Reveal>
+
+                    <Reveal delay={0.08} className="relative min-w-0">
+                      <ActivitySlideDeck
+                        theme={detail.theme}
+                        slides={detail.slides}
+                      />
+                    </Reveal>
+
+                    <div className="relative px-6 pb-6 md:px-8 md:pb-8">
+                      <Link
+                        className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-state-navy px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-state-tealDark hover:shadow-premium"
+                        href={`/${locale}/activities/${activity.slug}`}
+                      >
                         {copy.openCard} <ArrowRight className="h-4 w-4" />
                       </Link>
                     </div>
                   </div>
-                </Reveal>
-
-                <Reveal delay={0.08} className="min-w-0">
-                  <ActivitySlideDeck activityTitle={activity.title} theme={detail.theme} slides={detail.slides} />
-                </Reveal>
-              </Container>
-            </article>
-          );
-        })}
+                </article>
+              );
+            })}
+          </div>
+        </Container>
       </section>
 
-      <section id="activity-game" className="relative overflow-hidden bg-state-navy py-20 text-white">
-        <div className="security-grid absolute inset-0 opacity-45" />
-        <Container className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
-          <div>
-            <Badge className="border-white/15 bg-white/10 text-state-gold">{copy.interactive}</Badge>
-            <h2 className="mt-4 text-4xl font-bold">{copy.gameTitle}</h2>
-            <p className="mt-4 max-w-2xl text-white/70">{copy.gameText}</p>
+      <section id="activity-game" className="relative overflow-hidden bg-[#f7fbf9] pb-20">
+        <Container>
+          <div className="relative overflow-hidden rounded-[1.6rem] bg-state-navy px-6 py-10 text-white shadow-premium md:px-8 lg:px-10">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_26%,rgba(0,169,155,0.28),transparent_24rem),radial-gradient(circle_at_88%_18%,rgba(214,168,58,0.18),transparent_22rem)]" />
+            <div className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
+              <div>
+                <Badge className="border-white/15 bg-white/10 text-state-gold">{copy.interactive}</Badge>
+                <h2 className="mt-4 text-4xl font-bold">{copy.gameTitle}</h2>
+                <p className="mt-4 max-w-2xl text-white/70">{copy.gameText}</p>
+              </div>
+              <a className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-6 py-4 font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/15" href={gameUrl}>
+                <Gamepad2 className="h-5 w-5 text-state-gold" />
+                {copy.play}
+              </a>
+            </div>
           </div>
-          <a className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-6 py-4 font-semibold text-white ring-1 ring-white/20 transition hover:bg-white/15" href={gameUrl}>
-            <Gamepad2 className="h-5 w-5 text-state-gold" />
-            {copy.play}
-          </a>
         </Container>
       </section>
     </>

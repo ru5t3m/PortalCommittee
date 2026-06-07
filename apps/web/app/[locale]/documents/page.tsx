@@ -1,7 +1,8 @@
 import { ExternalLink, FileCheck2, Scale } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
 import { Badge } from "@/components/ui/Badge";
+import { Container } from "@/components/ui/Container";
 import { PremiumCard } from "@/components/ui/PremiumCard";
-import { Section } from "@/components/ui/Section";
 import type { Locale } from "@/lib/i18n";
 
 const legalActsRu = [
@@ -58,58 +59,62 @@ const legalActsKk = [
 
 const copy = {
   ru: {
-    eyebrow: "Документы",
+    eyebrow: "Нормативная база",
     title: "Нормативные правовые акты",
-    description: "Подборка официальных документов по вопросам национальной безопасности, службы и обучения. Ссылки ведут на ИПС «Әділет»."
+    description: "Справочная подборка официальных правовых актов по вопросам национальной безопасности, службы и обучения. Ссылки ведут на ИПС «Әділет».",
+    contentTitle: "Официальные ссылки"
   },
   kk: {
-    eyebrow: "Құжаттар",
+    eyebrow: "Нормативтік база",
     title: "Нормативтік құқықтық актілер",
-    description: "Ұлттық қауіпсіздік, қызмет және оқуға қабылдау мәселелері бойынша ресми құжаттар топтамасы. Сілтемелер «Әділет» АҚЖ беттеріне апарады."
+    description: "Ұлттық қауіпсіздік, қызмет және оқуға қабылдау мәселелері бойынша ресми құқықтық актілердің анықтамалық топтамасы. Сілтемелер «Әділет» АҚЖ беттеріне апарады.",
+    contentTitle: "Ресми сілтемелер"
   }
 };
 
-export default async function DocumentsPage({ params }: { params: Promise<{ locale: Locale }> }) {
+export default async function LegalReferencePage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
   const t = copy[locale];
   const legalActs = locale === "kk" ? legalActsKk : legalActsRu;
-  return (
-    <Section
-      eyebrow={t.eyebrow}
-      title={t.title}
-      description={t.description}
-      className="bg-white"
-    >
-      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        {legalActs.map((section) => (
-          <PremiumCard key={section.group} className="h-full">
-            <div className="flex items-start gap-4">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-state-teal/10 text-state-tealDark">
-                <section.icon className="h-6 w-6" />
-              </span>
-              <div>
-                <Badge>ИПС Әділет</Badge>
-                <h3 className="mt-3 text-2xl font-bold leading-tight text-state-navy">{section.group}</h3>
-              </div>
-            </div>
 
-            <div className="mt-6 grid gap-3">
-              {section.items.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-state-navy transition hover:-translate-y-0.5 hover:border-state-teal/45 hover:shadow-sm"
-                >
-                  <span className="text-sm font-semibold leading-6">{item.title}</span>
-                  <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-state-gold transition group-hover:translate-x-0.5" />
-                </a>
-              ))}
-            </div>
-          </PremiumCard>
-        ))}
-      </div>
-    </Section>
+  return (
+    <>
+      <PageHero badge={t.eyebrow} title={t.title} description={t.description} />
+      <section className="bg-white py-20 md:py-24">
+        <Container>
+          <h2 className="text-3xl font-bold text-state-navy md:text-4xl">{t.contentTitle}</h2>
+          <div className="mt-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            {legalActs.map((section) => (
+              <PremiumCard key={section.group} className="h-full">
+                <div className="flex items-start gap-4">
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-state-teal/10 text-state-tealDark">
+                    <section.icon className="h-6 w-6" />
+                  </span>
+                  <div>
+                    <Badge>ИПС Әділет</Badge>
+                    <h3 className="mt-3 text-2xl font-bold leading-tight text-state-navy">{section.group}</h3>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-3">
+                  {section.items.map((item) => (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-state-navy transition hover:-translate-y-0.5 hover:border-state-teal/45 hover:shadow-sm"
+                    >
+                      <span className="text-sm font-semibold leading-6">{item.title}</span>
+                      <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-state-gold transition group-hover:translate-x-0.5" />
+                    </a>
+                  ))}
+                </div>
+              </PremiumCard>
+            ))}
+          </div>
+        </Container>
+      </section>
+    </>
   );
 }

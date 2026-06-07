@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { PremiumCard } from "@/components/ui/PremiumCard";
+import { PsychologicalTestRunner } from "@/components/PsychologicalTestRunner";
 import { Section } from "@/components/ui/Section";
 import { getPsychologicalTests } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
@@ -35,7 +36,8 @@ const copy = {
     formatText: "Демо-задания, рекомендации и примерная шкала самооценки.",
     examples: "Примеры",
     taskTypes: "Типы заданий",
-    placeholder: "В полной версии здесь будет интерактивное задание с таймером и автоматическим подсчетом результата.",
+    training: "Самопроверка",
+    trainingTitle: "Пройдите базовый демо-тест",
     back: "К списку тестов"
   },
   kk: {
@@ -50,7 +52,8 @@ const copy = {
     formatText: "Демо-тапсырмалар, ұсынымдар және өзін-өзі бағалаудың шамамен шкаласы.",
     examples: "Мысалдар",
     taskTypes: "Тапсырма түрлері",
-    placeholder: "Толық нұсқада мұнда таймері және нәтижені автоматты есептеуі бар интерактивті тапсырма болады.",
+    training: "Өзін-өзі тексеру",
+    trainingTitle: "Базалық демо-тесттен өтіңіз",
     back: "Тесттер тізіміне"
   }
 };
@@ -101,10 +104,13 @@ export default async function PsychologicalTestPage({ params }: { params: Promis
             <PremiumCard key={item}>
               <span className="grid h-11 w-11 place-items-center rounded-2xl bg-state-teal text-white font-bold">{index + 1}</span>
               <h3 className="mt-5 text-lg font-bold text-state-navy">{item}</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{t.placeholder}</p>
             </PremiumCard>
           ))}
         </div>
+      </Section>
+
+      <Section eyebrow={t.training} title={t.trainingTitle} className="bg-white">
+        <PsychologicalTestRunner locale={locale} slug={test.slug} />
         <div className="mt-8">
           <Button href={`/${locale}/psychological-testing`}>{t.back}</Button>
         </div>

@@ -21,6 +21,7 @@ services:
       DATABASE_URL: postgresql+psycopg://knb:knb@postgres:5432/knb
       JWT_SECRET: change-this-secret
       CORS_ORIGINS: '["http://localhost:3000"]'
+      ALLOWED_HOSTS: '["localhost","127.0.0.1","api"]'
     ports:
       - "8000:8000"
     depends_on:

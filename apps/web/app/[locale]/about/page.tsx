@@ -1,14 +1,16 @@
 import { Building2, Flag, Landmark, Network, ScrollText } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+import { Container } from "@/components/ui/Container";
 import { PremiumCard } from "@/components/ui/PremiumCard";
-import { Section } from "@/components/ui/Section";
 import type { Locale } from "@/lib/i18n";
 
 const copy = {
   ru: {
-    eyebrow: "О Комитете",
+    eyebrow: "О КНБ",
     title: "Миссия, структура и официальная информация",
     description: "Раздел раскрывает публичную информацию о задачах, истории, руководстве и символике Комитета.",
+    contentTitle: "Разделы официальной информации",
     items: [
       { title: "Миссия и задачи", text: "Защита национальной безопасности, прав граждан и конституционного строя в рамках законодательства.", icon: Landmark },
       { title: "История", text: "Справочный раздел о развитии органов безопасности и ключевых этапах институционального становления.", icon: ScrollText },
@@ -21,6 +23,7 @@ const copy = {
     eyebrow: "Комитет туралы",
     title: "Миссия, құрылым және ресми ақпарат",
     description: "Бөлім Комитеттің міндеттері, тарихы, басшылығы және символикасы туралы ашық ақпаратты көрсетеді.",
+    contentTitle: "Ресми ақпарат бөлімдері",
     items: [
       { title: "Миссия және міндеттер", text: "Заңнама аясында ұлттық қауіпсіздікті, азаматтардың құқықтарын және конституциялық құрылысты қорғау.", icon: Landmark },
       { title: "Тарих", text: "Қауіпсіздік органдарының дамуы және институционалдық қалыптасудың негізгі кезеңдері туралы анықтамалық бөлім.", icon: ScrollText },
@@ -36,16 +39,22 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
   const t = copy[locale];
   const items = t.items as Array<{ title: string; text: string; icon: LucideIcon }>;
   return (
-    <Section eyebrow={t.eyebrow} title={t.title} description={t.description} className="bg-white">
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {items.map((item) => (
-          <PremiumCard key={item.title}>
-            <item.icon className="h-8 w-8 text-state-teal" />
-            <h3 className="mt-5 text-xl font-bold text-state-navy">{item.title}</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{item.text}</p>
-          </PremiumCard>
-        ))}
-      </div>
-    </Section>
+    <>
+      <PageHero badge={t.eyebrow} title={t.title} description={t.description} />
+      <section className="bg-white py-20 md:py-24">
+        <Container>
+          <h2 className="text-3xl font-bold text-state-navy md:text-4xl">{t.contentTitle}</h2>
+          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {items.map((item) => (
+              <PremiumCard key={item.title}>
+                <item.icon className="h-8 w-8 text-state-teal" />
+                <h3 className="mt-5 text-xl font-bold text-state-navy">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{item.text}</p>
+              </PremiumCard>
+            ))}
+          </div>
+        </Container>
+      </section>
+    </>
   );
 }

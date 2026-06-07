@@ -1,18 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Brain, CheckCircle2, ClipboardList, FileText, LogOut, Pencil, Phone, Save, UserRound, X } from "lucide-react";
+import { Bell, Brain, CheckCircle2, ClipboardList, FileText, LogOut, Phone, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import type { Locale } from "@/lib/i18n";
-
-type AuthUser = {
-  firstName: string;
-  lastName: string;
-  phone: string;
-};
+import { getMe, logout, type AuthMe } from "@/lib/auth";
 
 const copy = {
   ru: {
@@ -34,7 +29,11 @@ const copy = {
       { title: "Психотестирование", text: "Перейти к тренировочным психологическим тестам.", href: "psychological-testing", icon: CheckCircle2 }
     ],
     notificationsTitle: "Уведомления",
-    notifications: ["Данные профиля сохранены локально для демонстрационного входа.", "Для официальной подачи используйте опубликованные требования и документы."],
+    application: "Анкета кандидата",
+    tracking: "Код заявки",
+    status: "Статус",
+    email: "Email",
+    notifications: ["Анкета кандидата создана и сохранена в защищенной базе.", "Статус заявки будет обновляться модератором после проверки."],
     testsTitle: "Результаты психотестирований",
     testsEmptyTitle: "Пока нет результатов",
     testsEmptyText: "После прохождения психотестирования результаты появятся в этом разделе."
@@ -58,76 +57,48 @@ const copy = {
       { title: "Психотест", text: "Жаттығу психологиялық тесттеріне өту.", href: "psychological-testing", icon: CheckCircle2 }
     ],
     notificationsTitle: "Хабарламалар",
-    notifications: ["Профиль деректері демонстрациялық кіру үшін локалды сақталды.", "Ресми тапсыру үшін жарияланған талаптар мен құжаттарды пайдаланыңыз."],
+    application: "Кандидат анкетасы",
+    tracking: "Өтінім коды",
+    status: "Мәртебе",
+    email: "Email",
+    notifications: ["Кандидат анкетасы қорғалған дерекқорда сақталды.", "Өтінім мәртебесін тексеруден кейін модератор жаңартады."],
     testsTitle: "Психотест нәтижелері",
     testsEmptyTitle: "Әзірге нәтиже жоқ",
     testsEmptyText: "Психотесттен өткеннен кейін нәтижелер осы бөлімде пайда болады."
   }
 };
 
-function readStoredUser(): AuthUser | null {
-  try {
-    const rawUser = window.localStorage.getItem("knb-auth-user");
-    return rawUser ? (JSON.parse(rawUser) as AuthUser) : null;
-  } catch {
-    return null;
-  }
-}
-
 export function AccountDashboard({ locale }: { locale: Locale }) {
   const router = useRouter();
   const t = copy[locale];
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [draftUser, setDraftUser] = useState<AuthUser | null>(null);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [authState, setAuthState] = useState<AuthMe | null>(null);
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const storedUser = readStoredUser();
-    if (!storedUser) {
-      router.replace(`/${locale}/login`);
-      return;
-    }
-
-    setUser(storedUser);
-    setDraftUser(storedUser);
-    setIsChecking(false);
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const next = await getMe();
+        if (isMounted) {
+          setAuthState(next);
+          setIsChecking(false);
+        }
+      } catch {
+        router.replace(`/${locale}/login`);
+      }
+    };
+    void load();
+    return () => {
+      isMounted = false;
+    };
   }, [locale, router]);
 
-  function handleLogout() {
-    window.localStorage.removeItem("knb-auth-user");
-    window.dispatchEvent(new CustomEvent("knb-auth-changed"));
+  async function handleLogout() {
+    await logout();
     router.push(`/${locale}/login`);
   }
 
-  function startProfileEdit() {
-    setDraftUser(user);
-    setIsEditingProfile(true);
-  }
-
-  function cancelProfileEdit() {
-    setDraftUser(user);
-    setIsEditingProfile(false);
-  }
-
-  function saveProfileEdit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!draftUser) return;
-
-    const nextUser = {
-      firstName: draftUser.firstName.trim(),
-      lastName: draftUser.lastName.trim(),
-      phone: draftUser.phone.trim()
-    };
-
-    window.localStorage.setItem("knb-auth-user", JSON.stringify(nextUser));
-    window.dispatchEvent(new CustomEvent("knb-auth-changed", { detail: nextUser }));
-    setUser(nextUser);
-    setDraftUser(nextUser);
-    setIsEditingProfile(false);
-  }
-
-  if (isChecking || !user) {
+  if (isChecking || !authState) {
     return (
       <section className="min-h-[calc(100vh-77px)] bg-state-surface py-16">
         <Container>
@@ -137,14 +108,18 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
     );
   }
 
+  const application = authState.candidate_application;
+  const fullName = application ? `${application.first_name} ${application.last_name}` : authState.user.full_name;
+
   return (
     <section className="min-h-[calc(100vh-77px)] bg-[linear-gradient(180deg,#f6fbf8_0%,#ffffff_48%,#eef8f6_100%)] text-state-navy">
-      <div className="bg-[#06182d] text-white">
-        <Container className="grid gap-8 py-10 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div className="relative overflow-hidden bg-brand-gradient text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.18),transparent_25rem),radial-gradient(circle_at_80%_60%,rgba(214,168,58,0.22),transparent_24rem)]" />
+        <Container className="relative grid gap-8 py-16 lg:grid-cols-[1fr_auto] lg:items-center">
           <div className="flex items-center gap-5">
             <KnbEmblem className="h-20 w-20 shrink-0" />
             <div>
-              <h1 className="text-4xl font-bold tracking-normal">{t.title}</h1>
+              <h1 className="text-4xl font-bold leading-tight tracking-normal md:text-5xl">{t.title}</h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-white/70">{t.subtitle}</p>
             </div>
           </div>
@@ -164,55 +139,36 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-state-tealDark">{t.verified}</p>
-                <h2 className="mt-1 text-2xl font-bold">{user.firstName} {user.lastName}</h2>
+                <h2 className="mt-1 text-2xl font-bold">{fullName}</h2>
               </div>
-              {!isEditingProfile ? (
-                <button onClick={startProfileEdit} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-state-tealDark transition hover:border-state-teal hover:bg-state-surface" type="button" aria-label={t.editProfile}>
-                  <Pencil className="h-4 w-4" />
-                </button>
-              ) : null}
             </div>
 
-            {isEditingProfile && draftUser ? (
-              <form className="mt-7 grid gap-4" onSubmit={saveProfileEdit}>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-state-navy">{t.firstName}</span>
-                  <input value={draftUser.firstName} onChange={(event) => setDraftUser({ ...draftUser, firstName: event.target.value })} className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-state-navy outline-none transition focus:border-state-teal focus:ring-4 focus:ring-state-teal/10" required />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-state-navy">{t.lastName}</span>
-                  <input value={draftUser.lastName} onChange={(event) => setDraftUser({ ...draftUser, lastName: event.target.value })} className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-state-navy outline-none transition focus:border-state-teal focus:ring-4 focus:ring-state-teal/10" required />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-state-navy">{t.phone}</span>
-                  <input value={draftUser.phone} onChange={(event) => setDraftUser({ ...draftUser, phone: event.target.value })} className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-state-navy outline-none transition focus:border-state-teal focus:ring-4 focus:ring-state-teal/10" required type="tel" />
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-button-gradient px-4 py-2 text-sm font-semibold text-white shadow-lift transition hover:-translate-y-0.5" type="submit">
-                    <Save className="h-4 w-4" />
-                    {t.saveProfile}
-                  </button>
-                  <button onClick={cancelProfileEdit} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-state-navy transition hover:border-state-teal hover:bg-state-surface" type="button">
-                    <X className="h-4 w-4" />
-                    {t.cancel}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="mt-7 grid gap-3">
-                <div className="rounded-2xl bg-state-surface p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{t.fullName}</p>
-                  <p className="mt-2 font-semibold">{user.firstName} {user.lastName}</p>
-                </div>
+            <div className="mt-7 grid gap-3">
+              <div className="rounded-2xl bg-state-surface p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{t.fullName}</p>
+                <p className="mt-2 font-semibold">{fullName}</p>
+              </div>
+              <div className="rounded-2xl bg-state-surface p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{t.email}</p>
+                <p className="mt-2 font-semibold">{authState.user.email ?? (authState.user.telegram_username ? `@${authState.user.telegram_username}` : authState.user.phone ?? "-")}</p>
+              </div>
+              {application || authState.user.phone ? (
                 <div className="rounded-2xl bg-state-surface p-4">
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{t.phone}</p>
                   <p className="mt-2 inline-flex items-center gap-2 font-semibold">
                     <Phone className="h-4 w-4 text-state-tealDark" />
-                    {user.phone}
+                    {application?.phone ?? authState.user.phone}
                   </p>
                 </div>
+              ) : null}
+              {application ? (
+                <div className="rounded-2xl bg-state-surface p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{t.application}</p>
+                  <p className="mt-2 font-semibold">{t.tracking}: {application.tracking_code}</p>
+                  <p className="mt-1 text-sm font-semibold text-state-tealDark">{t.status}: {application.status}</p>
+                </div>
+              ) : null}
               </div>
-            )}
           </aside>
 
           <div className="grid gap-6">
