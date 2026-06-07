@@ -8,6 +8,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 revision: str = "20260523_0001"
 down_revision: Union[str, None] = None
@@ -18,10 +19,16 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     bind = op.get_bind()
     is_postgresql = bind.dialect.name == "postgresql"
-    role = sa.Enum("admin", "moderator", "candidate", name="role", create_type=not is_postgresql)
-    status = sa.Enum("draft", "published", "archived", name="status", create_type=not is_postgresql)
-    appeal_status = sa.Enum("received", "in_review", "answered", "rejected", name="appealstatus", create_type=not is_postgresql)
-    candidate_status = sa.Enum("draft", "submitted", "in_review", "approved", "rejected", name="candidatestatus", create_type=not is_postgresql)
+    if is_postgresql:
+        role = postgresql.ENUM("admin", "moderator", "candidate", name="role", create_type=False)
+        status = postgresql.ENUM("draft", "published", "archived", name="status", create_type=False)
+        appeal_status = postgresql.ENUM("received", "in_review", "answered", "rejected", name="appealstatus", create_type=False)
+        candidate_status = postgresql.ENUM("draft", "submitted", "in_review", "approved", "rejected", name="candidatestatus", create_type=False)
+    else:
+        role = sa.Enum("admin", "moderator", "candidate", name="role")
+        status = sa.Enum("draft", "published", "archived", name="status")
+        appeal_status = sa.Enum("received", "in_review", "answered", "rejected", name="appealstatus")
+        candidate_status = sa.Enum("draft", "submitted", "in_review", "approved", "rejected", name="candidatestatus")
 
     if is_postgresql:
         role.create(bind, checkfirst=True)
