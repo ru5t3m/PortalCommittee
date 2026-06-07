@@ -41,13 +41,14 @@ def cookie_secure() -> bool:
 def set_refresh_cookie(response: Response, token: str) -> None:
     settings = get_settings()
     max_age = settings.refresh_token_days * 24 * 60 * 60
+    is_production = cookie_secure()
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
         value=token,
         max_age=max_age,
         httponly=True,
-        secure=cookie_secure(),
-        samesite="lax",
+        secure=is_production,
+        samesite="none" if is_production else "lax",
         path="/api/v1/auth",
     )
 

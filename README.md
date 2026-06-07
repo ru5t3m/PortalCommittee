@@ -191,6 +191,12 @@ ALLOWED_HOSTS=knb-portal-api.onrender.com,localhost
 TELEGRAM_ADMIN_IDS=123456789,987654321
 ```
 
+Render Postgres migration troubleshooting:
+
+- `type "role" already exists` or `relation "users" already exists` means the database is partially migrated but `alembic_version` is not at the expected revision.
+- For a disposable test database, the clean fix is to reset/drop the database schema, then redeploy the API with the latest migration code.
+- If resetting through the Render dashboard does not clear the schema, create a new Render Postgres database and replace the API `DATABASE_URL` with the new Internal Database URL.
+
 ## Production Notes
 
 - Replace `JWT_SECRET`, database credentials, cookie secrets, and CORS origins.

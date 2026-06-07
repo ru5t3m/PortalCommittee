@@ -94,9 +94,18 @@ export function AuthPage({ locale }: { locale: Locale; mode: AuthMode }) {
           setStatus(t.verified);
           setIsCompleting(true);
           window.clearInterval(interval);
-          await completeTelegramLogin(challenge.challenge_id, challenge.nonce);
-          if (!cancelled) {
-            router.push(`/${locale}/account`);
+          try {
+            await completeTelegramLogin(challenge.challenge_id, challenge.nonce);
+            if (!cancelled) {
+              router.push(`/${locale}/account`);
+            }
+          } catch (caught) {
+            if (!cancelled) {
+              setError(caught instanceof Error ? humanizeAuthError(caught.message, locale) : t.error);
+              setStatus("");
+              setChallenge(null);
+              setIsCompleting(false);
+            }
           }
         } else if (current.status === "awaiting_contact") {
           setStatus(t.waiting);
