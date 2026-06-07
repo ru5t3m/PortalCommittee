@@ -1,4 +1,5 @@
 from functools import lru_cache
+import json
 from typing import Any
 
 from pydantic import AnyHttpUrl, field_validator
@@ -28,12 +29,15 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", "allowed_hosts", "telegram_admin_ids", "telegram_moderator_ids", mode="before")
     @classmethod
     def parse_list_env(cls, value: Any) -> Any:
+        if isinstance(value, int):
+            return [str(value)]
         if isinstance(value, str):
             stripped = value.strip()
             if not stripped:
                 return []
             if stripped.startswith("["):
-                return value
+                parsed = json.loads(stripped)
+                return [str(item) for item in parsed]
             return [item.strip() for item in stripped.split(",") if item.strip()]
         return value
 

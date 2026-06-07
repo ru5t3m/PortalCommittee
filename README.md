@@ -179,7 +179,7 @@ Render environment variables can use single comma-separated values or JSON array
 ```env
 CORS_ORIGINS=https://knb-portal.vercel.app
 ALLOWED_HOSTS=knb-portal-api.onrender.com
-TELEGRAM_ADMIN_IDS=123456789
+TELEGRAM_ADMIN_IDS=["123456789"]
 TELEGRAM_MODERATOR_IDS=
 ```
 
@@ -188,6 +188,7 @@ Multiple values are also valid:
 ```env
 CORS_ORIGINS=https://knb-portal.vercel.app,http://localhost:3000
 ALLOWED_HOSTS=knb-portal-api.onrender.com,localhost
+TELEGRAM_ADMIN_IDS=123456789,987654321
 ```
 
 ## Production Notes

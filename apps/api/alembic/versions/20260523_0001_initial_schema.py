@@ -16,10 +16,18 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    role = sa.Enum("admin", "moderator", "candidate", name="role")
-    status = sa.Enum("draft", "published", "archived", name="status")
-    appeal_status = sa.Enum("received", "in_review", "answered", "rejected", name="appealstatus")
-    candidate_status = sa.Enum("draft", "submitted", "in_review", "approved", "rejected", name="candidatestatus")
+    bind = op.get_bind()
+    is_postgresql = bind.dialect.name == "postgresql"
+    role = sa.Enum("admin", "moderator", "candidate", name="role", create_type=not is_postgresql)
+    status = sa.Enum("draft", "published", "archived", name="status", create_type=not is_postgresql)
+    appeal_status = sa.Enum("received", "in_review", "answered", "rejected", name="appealstatus", create_type=not is_postgresql)
+    candidate_status = sa.Enum("draft", "submitted", "in_review", "approved", "rejected", name="candidatestatus", create_type=not is_postgresql)
+
+    if is_postgresql:
+        role.create(bind, checkfirst=True)
+        status.create(bind, checkfirst=True)
+        appeal_status.create(bind, checkfirst=True)
+        candidate_status.create(bind, checkfirst=True)
 
     op.create_table(
         "users",
