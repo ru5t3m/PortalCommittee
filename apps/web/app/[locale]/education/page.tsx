@@ -47,7 +47,7 @@ export default async function EducationPage({ params }: { params: Promise<{ loca
               <Link href={`/${locale}/education/${academy.href}`} key={academy.title}>
                 <PremiumCard className="h-full">
                   {academy.image ? (
-                    <img src={academy.image} alt="" className="h-20 w-20 object-contain" />
+                    <img src={academy.image} alt="" className="h-36 w-36 object-contain sm:h-40 sm:w-40" />
                   ) : (
                     <academy.icon className="h-9 w-9 text-state-teal" />
                   )}
