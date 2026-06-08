@@ -35,6 +35,41 @@ class AuthMeOut(BaseModel):
     candidate_application: CandidateApplicationOut | None = None
 
 
+class PsychologicalTestSectionResult(BaseModel):
+    id: str = Field(min_length=1, max_length=80)
+    title: str = Field(min_length=1, max_length=255)
+    total_questions: int = Field(ge=0, le=500)
+    answered_questions: int = Field(ge=0, le=500)
+
+
+class PsychologicalTestResultCreate(BaseModel):
+    test_slug: str = Field(min_length=1, max_length=120)
+    test_title: str = Field(min_length=1, max_length=255)
+    total_questions: int = Field(ge=1, le=500)
+    answered_questions: int = Field(ge=0, le=500)
+    duration_seconds: int = Field(ge=1, le=24 * 60 * 60)
+    remaining_seconds: int = Field(ge=0, le=24 * 60 * 60)
+    sections: list[PsychologicalTestSectionResult] = Field(min_length=1, max_length=20)
+    answers: dict = Field(default_factory=dict)
+
+
+class PsychologicalTestResultOut(BaseModel):
+    id: int
+    test_slug: str
+    test_title: str
+    total_questions: int
+    answered_questions: int
+    duration_seconds: int
+    remaining_seconds: int
+    sections: list[PsychologicalTestSectionResult]
+    submitted_at: datetime
+
+
+class AdminPsychologicalTestResultOut(PsychologicalTestResultOut):
+    user: UserOut
+    candidate_application: CandidateApplicationOut | None = None
+
+
 class TelegramLoginStartOut(BaseModel):
     challenge_id: int
     nonce: str

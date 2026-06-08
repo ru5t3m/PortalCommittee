@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
 import { primaryPsychologicalSections, type PrimaryPsychologicalQuestion } from "@/lib/primary-psychological-test";
 import { getMe } from "@/lib/auth";
+import { savePsychologicalTestResult, type PsychologicalTestResult } from "@/lib/psychological-tests";
 
 type TestSlug = "primary-selection" | "attention" | "memory" | "logic" | "stress-resilience";
 
@@ -468,6 +469,10 @@ const primaryCopy = {
     authRequired: "Для прохождения теста нужен вход",
     authRequiredText: "Психологическое тестирование доступно только пользователям, которые вошли на портал. Войдите через Telegram или почту, затем вернитесь к тесту.",
     login: "Войти",
+    exitToTests: "Выйти на страницу психотестирования",
+    saving: "Сохраняем результат...",
+    saved: "Результат сохранен",
+    saveError: "Не удалось сохранить результат. Проверьте подключение и повторите завершение позже.",
     incompletePage: "Ответьте на все вопросы этой страницы, чтобы перейти дальше.",
     textAnswer: "Ваш ответ",
     textPlaceholder: "Введите ответ",
@@ -506,6 +511,10 @@ const primaryCopy = {
     authRequired: "Тесттен өту үшін кіру қажет",
     authRequiredText: "Психологиялық тестілеу порталға кірген пайдаланушыларға ғана қолжетімді. Telegram немесе пошта арқылы кіріп, тестке қайта оралыңыз.",
     login: "Кіру",
+    exitToTests: "Психотест бетіне шығу",
+    saving: "Нәтиже сақталуда...",
+    saved: "Нәтиже сақталды",
+    saveError: "Нәтижені сақтау мүмкін болмады. Қосылымды тексеріп, кейін қайта аяқтап көріңіз.",
     incompletePage: "Әрі қарай өту үшін осы беттегі барлық сұраққа жауап беріңіз.",
     textAnswer: "Жауабыңыз",
     textPlaceholder: "Жауапты енгізіңіз",
@@ -678,6 +687,10 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
   const [authStatus, setAuthStatus] = useState<"checking" | "allowed" | "denied">("checking");
   const [remainingSeconds, setRemainingSeconds] = useState(PRIMARY_TEST_SECONDS);
   const [sectionAnswers, setSectionAnswers] = useState<Record<string, Record<string, string | string[]>>>({});
+  const [savedResult, setSavedResult] = useState<PsychologicalTestResult | null>(null);
+  const [saveError, setSaveError] = useState("");
+  const [isSavingResult, setIsSavingResult] = useState(false);
+  const [hasTriedSavingResult, setHasTriedSavingResult] = useState(false);
   const activeSection = readySections[sectionIndex] ?? readySections[0];
   const activeAnswers = sectionAnswers[activeSection.id] ?? {};
   const totalQuestions = readySections.reduce((sum, section) => sum + section.questions.length, 0);
@@ -700,6 +713,19 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
   const isPageComplete = pageQuestions.length > 0 && pageAnsweredCount === pageQuestions.length;
   const isLastPage = pageIndex >= totalPages - 1;
   const isLastSection = sectionIndex >= readySections.length - 1;
+  const sectionSummaries = readySections.map((section) => {
+    const answers = sectionAnswers[section.id] ?? {};
+    const sectionAnswered = section.questions.filter((question) => {
+      const answer = answers[question.id];
+      return Array.isArray(answer) ? answer.length > 0 : typeof answer === "string" && answer.trim().length > 0;
+    }).length;
+    return {
+      id: section.id,
+      title: section.title,
+      total_questions: section.questions.length,
+      answered_questions: sectionAnswered
+    };
+  });
 
   useEffect(() => {
     let active = true;
@@ -731,6 +757,37 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
 
     return () => window.clearInterval(timerId);
   }, [authStatus, mode]);
+
+  useEffect(() => {
+    if (authStatus !== "allowed" || mode !== "finished" || savedResult || isSavingResult || hasTriedSavingResult) return;
+    let active = true;
+    setHasTriedSavingResult(true);
+    setIsSavingResult(true);
+    setSaveError("");
+    savePsychologicalTestResult({
+      test_slug: "primary-selection",
+      test_title: t.testTitle,
+      total_questions: totalQuestions,
+      answered_questions: answeredTotal,
+      duration_seconds: PRIMARY_TEST_SECONDS,
+      remaining_seconds: remainingSeconds,
+      sections: sectionSummaries,
+      answers: sectionAnswers
+    })
+      .then((result) => {
+        if (active) setSavedResult(result);
+      })
+      .catch(() => {
+        if (active) setSaveError(t.saveError);
+      })
+      .finally(() => {
+        if (active) setIsSavingResult(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [answeredTotal, authStatus, hasTriedSavingResult, isSavingResult, mode, remainingSeconds, savedResult, sectionAnswers, sectionSummaries, t.saveError, t.testTitle, totalQuestions]);
 
   const formattedTime = useMemo(() => {
     const minutes = Math.floor(remainingSeconds / 60);
@@ -816,6 +873,9 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-state-tealDark">{t.testTitle}</p>
             <h1 className="mt-4 text-4xl font-bold text-state-navy">{t.finished}</h1>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">{t.finishedText}</p>
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+              {isSavingResult ? t.saving : savedResult ? t.saved : saveError || t.saving}
+            </div>
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-slate-50 p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t.questions}</p>
@@ -829,6 +889,14 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t.section}</p>
                 <p className="mt-2 text-3xl font-bold">{Math.min(sectionIndex + 1, readySections.length)}/{readySections.length}</p>
               </div>
+            </div>
+            <div className="mt-8">
+              <Link
+                href={`/${locale}/psychological-testing`}
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-state-navy px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-state-tealDark"
+              >
+                {t.exitToTests}
+              </Link>
             </div>
           </section>
         </div>

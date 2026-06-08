@@ -1,5 +1,6 @@
 import { adminAuthFetch } from "@/lib/auth";
 import { API_URL, parseApiError } from "@/lib/api";
+import type { PsychologicalTestResult } from "@/lib/psychological-tests";
 
 export type AdminDashboard = {
   actor: {
@@ -59,6 +60,21 @@ export type AdminCandidate = {
   };
 };
 
+export type AdminPsychologicalTestResult = PsychologicalTestResult & {
+  user: AdminDashboard["actor"];
+  candidate_application: {
+    tracking_code: string;
+    status: string;
+    first_name: string;
+    last_name: string;
+    middle_name: string | null;
+    phone: string;
+    region: string | null;
+    education_level: string | null;
+    desired_direction: string | null;
+  } | null;
+};
+
 async function readJson<T>(response: Response) {
   if (!response.ok) {
     throw new Error(await parseApiError(response));
@@ -76,6 +92,10 @@ export async function listAdminAppeals() {
 
 export async function listAdminCandidates() {
   return readJson<AdminCandidate[]>(await adminAuthFetch(`${API_URL}/admin/candidates`));
+}
+
+export async function listAdminPsychologicalTestResults() {
+  return readJson<AdminPsychologicalTestResult[]>(await adminAuthFetch(`${API_URL}/admin/psychological-tests/results`));
 }
 
 export async function updateAdminAppealStatus(id: number, status: AdminAppeal["status"]) {

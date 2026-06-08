@@ -1,6 +1,6 @@
 import enum
 from datetime import date, datetime
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, JSON, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -143,6 +143,26 @@ class CandidateApplication(Base, TimestampMixin):
     moderator_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     user: Mapped[User] = relationship(back_populates="candidate_application")
+
+
+class PsychologicalTestResult(Base, TimestampMixin):
+    __tablename__ = "psychological_test_results"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    candidate_application_id: Mapped[int | None] = mapped_column(ForeignKey("candidate_applications.id"), nullable=True, index=True)
+    test_slug: Mapped[str] = mapped_column(String(120), index=True)
+    test_title: Mapped[str] = mapped_column(String(255))
+    total_questions: Mapped[int] = mapped_column(Integer)
+    answered_questions: Mapped[int] = mapped_column(Integer)
+    duration_seconds: Mapped[int] = mapped_column(Integer)
+    remaining_seconds: Mapped[int] = mapped_column(Integer)
+    sections: Mapped[dict] = mapped_column(JSON)
+    answers: Mapped[dict] = mapped_column(JSON)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    user: Mapped[User] = relationship()
+    candidate_application: Mapped[CandidateApplication | None] = relationship()
 
 
 class RefreshSession(Base, TimestampMixin):

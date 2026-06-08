@@ -8,6 +8,7 @@ import { Container } from "@/components/ui/Container";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import type { Locale } from "@/lib/i18n";
 import { getMe, logout, type AuthMe } from "@/lib/auth";
+import { listMyPsychologicalTestResults, type PsychologicalTestResult } from "@/lib/psychological-tests";
 
 const copy = {
   ru: {
@@ -36,7 +37,10 @@ const copy = {
     notifications: ["Анкета кандидата создана и сохранена в защищенной базе.", "Статус заявки будет обновляться модератором после проверки."],
     testsTitle: "Результаты психотестирований",
     testsEmptyTitle: "Пока нет результатов",
-    testsEmptyText: "После прохождения психотестирования результаты появятся в этом разделе."
+    testsEmptyText: "После прохождения психотестирования результаты появятся в этом разделе.",
+    answered: "Ответов",
+    submittedAt: "Дата прохождения",
+    timeSpent: "Затрачено"
   },
   kk: {
     title: "Жеке кабинет",
@@ -64,7 +68,10 @@ const copy = {
     notifications: ["Кандидат анкетасы қорғалған дерекқорда сақталды.", "Өтінім мәртебесін тексеруден кейін модератор жаңартады."],
     testsTitle: "Психотест нәтижелері",
     testsEmptyTitle: "Әзірге нәтиже жоқ",
-    testsEmptyText: "Психотесттен өткеннен кейін нәтижелер осы бөлімде пайда болады."
+    testsEmptyText: "Психотесттен өткеннен кейін нәтижелер осы бөлімде пайда болады.",
+    answered: "Жауап",
+    submittedAt: "Өткен күні",
+    timeSpent: "Жұмсалған уақыт"
   }
 };
 
@@ -72,15 +79,17 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
   const router = useRouter();
   const t = copy[locale];
   const [authState, setAuthState] = useState<AuthMe | null>(null);
+  const [testResults, setTestResults] = useState<PsychologicalTestResult[]>([]);
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     const load = async () => {
       try {
-        const next = await getMe();
+        const [next, results] = await Promise.all([getMe(), listMyPsychologicalTestResults()]);
         if (isMounted) {
           setAuthState(next);
+          setTestResults(results);
           setIsChecking(false);
         }
       } catch {
@@ -110,6 +119,13 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
 
   const application = authState.candidate_application;
   const fullName = application ? `${application.first_name} ${application.last_name}` : authState.user.full_name;
+  const formatDate = (value: string) => new Intl.DateTimeFormat(locale === "kk" ? "kk-KZ" : "ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  const formatDuration = (durationSeconds: number, remainingSeconds: number) => {
+    const spent = Math.max(0, durationSeconds - remainingSeconds);
+    const minutes = Math.floor(spent / 60);
+    const seconds = spent % 60;
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  };
 
   return (
     <section className="min-h-[calc(100vh-77px)] bg-[linear-gradient(180deg,#f6fbf8_0%,#ffffff_48%,#eef8f6_100%)] text-state-navy">
@@ -190,13 +206,35 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
                 <Brain className="h-5 w-5 text-state-tealDark" />
                 {t.testsTitle}
               </h2>
-              <div className="mt-5 rounded-2xl border border-dashed border-state-teal/30 bg-state-surface p-8 text-center">
-                <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white text-state-tealDark shadow-sm">
-                  <Brain className="h-7 w-7" />
-                </span>
-                <h3 className="mt-4 text-xl font-bold text-state-navy">{t.testsEmptyTitle}</h3>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{t.testsEmptyText}</p>
-              </div>
+              {testResults.length ? (
+                <div className="mt-5 grid gap-3">
+                  {testResults.map((result) => (
+                    <div key={result.id} className="rounded-2xl border border-slate-200 bg-state-surface p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-lg font-bold text-state-navy">{result.test_title}</h3>
+                          <p className="mt-1 text-sm font-semibold text-state-tealDark">{t.submittedAt}: {formatDate(result.submitted_at)}</p>
+                        </div>
+                        <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-state-navy shadow-sm">
+                          {result.answered_questions}/{result.total_questions}
+                        </span>
+                      </div>
+                      <div className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+                        <span className="rounded-xl bg-white px-3 py-2">{t.answered}: {result.answered_questions}/{result.total_questions}</span>
+                        <span className="rounded-xl bg-white px-3 py-2">{t.timeSpent}: {formatDuration(result.duration_seconds, result.remaining_seconds)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-2xl border border-dashed border-state-teal/30 bg-state-surface p-8 text-center">
+                  <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white text-state-tealDark shadow-sm">
+                    <Brain className="h-7 w-7" />
+                  </span>
+                  <h3 className="mt-4 text-xl font-bold text-state-navy">{t.testsEmptyTitle}</h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{t.testsEmptyText}</p>
+                </div>
+              )}
             </section>
 
             <article className="rounded-[1.35rem] border border-slate-200/80 bg-white/[0.94] p-6 shadow-sm">

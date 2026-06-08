@@ -6,13 +6,15 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import type { Locale } from "@/lib/i18n";
 import {
   getAdminDashboard,
+  listAdminPsychologicalTestResults,
   listAdminAppeals,
   listAdminCandidates,
   updateAdminAppealStatus,
   updateAdminCandidateStatus,
   type AdminAppeal,
   type AdminCandidate,
-  type AdminDashboard
+  type AdminDashboard,
+  type AdminPsychologicalTestResult
 } from "@/lib/admin";
 
 const copy = {
@@ -30,7 +32,11 @@ const copy = {
     rejected: "Отклонены",
     searchPlaceholder: "Поиск по ФИО, телефону, email или трек-номеру",
     allStatuses: "Все статусы",
-    noTestingData: "Результаты психологических тестирований пока не сохраняются в backend. После подключения хранения здесь появятся результаты всех пользователей.",
+    noTestingData: "Результатов психологических тестирований пока нет.",
+    answered: "Ответов",
+    timeSpent: "Затрачено",
+    submittedAt: "Дата прохождения",
+    sections: "Разделы",
     emptyAppeals: "Обращений пока нет.",
     emptyCandidates: "Кандидатских заявок пока нет.",
     details: "Детали",
@@ -66,7 +72,11 @@ const copy = {
     rejected: "Қабылданбады",
     searchPlaceholder: "ТАӘ, телефон, email немесе трек-нөмір бойынша іздеу",
     allStatuses: "Барлық мәртебелер",
-    noTestingData: "Психологиялық тестілеу нәтижелері әзірге backend ішінде сақталмайды. Сақтау қосылғаннан кейін мұнда барлық пайдаланушы нәтижелері көрсетіледі.",
+    noTestingData: "Психологиялық тестілеу нәтижелері әзірге жоқ.",
+    answered: "Жауап",
+    timeSpent: "Жұмсалған уақыт",
+    submittedAt: "Өткен күні",
+    sections: "Бөлімдер",
     emptyAppeals: "Әзірге өтініш жоқ.",
     emptyCandidates: "Әзірге кандидат өтінімдері жоқ.",
     details: "Толығырақ",
@@ -114,6 +124,7 @@ export function AdminPanel({ locale }: { locale: Locale }) {
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null);
   const [appeals, setAppeals] = useState<AdminAppeal[]>([]);
   const [candidates, setCandidates] = useState<AdminCandidate[]>([]);
+  const [testResults, setTestResults] = useState<AdminPsychologicalTestResult[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("appeals");
   const [candidateQuery, setCandidateQuery] = useState("");
   const [candidateStatusFilter, setCandidateStatusFilter] = useState<AdminCandidate["status"] | "all">("all");
@@ -155,9 +166,11 @@ export function AdminPanel({ locale }: { locale: Locale }) {
       listAdminAppeals(),
       listAdminCandidates()
     ]);
+    const nextTestResults = await listAdminPsychologicalTestResults();
     setDashboard(nextDashboard);
     setAppeals(nextAppeals);
     setCandidates(nextCandidates);
+    setTestResults(nextTestResults);
     setSelectedAppealId((current) => current ?? nextAppeals[0]?.id ?? null);
     setSelectedCandidateId((current) => current ?? nextCandidates[0]?.id ?? null);
   }
@@ -213,6 +226,13 @@ export function AdminPanel({ locale }: { locale: Locale }) {
         setError(statusError instanceof Error ? statusError.message : t.denied);
       }
     });
+  }
+
+  function formatDuration(durationSeconds: number, remainingSeconds: number) {
+    const spent = Math.max(0, durationSeconds - remainingSeconds);
+    const minutes = Math.floor(spent / 60);
+    const seconds = spent % 60;
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
   }
 
   if (error && !dashboard) {
@@ -392,7 +412,45 @@ export function AdminPanel({ locale }: { locale: Locale }) {
       ) : (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="text-xl font-bold text-state-navy">{t.testing}</h3>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{t.noTestingData}</p>
+          {testResults.length ? (
+            <div className="mt-5 grid gap-4">
+              {testResults.map((result) => {
+                const application = result.candidate_application;
+                const displayName = application ? `${application.last_name} ${application.first_name}` : result.user.full_name;
+                return (
+                  <article key={result.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h4 className="text-lg font-bold text-state-navy">{displayName}</h4>
+                        <p className="mt-1 text-sm font-semibold text-state-tealDark">{result.test_title}</p>
+                        <p className="mt-1 text-xs text-slate-500">{result.user.email ?? result.user.phone ?? result.user.telegram_username ?? result.user.full_name}</p>
+                      </div>
+                      <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-state-navy shadow-sm">
+                        {result.answered_questions}/{result.total_questions}
+                      </span>
+                    </div>
+                    <div className="mt-4 grid gap-2 text-sm text-slate-700 md:grid-cols-3">
+                      <span className="rounded-xl bg-white px-3 py-2">{t.submittedAt}: {formatDate(result.submitted_at)}</span>
+                      <span className="rounded-xl bg-white px-3 py-2">{t.answered}: {result.answered_questions}/{result.total_questions}</span>
+                      <span className="rounded-xl bg-white px-3 py-2">{t.timeSpent}: {formatDuration(result.duration_seconds, result.remaining_seconds)}</span>
+                    </div>
+                    <div className="mt-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t.sections}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {result.sections.map((section) => (
+                          <span key={`${result.id}-${section.id}`} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700">
+                            {section.title}: {section.answered_questions}/{section.total_questions}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{t.noTestingData}</p>
+          )}
         </section>
       )
       )}

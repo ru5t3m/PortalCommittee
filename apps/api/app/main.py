@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from app.api.v1 import admin, auth, public
+from app.api.v1 import admin, auth, public, tests
 from app.core.config import get_settings
 from app.models import entities  # noqa: F401
 
@@ -23,6 +23,7 @@ def create_app() -> FastAPI:
 
     app.include_router(public.router, prefix="/api/v1", tags=["public"])
     app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
+    app.include_router(tests.router, prefix="/api/v1", tags=["psychological-tests"])
     app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
 
     @app.get("/health")
