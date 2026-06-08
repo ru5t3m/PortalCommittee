@@ -14,7 +14,7 @@ const copy = {
     contentTitle: "Учебные заведения",
     go: "Перейти",
     academies: [
-      { title: "Академия КНБ", text: "Отдельная страница для информации о поступлении, направлениях подготовки и требованиях к кандидатам.", href: "knb-academy", icon: GraduationCap },
+      { title: "Академия КНБ", text: "Отдельная страница для информации о поступлении, направлениях подготовки и требованиях к кандидатам.", href: "knb-academy", icon: GraduationCap, image: "/education/knb-academy-emblem.png" },
       { title: "Пограничная академия КНБ", text: "Отдельная страница для поступающих на направления, связанные с пограничной службой.", href: "border-academy", icon: Shield }
     ]
   },
@@ -25,7 +25,7 @@ const copy = {
     contentTitle: "Оқу орындары",
     go: "Өту",
     academies: [
-      { title: "ҰҚК Академиясы", text: "Оқуға қабылдау, даярлық бағыттары және кандидаттарға қойылатын талаптар туралы бөлек бет.", href: "knb-academy", icon: GraduationCap },
+      { title: "ҰҚК Академиясы", text: "Оқуға қабылдау, даярлық бағыттары және кандидаттарға қойылатын талаптар туралы бөлек бет.", href: "knb-academy", icon: GraduationCap, image: "/education/knb-academy-emblem.png" },
       { title: "ҰҚК Шекара академиясы", text: "Шекара қызметімен байланысты бағыттарға түсушілерге арналған бөлек бет.", href: "border-academy", icon: Shield }
     ]
   }
@@ -34,7 +34,7 @@ const copy = {
 export default async function EducationPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
   const t = copy[locale];
-  const academies = t.academies as Array<{ title: string; text: string; href: string; icon: LucideIcon }>;
+  const academies = t.academies as Array<{ title: string; text: string; href: string; icon: LucideIcon; image?: string }>;
 
   return (
     <>
@@ -46,7 +46,11 @@ export default async function EducationPage({ params }: { params: Promise<{ loca
             {academies.map((academy) => (
               <Link href={`/${locale}/education/${academy.href}`} key={academy.title}>
                 <PremiumCard className="h-full">
-                  <academy.icon className="h-9 w-9 text-state-teal" />
+                  {academy.image ? (
+                    <img src={academy.image} alt="" className="h-20 w-20 object-contain" />
+                  ) : (
+                    <academy.icon className="h-9 w-9 text-state-teal" />
+                  )}
                   <h3 className="mt-5 text-2xl font-bold text-state-navy">{academy.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-slate-600">{academy.text}</p>
                   <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-state-tealDark">
