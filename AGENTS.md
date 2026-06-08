@@ -98,6 +98,7 @@ Implemented or partially implemented:
 - Candidate registration/application data is separate from authentication. After Telegram auth, a candidate may still need to complete candidate application data.
 - Refresh tokens are stored as HttpOnly cookies; access tokens are kept in browser session storage.
 - Refresh-token sessions use `RefreshSession` rows.
+- Frontend auth recovery uses `/auth/refresh` when the access token is missing or expired. Client refresh calls are deduplicated through a shared promise because backend refresh rotates/revokes the previous refresh session.
 - Current user cabinet reads `/auth/me` and displays persisted candidate application data.
 - Public first-contact work/study applications submit through `/api/v1/appeals`.
 - Appeal submission displays a tracking code.

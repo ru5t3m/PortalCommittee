@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import current_user
 from app.db.session import get_db
-from app.models.entities import Appeal, News, Page, RegionOffice, Status
+from app.models.entities import Appeal, News, Page, RegionOffice, Status, User
 from app.schemas.dto import AppealCreate, NewsOut, PageOut, RegionOfficeOut, TrackingOut
 from app.services.localization import localized, pick_locale
 from app.services.tracking import make_tracking_code
@@ -25,7 +26,7 @@ def get_page(slug: str, locale: str = Query("ru"), db: Session = Depends(get_db)
 
 
 @router.post("/appeals", response_model=TrackingOut, status_code=201)
-def create_appeal(payload: AppealCreate, db: Session = Depends(get_db)):
+def create_appeal(payload: AppealCreate, db: Session = Depends(get_db), _user: User = Depends(current_user)):
     row = Appeal(tracking_code=make_tracking_code("APL"), **payload.model_dump())
     db.add(row)
     db.commit()

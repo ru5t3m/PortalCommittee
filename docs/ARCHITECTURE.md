@@ -35,6 +35,7 @@ No English routes are in scope.
 - Next.js App Router is used for localized routes under `apps/web/app/[locale]`.
 - Shared locale handling lives in `apps/web/lib/i18n.ts`.
 - API calls should go through typed helpers in `apps/web/lib/api.ts`.
+- Authenticated frontend calls should use helpers in `apps/web/lib/auth.ts`; access tokens live in session storage and are recovered through the HttpOnly refresh cookie. Concurrent refresh calls are deduplicated client-side because backend refresh tokens rotate.
 - Some datasets may still be static in `apps/web/lib/data.ts`; active site sections should move to backend-backed content CRUD where required.
 - Mobile UX may diverge substantially from desktop UX while keeping the same `/ru` and `/kk` routes.
 - Mobile and desktop components should share data loading, validation, translations, and API contracts rather than duplicating business logic.

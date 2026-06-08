@@ -1,9 +1,11 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
-import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
+import { CheckCircle2, LogIn } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { KnbEmblem } from "@/components/KnbEmblem";
-import { submitCitizenAppeal, type TrackingResponse } from "@/lib/api";
+import { API_URL, parseApiError, type CitizenAppealPayload, type TrackingResponse } from "@/lib/api";
+import { authFetch, getMe } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n";
 
 const copy = {
@@ -28,6 +30,10 @@ const copy = {
     newApplication: "Подать еще одну заявку",
     visualSteps: ["Выберите службу или учебу", "Заполните все поля", "Нажмите кнопку отправки", "Отправьте необходимые документы на адрес почты, который увидите после отправки", "Ожидайте обратной связи"],
     error: "Не удалось выполнить запрос",
+    checkingAuth: "Проверяем вход",
+    authRequired: "Для подачи заявки нужен вход",
+    authRequiredText: "Заявка на поступление доступна только пользователям, которые вошли в профиль. Войдите через Telegram или email, затем вернитесь к форме.",
+    login: "Войти",
     statusLabels: {
       received: "Получено",
       in_review: "На рассмотрении",
@@ -56,6 +62,10 @@ const copy = {
     newApplication: "Тағы бір өтінім беру",
     visualSteps: ["Қызметті немесе оқуды таңдаңыз", "Барлық өрістерді толтырыңыз", "Жіберу батырмасын басыңыз", "Жібергеннен кейін көрсетілетін пошта мекенжайына қажетті құжаттарды жіберіңіз", "Кері байланысты күтіңіз"],
     error: "Сұрауды орындау мүмкін болмады",
+    checkingAuth: "Кіру тексерілуде",
+    authRequired: "Өтінім беру үшін кіру қажет",
+    authRequiredText: "Оқуға немесе қызметке өтінім беру портал профиліне кірген пайдаланушыларға ғана қолжетімді. Telegram немесе email арқылы кіріп, нысанға қайта оралыңыз.",
+    login: "Кіру",
     statusLabels: {
       received: "Қабылданды",
       in_review: "Қаралуда",
@@ -72,12 +82,40 @@ function statusText(locale: Locale, status: string) {
   return status in labels ? labels[status as keyof typeof labels] : status;
 }
 
+async function submitAuthorizedCitizenAppeal(payload: CitizenAppealPayload) {
+  const response = await authFetch(`${API_URL}/appeals`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as TrackingResponse;
+}
+
 export function CitizenAppealForm({ locale }: { locale: Locale }) {
   const t = copy[locale];
   const formRef = useRef<HTMLFormElement>(null);
+  const [authStatus, setAuthStatus] = useState<"checking" | "allowed" | "denied">("checking");
   const [submitResult, setSubmitResult] = useState<TrackingResponse | null>(null);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, startSubmit] = useTransition();
+
+  useEffect(() => {
+    let active = true;
+    getMe()
+      .then(() => {
+        if (active) setAuthStatus("allowed");
+      })
+      .catch(() => {
+        if (active) setAuthStatus("denied");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -95,7 +133,7 @@ export function CitizenAppealForm({ locale }: { locale: Locale }) {
       setSubmitError("");
       setSubmitResult(null);
       try {
-        const result = await submitCitizenAppeal(payload);
+        const result = await submitAuthorizedCitizenAppeal(payload);
         setSubmitResult(result);
         formRef.current?.reset();
       } catch (error) {
@@ -127,6 +165,24 @@ export function CitizenAppealForm({ locale }: { locale: Locale }) {
         </div>
       </aside>
 
+      {authStatus === "checking" ? (
+        <section className="grid min-h-[20rem] content-center rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm md:p-8">
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-state-tealDark">{t.checkingAuth}</p>
+        </section>
+      ) : authStatus === "denied" ? (
+        <section className="grid min-h-[24rem] content-center rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-state-teal/10 text-state-tealDark">
+            <LogIn className="h-7 w-7" />
+          </div>
+          <h2 className="mt-5 text-2xl font-bold text-state-navy">{t.authRequired}</h2>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">{t.authRequiredText}</p>
+          <div className="mt-6">
+            <Link href={`/${locale}/login`} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-state-gold px-5 py-3 text-sm font-bold text-state-navy transition hover:bg-[#e5bd55]">
+              {t.login}
+            </Link>
+          </div>
+        </section>
+      ) : (
       <form ref={formRef} onSubmit={handleSubmit} className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <h2 className="text-2xl font-bold text-state-navy">{t.formTitle}</h2>
         {submitResult ? (
@@ -190,6 +246,7 @@ export function CitizenAppealForm({ locale }: { locale: Locale }) {
           </>
         )}
       </form>
+      )}
     </div>
   );
 }

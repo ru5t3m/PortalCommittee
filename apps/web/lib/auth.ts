@@ -49,6 +49,7 @@ export type TelegramLoginStatus = {
 
 const ACCESS_TOKEN_KEY = "knb-access-token";
 const ADMIN_ACCESS_TOKEN_KEY = "knb-admin-access-token";
+let refreshPromise: Promise<TokenResponse> | null = null;
 
 function getStoredAccessToken() {
   if (typeof window === "undefined") return null;
@@ -158,11 +159,17 @@ export function hasAdminPanelSession() {
 }
 
 export async function refreshSession() {
-  const response = await fetch(`${API_URL}/auth/refresh`, {
-    method: "POST",
-    credentials: "include"
-  });
-  return storeTokenFromResponse(response);
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_URL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include"
+    })
+      .then(storeTokenFromResponse)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
 }
 
 export async function logout() {

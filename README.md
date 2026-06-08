@@ -35,6 +35,7 @@ Out of scope unless explicitly changed later:
 - Email/password login and registration as a secondary provider. The registration page currently allows only email/password registration. First-time email registration collects name, birth date, phone, email, and password, then creates the candidate account/application.
 - Phone confirmation through Telegram contact sharing.
 - Logout and refresh-token sessions using an HttpOnly refresh cookie.
+- Frontend session recovery after page reload uses the refresh cookie and deduplicates concurrent refresh calls.
 - Candidate account cabinet using `/auth/me`.
 - Admin/moderator dashboard for appeals and candidate applications.
 - Admin/moderator status changes for appeals and candidate applications.
