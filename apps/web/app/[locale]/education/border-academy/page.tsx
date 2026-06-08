@@ -1,4 +1,4 @@
-import { BookOpenCheck, ClipboardCheck, FileText, HeartPulse, MapPinned, Shield, Stethoscope, Trophy, UsersRound } from "lucide-react";
+import { BookOpenCheck, CalendarClock, ClipboardCheck, FileText, HeartPulse, MapPinned, Shield, ShieldCheck, Stethoscope, Trophy, UsersRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/Button";
@@ -25,6 +25,16 @@ const copy = {
       "граждан, прошедших воинскую службу либо службу в специальных государственных органах, и военнослужащих срочной службы до достижения ими в год поступления 24 лет",
       "военнослужащих по контракту либо сотрудников специальных государственных органов до достижения ими в год поступления 25 лет"
     ],
+    summary: [
+      ["3 категории", "кандидатов"],
+      ["6-7 месяцев", "предварительное изучение"],
+      ["70 баллов", "для медицинских специальностей"]
+    ],
+    routeTitle: "Маршрут поступления",
+    routeText: "Поступление начинается с обращения в подразделения Пограничной службы по месту жительства, затем кандидат проходит изучение, конкурсный прием и зачисление по рейтингу.",
+    selectionTitle: "Окончательный профессиональный отбор",
+    entTitle: "ЕНТ и направления подготовки",
+    contactTitle: "Первый шаг кандидата",
     blocks: [
       {
         title: "Куда обращаться",
@@ -86,6 +96,16 @@ const copy = {
       "әскери қызмет немесе арнаулы мемлекеттік органдарда қызмет өткерген азаматтар және мерзімді әскери қызметшілер, түсу жылы 24 жасқа толғанға дейін",
       "келісімшарт бойынша әскери қызметшілер немесе арнаулы мемлекеттік органдардың қызметкерлері, түсу жылы 25 жасқа толғанға дейін"
     ],
+    summary: [
+      ["3 санат", "кандидаттар"],
+      ["6-7 ай", "алдын ала зерделеу"],
+      ["70 балл", "медициналық мамандықтарға"]
+    ],
+    routeTitle: "Түсу маршруты",
+    routeText: "Түсу тұрғылықты жері бойынша Шекара қызметі бөлімшелеріне жүгінуден басталады, одан кейін кандидат зерделеуден, конкурстық қабылдаудан және рейтинг бойынша оқуға қабылдаудан өтеді.",
+    selectionTitle: "Түпкілікті кәсіби іріктеу",
+    entTitle: "ҰБТ және даярлық бағыттары",
+    contactTitle: "Кандидаттың алғашқы қадамы",
     blocks: [
       {
         title: "Қайда жүгіну керек",
@@ -141,49 +161,116 @@ const copy = {
 export default async function BorderAcademyPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
   const t = copy[locale];
+  const contactBlock = t.blocks[0];
+  const routeBlocks = [t.blocks[0], t.blocks[1], t.blocks[2], t.blocks[6]];
+  const selectionBlock = t.blocks[3];
+  const entBlocks = [t.blocks[4], t.blocks[5]];
+  const certificateBlock = t.blocks[7];
   return (
     <>
       <PageHero badge={t.eyebrow} title={t.title} description={t.description} />
-      <section className="bg-white py-20 md:py-24">
+      <section className="bg-[linear-gradient(180deg,#ffffff_0%,#f6fbf8_48%,#ffffff_100%)] py-20 md:py-24">
         <Container>
-          <PremiumCard className="border-state-teal/20 bg-state-teal/5">
-            <Shield className="h-10 w-10 text-state-tealDark" />
-            <h2 className="mt-5 text-3xl font-bold text-state-navy">{t.introTitle}</h2>
-            <ul className="mt-5 grid gap-3 text-base leading-7 text-slate-700">
-              {t.introItems.map((item) => (
-                <li key={item} className="flex gap-3">
-                  <span className="mt-2.5 h-2 w-2 shrink-0 rounded-full bg-state-gold" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <Button href={`/${locale}/appeals`} variant="gold" className="mt-7">{t.apply}</Button>
-          </PremiumCard>
+          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
+            <div className="relative overflow-hidden rounded-[1.35rem] bg-state-navy p-7 text-white shadow-premium md:p-8">
+              <div className="security-grid absolute inset-0 opacity-35" />
+              <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full border border-state-gold/25" />
+              <div className="relative">
+                <Shield className="h-11 w-11 text-state-gold" />
+                <h2 className="mt-5 text-3xl font-bold leading-tight">{t.introTitle}</h2>
+                <ul className="mt-5 grid gap-3 text-sm leading-7 text-white/78">
+                  {t.introItems.map((item) => (
+                    <li key={item} className="flex gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-3">
+                      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-state-gold" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button href={`/${locale}/appeals`} variant="gold" className="mt-7">{t.apply}</Button>
+              </div>
+            </div>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-2">
-            {t.blocks.map((block) => (
-              <PremiumCard key={block.title} className="h-full">
-                <block.icon className="h-8 w-8 text-state-teal" />
-                <h3 className="mt-5 text-xl font-bold text-state-navy">{block.title}</h3>
-                {block.text ? <p className="mt-3 text-sm leading-7 text-slate-600">{block.text}</p> : null}
-                {block.items ? (
-                  <ul className="mt-4 grid gap-2 text-sm leading-6 text-slate-600">
-                    {block.items.map((item) => (
-                      <li key={item} className="flex gap-2">
-                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-state-gold" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </PremiumCard>
-            ))}
+            <div className="grid gap-4">
+              {t.summary.map(([value, label]) => (
+                <div key={value} className="rounded-[1.15rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <p className="text-3xl font-bold text-state-navy">{value}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-500">{label}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <PremiumCard className="mt-8 bg-state-navy text-white">
-            <h2 className="text-2xl font-bold">{t.noteTitle}</h2>
-            <p className="mt-3 max-w-4xl text-sm leading-7 text-white/72">{t.noteText}</p>
-          </PremiumCard>
+          <section className="mt-10 rounded-[1.35rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+            <div className="grid gap-5 lg:grid-cols-[0.7fr_1.3fr] lg:items-start">
+              <div>
+                <CalendarClock className="h-9 w-9 text-state-teal" />
+                <h2 className="mt-4 text-3xl font-bold text-state-navy">{t.routeTitle}</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{t.routeText}</p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-4">
+                {routeBlocks.map((block, index) => (
+                  <div key={block.title} className="relative rounded-2xl bg-state-surface p-5">
+                    <span className="absolute right-4 top-4 text-4xl font-black text-state-teal/12">{String(index + 1).padStart(2, "0")}</span>
+                    <block.icon className="h-7 w-7 text-state-tealDark" />
+                    <h3 className="mt-5 text-base font-bold leading-6 text-state-navy">{block.title}</h3>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+            <section className="rounded-[1.35rem] bg-state-navy p-6 text-white shadow-premium md:p-8">
+              <ClipboardCheck className="h-9 w-9 text-state-gold" />
+              <h2 className="mt-5 text-2xl font-bold">{t.selectionTitle}</h2>
+              {selectionBlock.items ? (
+                <ul className="mt-6 grid gap-3">
+                  {selectionBlock.items.map((item) => (
+                    <li key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 text-sm font-semibold leading-6 text-white/82">
+                      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-state-gold" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+
+            <section className="rounded-[1.35rem] border border-state-teal/15 bg-white p-6 shadow-sm md:p-8">
+              <BookOpenCheck className="h-9 w-9 text-state-teal" />
+              <h2 className="mt-5 text-2xl font-bold text-state-navy">{t.entTitle}</h2>
+              <div className="mt-6 grid gap-4">
+                {entBlocks.map((block) => (
+                  <article key={block.title} className="rounded-2xl border border-slate-200 bg-state-surface p-5">
+                    <div className="flex items-start gap-3">
+                      <block.icon className="mt-1 h-6 w-6 shrink-0 text-state-tealDark" />
+                      <div>
+                        <h3 className="text-lg font-bold text-state-navy">{block.title}</h3>
+                        <p className="mt-3 text-sm leading-7 text-slate-600">{block.text}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+                <article className="rounded-2xl border border-state-gold/30 bg-state-gold/10 p-5">
+                  <h3 className="text-lg font-bold text-state-navy">{certificateBlock.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-700">{certificateBlock.text}</p>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <PremiumCard className="h-full">
+              <contactBlock.icon className="h-8 w-8 text-state-teal" />
+              <h2 className="mt-5 text-2xl font-bold text-state-navy">{t.contactTitle}</h2>
+              <h3 className="mt-4 text-lg font-bold text-state-navy">{contactBlock.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{contactBlock.text}</p>
+            </PremiumCard>
+
+            <PremiumCard className="h-full bg-state-navy text-white">
+              <h2 className="text-2xl font-bold">{t.noteTitle}</h2>
+              <p className="mt-3 text-sm leading-7 text-white/72">{t.noteText}</p>
+            </PremiumCard>
+          </div>
         </Container>
       </section>
     </>

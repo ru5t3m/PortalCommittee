@@ -12,7 +12,7 @@ import { getMe, type AuthMe } from "@/lib/auth";
 const links = {
   ru: [
     ["", "Главная"],
-    ["about", "О Комитете"],
+    ["about", "О КНБ РК"],
     ["activities", "Направления деятельности"],
     ["careers/admission", "Поступление на службу"],
     ["education", "Поступление на учебу"],
