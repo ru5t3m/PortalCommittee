@@ -1,5 +1,6 @@
 import json
 import secrets
+import base64
 from datetime import datetime, timedelta, timezone
 from urllib import request as urllib_request
 from urllib.error import URLError
@@ -12,11 +13,13 @@ from app.api.deps import current_user
 from app.core.config import get_settings
 from app.core.security import create_access_token, create_refresh_token, hash_password, hash_token, verify_password
 from app.db.session import get_db
-from app.models.entities import CandidateApplication, LoginAttempt, RefreshSession, Role, TelegramLoginChallenge, User
+from app.models.entities import CandidateApplication, EdsLoginChallenge, LoginAttempt, RefreshSession, Role, TelegramLoginChallenge, User
 from app.schemas.dto import (
     AuthMeOut,
     AdminPanelLoginIn,
     CandidateApplicationOut,
+    EdsLoginCompleteIn,
+    EdsLoginStartOut,
     PasswordLoginIn,
     PasswordRegisterIn,
     TelegramLoginCompleteIn,
@@ -25,6 +28,7 @@ from app.schemas.dto import (
     TokenOut,
     UserOut,
 )
+from app.services.eds import EdsVerificationError, verify_cms_signature
 from app.services.tracking import make_tracking_code
 
 router = APIRouter()
@@ -160,6 +164,25 @@ def record_telegram_attempt(
     )
 
 
+def record_eds_attempt(
+    db: Session,
+    *,
+    iin: str | None,
+    request: Request,
+    user: User | None,
+    success: bool,
+    reason: str | None = None,
+) -> None:
+    record_login_attempt(
+        db,
+        email=f"eds:{iin or 'unknown'}",
+        request=request,
+        user=user,
+        success=success,
+        reason=reason,
+    )
+
+
 def too_many_recent_failures(db: Session, identifier: str, request: Request) -> bool:
     since = datetime.now(timezone.utc) - timedelta(minutes=LOCKOUT_WINDOW_MINUTES)
     ip = client_ip(request)
@@ -239,6 +262,10 @@ def role_for_email(email: str) -> Role:
     return Role.candidate
 
 
+def role_for_iin(iin: str) -> Role:
+    return Role.candidate
+
+
 def validate_password_policy(password: str) -> None:
     has_lower = any(char.islower() for char in password)
     has_upper = any(char.isupper() for char in password)
@@ -309,7 +336,6 @@ def register_with_password(payload: PasswordRegisterIn, request: Request, respon
                 )
             )
 
-    user.failed_login_count = 0
     user.last_login_at = now
     record_login_attempt(db, email=email, request=request, user=user, success=True, reason="password_registered")
     create_refresh_session(db, user, request, response)
@@ -328,8 +354,6 @@ def login_with_password(payload: PasswordLoginIn, request: Request, response: Re
 
     user = db.query(User).filter(User.email == email, User.is_active.is_(True), User.is_blocked.is_(False)).first()
     if not user or not user.hashed_password or not verify_password(payload.password, user.hashed_password):
-        if user:
-            user.failed_login_count += 1
         record_login_attempt(db, email=email, request=request, user=user, success=False, reason="invalid_credentials")
         db.commit()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
@@ -337,7 +361,6 @@ def login_with_password(payload: PasswordLoginIn, request: Request, response: Re
     role = role_for_email(email)
     if role in {Role.admin, Role.moderator}:
         user.role = role
-    user.failed_login_count = 0
     user.last_login_at = datetime.now(timezone.utc)
     record_login_attempt(db, email=email, request=request, user=user, success=True, reason="password_login")
     create_refresh_session(db, user, request, response)
@@ -375,6 +398,113 @@ def login_admin_panel(
     record_login_attempt(db, email=admin_identifier, request=request, user=user, success=True, reason="admin_panel_login")
     db.commit()
     return admin_token_out(user)
+
+
+@router.post("/auth/eds/start", response_model=EdsLoginStartOut, status_code=201)
+def start_eds_login(request: Request, db: Session = Depends(get_db)):
+    settings = get_settings()
+    ip = client_ip(request)
+    if ip:
+        since = datetime.now(timezone.utc) - timedelta(minutes=LOCKOUT_WINDOW_MINUTES)
+        recent_count = (
+            db.query(EdsLoginChallenge)
+            .filter(EdsLoginChallenge.created_ip == ip, EdsLoginChallenge.created_at >= since)
+            .count()
+        )
+        if recent_count >= MAX_TELEGRAM_CHALLENGES_PER_WINDOW:
+            raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many EDS login requests")
+
+    nonce = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.eds_login_challenge_minutes)
+    challenge_text = json.dumps(
+        {
+            "action": "knb_portal_eds_login",
+            "nonce": nonce,
+            "issued_at": datetime.now(timezone.utc).isoformat(),
+            "expires_at": expires_at.isoformat(),
+        },
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    challenge = EdsLoginChallenge(
+        nonce=nonce,
+        status="pending",
+        challenge_text=challenge_text,
+        expires_at=expires_at,
+        created_ip=client_ip(request),
+        user_agent=user_agent(request),
+    )
+    db.add(challenge)
+    db.commit()
+    db.refresh(challenge)
+    return EdsLoginStartOut(
+        challenge_id=challenge.id,
+        nonce=challenge.nonce,
+        challenge_text=challenge.challenge_text,
+        challenge_base64=base64.b64encode(challenge.challenge_text.encode("utf-8")).decode("ascii"),
+        expires_at=challenge.expires_at,
+    )
+
+
+@router.post("/auth/eds/complete", response_model=TokenOut)
+def complete_eds_login(payload: EdsLoginCompleteIn, request: Request, response: Response, db: Session = Depends(get_db)):
+    challenge = (
+        db.query(EdsLoginChallenge)
+        .filter(EdsLoginChallenge.id == payload.challenge_id, EdsLoginChallenge.nonce == payload.nonce)
+        .first()
+    )
+    now = datetime.now(timezone.utc)
+    if not challenge:
+        record_eds_attempt(db, iin=None, request=request, user=None, success=False, reason="challenge_not_found")
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="EDS login request not found")
+    if is_expired(challenge.expires_at, now) or challenge.status != "pending" or challenge.consumed_at is not None:
+        challenge.status = "expired" if is_expired(challenge.expires_at, now) else challenge.status
+        record_eds_attempt(db, iin=challenge.iin, request=request, user=None, success=False, reason="challenge_not_active")
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="EDS login request is not active")
+
+    try:
+        signer = verify_cms_signature(payload.cms_base64, challenge.challenge_text)
+    except EdsVerificationError as exc:
+        record_eds_attempt(db, iin=None, request=request, user=None, success=False, reason="signature_verification_failed")
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+
+    user = db.query(User).filter(User.iin == signer.iin).first()
+    role = role_for_iin(signer.iin)
+    if not user:
+        user = User(
+            email=None,
+            full_name=signer.full_name,
+            iin=signer.iin,
+            eds_certificate_serial=signer.certificate_serial,
+            hashed_password=None,
+            role=role,
+        )
+        db.add(user)
+        db.flush()
+    else:
+        if not user.is_active or user.is_blocked:
+            record_eds_attempt(db, iin=signer.iin, request=request, user=user, success=False, reason="blocked_or_inactive")
+            db.commit()
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is not active")
+        user.full_name = signer.full_name
+        user.eds_certificate_serial = signer.certificate_serial
+
+    user.last_login_at = now
+    challenge.status = "consumed"
+    challenge.signed_at = now
+    challenge.consumed_at = now
+    challenge.iin = signer.iin
+    challenge.full_name = signer.full_name
+    challenge.certificate_serial = signer.certificate_serial
+    challenge.certificate_subject = signer.certificate_subject
+    record_eds_attempt(db, iin=signer.iin, request=request, user=user, success=True, reason="eds_login")
+    create_refresh_session(db, user, request, response)
+    db.commit()
+    db.refresh(user)
+    return token_out(user)
 
 
 @router.post("/auth/telegram/start", response_model=TelegramLoginStartOut, status_code=201)
@@ -475,7 +605,6 @@ def complete_telegram_login(payload: TelegramLoginCompleteIn, request: Request, 
         db.commit()
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is not active")
 
-    user.failed_login_count = 0
     user.last_login_at = now
     challenge.status = "consumed"
     challenge.consumed_at = now

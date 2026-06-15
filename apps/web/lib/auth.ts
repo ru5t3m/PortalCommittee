@@ -47,6 +47,14 @@ export type TelegramLoginStatus = {
   phone_verified: boolean;
 };
 
+export type EdsLoginStart = {
+  challenge_id: number;
+  nonce: string;
+  challenge_text: string;
+  challenge_base64: string;
+  expires_at: string;
+};
+
 const ACCESS_TOKEN_KEY = "knb-access-token";
 const ADMIN_ACCESS_TOKEN_KEY = "knb-admin-access-token";
 let refreshPromise: Promise<TokenResponse> | null = null;
@@ -103,6 +111,27 @@ export async function completeTelegramLogin(challengeId: number, nonce: string) 
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify({ challenge_id: challengeId, nonce })
+  });
+  return storeTokenFromResponse(response);
+}
+
+export async function startEdsLogin() {
+  const response = await fetch(`${API_URL}/auth/eds/start`, {
+    method: "POST",
+    credentials: "include"
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as EdsLoginStart;
+}
+
+export async function completeEdsLogin(challengeId: number, nonce: string, cmsBase64: string) {
+  const response = await fetch(`${API_URL}/auth/eds/complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ challenge_id: challengeId, nonce, cms_base64: cmsBase64 })
   });
   return storeTokenFromResponse(response);
 }

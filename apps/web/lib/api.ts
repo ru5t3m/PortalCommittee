@@ -14,6 +14,18 @@ export type CitizenAppealPayload = {
   message: string;
 };
 
+export type RegionOffice = {
+  id: number;
+  service: "knb" | "border";
+  name_ru: string;
+  name_kk: string;
+  region_ru: string;
+  region_kk: string;
+  phones: string[];
+  latitude: string;
+  longitude: string;
+};
+
 export async function parseApiError(response: Response) {
   try {
     const payload = await response.json();
@@ -30,22 +42,18 @@ export async function parseApiError(response: Response) {
   }
 }
 
-export async function submitCitizenAppeal(payload: CitizenAppealPayload) {
-  const response = await fetch(`${API_URL}/appeals`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  if (!response.ok) {
-    throw new Error(await parseApiError(response));
-  }
-  return (await response.json()) as TrackingResponse;
-}
-
 export async function getAppealStatus(trackingCode: string) {
   const response = await fetch(`${API_URL}/appeals/${encodeURIComponent(trackingCode)}`);
   if (!response.ok) {
     throw new Error(await parseApiError(response));
   }
   return (await response.json()) as TrackingResponse;
+}
+
+export async function listRegionOffices() {
+  const response = await fetch(`${API_URL}/contacts/regions`);
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as RegionOffice[];
 }

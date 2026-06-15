@@ -7,11 +7,10 @@ export type PrimaryPsychologicalQuestion = {
   choices?: string[];
 };
 export type PrimaryPsychologicalSection = {
-  id: "numeric" | "visual" | "memory" | "interpretation";
+  id: "numeric" | "visual";
   title: string;
   description: string;
   questions: PrimaryPsychologicalQuestion[];
-  status?: "ready" | "planned";
 };
 
 const imageBase = "/psychological-tests/primary-selection";
@@ -143,28 +142,12 @@ export const primaryPsychologicalSections: PrimaryPsychologicalSection[] = [
     id: "numeric",
     title: "Числовые закономерности",
     description: "50 заданий на числовые ряды, пропущенные числа и формально-логическое мышление.",
-    questions: numericQuestions,
-    status: "ready"
+    questions: numericQuestions
   },
   {
     id: "visual",
     title: "Наглядно-образные задания",
     description: "50 заданий с фигурами: исключение лишней фигуры и выбор пропущенного элемента.",
-    questions: visualQuestions,
-    status: "ready"
-  },
-  {
-    id: "memory",
-    title: "Память",
-    description: "Секция для заданий на кратковременную память будет добавлена следующим этапом.",
-    questions: [],
-    status: "planned"
-  },
-  {
-    id: "interpretation",
-    title: "Интерпретация",
-    description: "Итоговая интерпретация появится после внесения ключей ответов и шкал оценки.",
-    questions: [],
-    status: "planned"
+    questions: visualQuestions
   }
 ];

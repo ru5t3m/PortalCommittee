@@ -190,6 +190,8 @@ ADMIN_PORTAL_ALLOWED_USER_EMAIL=test@gmail.com
 ADMIN_PANEL_EMAIL=rustemadmin@gmail.com
 ADMIN_PANEL_PASSWORD_HASH=<bcrypt-hash>
 ADMIN_ACCESS_TOKEN_MINUTES=60
+EDS_TRUSTED_CA_FILE=/etc/knb/certs/nca-trusted-ca.pem
+EDS_ALLOW_UNTRUSTED_CERTIFICATES=false
 ```
 
 Multiple values are also valid:
@@ -216,6 +218,7 @@ Render Postgres migration troubleshooting:
 
 - Replace `JWT_SECRET`, database credentials, cookie secrets, and CORS origins.
 - Configure `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, and strong `TELEGRAM_WEBHOOK_SECRET`.
+- Configure `EDS_TRUSTED_CA_FILE` with the trusted NCA RK certificate bundle before enabling EDS login in production.
 - Configure the separate `/admin` gate through `ADMIN_PORTAL_ALLOWED_USER_EMAIL`, `ADMIN_PANEL_EMAIL`, and `ADMIN_PANEL_PASSWORD_HASH`.
 - Set allowed hosts explicitly for the deployed domain and ingress.
 - Terminate HTTPS at a trusted ingress or reverse proxy.

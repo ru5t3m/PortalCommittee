@@ -50,7 +50,7 @@ const homeCopy = {
     careerDescription: "Последовательность отбора вынесена в плотную визуальную линию, чтобы кандидат сразу видел весь маршрут.",
     psychEyebrow: "Самопроверка",
     psychTitle: "Психологическое тестирование",
-    psychDescription: "Демо-разделы помогают кандидату оценить базовые навыки до официальных этапов отбора. Результаты не являются официальным заключением.",
+    psychDescription: "Первичный психологический тест помогает кандидату пройти подготовительный этап в личном кабинете. Автоматическая оценка отключена до утверждения ключей.",
     contactBadge: "Контактный центр",
     contactTitle: "Нужна официальная информация?",
     contactText: "Используйте разделы портала или региональные контакты, чтобы быстро найти официальную информацию.",
@@ -74,7 +74,7 @@ const homeCopy = {
     careerDescription: "Іріктеу кезеңдері кандидат бүкіл маршрутты бірден көруі үшін көрнекі желі түрінде берілген.",
     psychEyebrow: "Өзін-өзі тексеру",
     psychTitle: "Психологиялық тестілеу",
-    psychDescription: "Демо-бөлімдер кандидатқа ресми іріктеу кезеңдеріне дейін базалық дағдыларын бағалауға көмектеседі. Нәтижелер ресми қорытынды болып табылмайды.",
+    psychDescription: "Бастапқы психологиялық тест кандидатқа жеке кабинет арқылы дайындық кезеңінен өтуге көмектеседі. Автоматты бағалау кілттер бекітілгенге дейін өшірулі.",
     contactBadge: "Байланыс орталығы",
     contactTitle: "Ресми ақпарат қажет пе?",
     contactText: "Ресми ақпаратты жылдам табу үшін портал бөлімдерін немесе өңірлік байланыстарды пайдаланыңыз.",
@@ -177,7 +177,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
       </Section>
 
       <Section eyebrow={copy.psychEyebrow} title={copy.psychTitle} description={copy.psychDescription}>
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {psychologicalTests.map((item, index) => (
             <Reveal delay={index * 0.05} key={item.slug}>
               <Link href={`/${locale}/psychological-testing/${item.slug}`}>

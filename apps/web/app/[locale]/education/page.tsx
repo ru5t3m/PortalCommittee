@@ -15,7 +15,7 @@ const copy = {
     go: "Перейти",
     academies: [
       { title: "Академия КНБ", text: "Отдельная страница для информации о поступлении, направлениях подготовки и требованиях к кандидатам.", href: "knb-academy", icon: GraduationCap, image: "/education/knb-academy-emblem.png" },
-      { title: "Пограничная академия КНБ", text: "Отдельная страница для поступающих на направления, связанные с пограничной службой.", href: "border-academy", icon: Shield }
+      { title: "Пограничная академия КНБ", text: "Отдельная страница для поступающих на направления, связанные с пограничной службой.", href: "border-academy", icon: Shield, image: "/education/border-academy-emblem.png" }
     ]
   },
   kk: {
@@ -26,7 +26,7 @@ const copy = {
     go: "Өту",
     academies: [
       { title: "ҰҚК Академиясы", text: "Оқуға қабылдау, даярлық бағыттары және кандидаттарға қойылатын талаптар туралы бөлек бет.", href: "knb-academy", icon: GraduationCap, image: "/education/knb-academy-emblem.png" },
-      { title: "ҰҚК Шекара академиясы", text: "Шекара қызметімен байланысты бағыттарға түсушілерге арналған бөлек бет.", href: "border-academy", icon: Shield }
+      { title: "ҰҚК Шекара академиясы", text: "Шекара қызметімен байланысты бағыттарға түсушілерге арналған бөлек бет.", href: "border-academy", icon: Shield, image: "/education/border-academy-emblem.png" }
     ]
   }
 };

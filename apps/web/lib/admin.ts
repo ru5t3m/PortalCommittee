@@ -1,5 +1,5 @@
 import { adminAuthFetch } from "@/lib/auth";
-import { API_URL, parseApiError } from "@/lib/api";
+import { API_URL, parseApiError, type RegionOffice } from "@/lib/api";
 import type { PsychologicalTestResult } from "@/lib/psychological-tests";
 
 export type AdminDashboard = {
@@ -13,7 +13,6 @@ export type AdminDashboard = {
     phone_verified: boolean;
   };
   users: number;
-  pages: number;
   appeals: number;
   candidates: number;
   region_offices: number;
@@ -75,6 +74,9 @@ export type AdminPsychologicalTestResult = PsychologicalTestResult & {
   } | null;
 };
 
+export type AdminRegionOffice = RegionOffice;
+export type AdminRegionOfficePayload = Omit<RegionOffice, "id">;
+
 async function readJson<T>(response: Response) {
   if (!response.ok) {
     throw new Error(await parseApiError(response));
@@ -98,6 +100,10 @@ export async function listAdminPsychologicalTestResults() {
   return readJson<AdminPsychologicalTestResult[]>(await adminAuthFetch(`${API_URL}/admin/psychological-tests/results`));
 }
 
+export async function listAdminRegionOffices() {
+  return readJson<AdminRegionOffice[]>(await adminAuthFetch(`${API_URL}/admin/contacts/regions`));
+}
+
 export async function updateAdminAppealStatus(id: number, status: AdminAppeal["status"]) {
   return readJson<AdminAppeal>(
     await adminAuthFetch(`${API_URL}/admin/appeals/${id}/status`, {
@@ -116,4 +122,31 @@ export async function updateAdminCandidateStatus(id: number, status: AdminCandid
       body: JSON.stringify({ status, moderator_comment: moderatorComment })
     })
   );
+}
+
+export async function createAdminRegionOffice(payload: AdminRegionOfficePayload) {
+  return readJson<AdminRegionOffice>(
+    await adminAuthFetch(`${API_URL}/admin/contacts/regions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+  );
+}
+
+export async function updateAdminRegionOffice(id: number, payload: AdminRegionOfficePayload) {
+  return readJson<AdminRegionOffice>(
+    await adminAuthFetch(`${API_URL}/admin/contacts/regions/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+  );
+}
+
+export async function deleteAdminRegionOffice(id: number) {
+  const response = await adminAuthFetch(`${API_URL}/admin/contacts/regions/${id}`, { method: "DELETE" });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
 }

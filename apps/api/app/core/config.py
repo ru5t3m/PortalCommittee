@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     telegram_bot_username: str = ""
     telegram_webhook_secret: str = ""
     telegram_login_challenge_minutes: int = 10
+    eds_login_challenge_minutes: int = 5
+    eds_trusted_ca_file: str = ""
+    eds_allow_untrusted_certificates: bool = False
     admin_portal_allowed_user_email: str = "test@gmail.com"
     admin_panel_email: str = ""
     admin_panel_password_hash: str = ""
@@ -62,6 +65,10 @@ class Settings(BaseSettings):
                 raise RuntimeError("TELEGRAM_BOT_USERNAME must be configured in production")
             if not self.telegram_webhook_secret or len(self.telegram_webhook_secret) < 24:
                 raise RuntimeError("TELEGRAM_WEBHOOK_SECRET must be configured with a strong value in production")
+            if not self.eds_trusted_ca_file:
+                raise RuntimeError("EDS_TRUSTED_CA_FILE must be configured in production")
+            if self.eds_allow_untrusted_certificates:
+                raise RuntimeError("EDS_ALLOW_UNTRUSTED_CERTIFICATES must be false in production")
 
 
 @lru_cache

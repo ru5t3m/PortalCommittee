@@ -4,6 +4,7 @@ import { MapPin, Phone } from "lucide-react";
 import L from "leaflet";
 import { MapContainer, Marker, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import { useEffect, useMemo, useState } from "react";
+import { listRegionOffices, type RegionOffice } from "@/lib/api";
 import type { Locale } from "@/lib/i18n";
 
 type Service = "knb" | "border";
@@ -17,6 +18,18 @@ type ContactPoint = {
   region: Record<Locale, string>;
   phones: string[];
 };
+
+function officeToContactPoint(office: RegionOffice): ContactPoint {
+  return {
+    id: `office-${office.id}`,
+    service: office.service,
+    lat: Number(office.latitude),
+    lng: Number(office.longitude),
+    name: { ru: office.name_ru, kk: office.name_kk },
+    region: { ru: office.region_ru, kk: office.region_kk },
+    phones: office.phones
+  };
+}
 
 const knbPoints: ContactPoint[] = [
   { id: "knb-astana", service: "knb", lat: 51.13, lng: 71.43, name: { ru: "ДКНБ по г. Астана", kk: "Астана қ. бойынша ҰҚКД" }, region: { ru: "Астана", kk: "Астана" }, phones: ["8 (7172) 76-41-26"] },
@@ -65,6 +78,8 @@ const borderPoints: ContactPoint[] = [
   { id: "border-us-zhangiztobe", service: "border", lat: 43.65, lng: 51.17, name: { ru: "УС «Жангизтобе», г. Актау", kk: "«Жаңғызтөбе» ББ, Ақтау қ." }, region: { ru: "Актау", kk: "Ақтау" }, phones: ["8 (7234) 52-57-82"] },
   { id: "border-us-aktau", service: "border", lat: 43.65, lng: 51.17, name: { ru: "УС «Актау»", kk: "«Ақтау» ББ" }, region: { ru: "Актау", kk: "Ақтау" }, phones: ["8 (7292) 20-34-18"] }
 ];
+
+const staticContactPoints = [...knbPoints, ...borderPoints];
 
 const copy = {
   ru: {
@@ -120,14 +135,40 @@ function SelectedPointController({ point }: { point: ContactPoint }) {
 
 export function ContactsMapLeaflet({ locale }: { locale: Locale }) {
   const t = copy[locale];
+  const [editablePoints, setEditablePoints] = useState<ContactPoint[]>([]);
   const [service, setService] = useState<Service>("knb");
-  const points = service === "knb" ? knbPoints : borderPoints;
+  const sourcePoints = editablePoints.length ? editablePoints : staticContactPoints;
+  const points = sourcePoints.filter((point) => point.service === service);
   const [selectedId, setSelectedId] = useState(knbPoints[0].id);
-  const selectedPoint = useMemo(() => points.find((point) => point.id === selectedId) ?? points[0], [points, selectedId]);
+  const selectedPoint = useMemo(() => points.find((point) => point.id === selectedId) ?? points[0] ?? sourcePoints[0] ?? knbPoints[0], [points, selectedId, sourcePoints]);
+
+  useEffect(() => {
+    let active = true;
+    listRegionOffices()
+      .then((offices) => {
+        if (!active) return;
+        const nextPoints = offices.map(officeToContactPoint).filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lng));
+        setEditablePoints(nextPoints);
+      })
+      .catch(() => {
+        if (active) setEditablePoints([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (points.length && !points.some((point) => point.id === selectedId)) {
+      setSelectedId(points[0].id);
+    }
+  }, [points, selectedId]);
 
   function selectService(nextService: Service) {
     setService(nextService);
-    setSelectedId(nextService === "knb" ? knbPoints[0].id : borderPoints[0].id);
+    const nextPoints = sourcePoints.filter((point) => point.service === nextService);
+    setSelectedId(nextPoints[0]?.id ?? "");
   }
 
   return (

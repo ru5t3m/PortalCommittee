@@ -1,20 +1,26 @@
 "use client";
 
-import { BarChart3, ClipboardCheck, FileText, Search, ShieldCheck, UserRoundCheck, Users } from "lucide-react";
+import { BarChart3, FileText, MapPinned, Search, ShieldCheck, UserRoundCheck, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import type { Locale } from "@/lib/i18n";
 import {
+  createAdminRegionOffice,
+  deleteAdminRegionOffice,
   getAdminDashboard,
   listAdminPsychologicalTestResults,
   listAdminAppeals,
   listAdminCandidates,
+  listAdminRegionOffices,
   updateAdminAppealStatus,
   updateAdminCandidateStatus,
+  updateAdminRegionOffice,
   type AdminAppeal,
   type AdminCandidate,
   type AdminDashboard,
-  type AdminPsychologicalTestResult
+  type AdminPsychologicalTestResult,
+  type AdminRegionOffice,
+  type AdminRegionOfficePayload
 } from "@/lib/admin";
 
 const copy = {
@@ -22,10 +28,26 @@ const copy = {
     loading: "Загрузка данных",
     denied: "Войдите под учетной записью Admin или Moderator.",
     refresh: "Обновить",
-    appeals: "Обращения",
+    appeals: "Заявки на службу/учебу",
     candidates: "Кандидаты",
     users: "Пользователи",
     testing: "Тестирования",
+    contactsTab: "Контакты",
+    contactDirectory: "Справочник контактов",
+    newContact: "Новый контакт",
+    deleteContact: "Удалить",
+    service: "Служба",
+    serviceKnb: "КНБ",
+    serviceBorder: "Пограничная служба",
+    nameRu: "Название RU",
+    nameKk: "Название KK",
+    regionRu: "Регион RU",
+    regionKk: "Регион KK",
+    phones: "Телефоны",
+    phonesHint: "Один номер на строку",
+    latitude: "Широта",
+    longitude: "Долгота",
+    emptyContacts: "Контакты пока не заведены.",
     candidatePipeline: "Воронка кандидатов",
     needsReview: "Требуют рассмотрения",
     approved: "Одобрены",
@@ -37,7 +59,7 @@ const copy = {
     timeSpent: "Затрачено",
     submittedAt: "Дата прохождения",
     sections: "Разделы",
-    emptyAppeals: "Обращений пока нет.",
+    emptyAppeals: "Заявок на службу или учебу пока нет.",
     emptyCandidates: "Кандидатских заявок пока нет.",
     details: "Детали",
     status: "Статус",
@@ -62,10 +84,26 @@ const copy = {
     loading: "Деректер жүктелуде",
     denied: "Admin немесе Moderator есептік жазбасымен кіріңіз.",
     refresh: "Жаңарту",
-    appeals: "Өтініштер",
+    appeals: "Қызмет/оқу өтінімдері",
     candidates: "Кандидаттар",
     users: "Пайдаланушылар",
     testing: "Тестілеу",
+    contactsTab: "Байланыстар",
+    contactDirectory: "Байланыс анықтамалығы",
+    newContact: "Жаңа байланыс",
+    deleteContact: "Жою",
+    service: "Қызмет",
+    serviceKnb: "ҰҚК",
+    serviceBorder: "Шекара қызметі",
+    nameRu: "Атауы RU",
+    nameKk: "Атауы KK",
+    regionRu: "Өңір RU",
+    regionKk: "Өңір KK",
+    phones: "Телефондар",
+    phonesHint: "Әр жолға бір нөмір",
+    latitude: "Ендік",
+    longitude: "Бойлық",
+    emptyContacts: "Байланыстар әзірге енгізілмеген.",
     candidatePipeline: "Кандидаттар воронкасы",
     needsReview: "Қарауды қажет етеді",
     approved: "Мақұлданды",
@@ -77,7 +115,7 @@ const copy = {
     timeSpent: "Жұмсалған уақыт",
     submittedAt: "Өткен күні",
     sections: "Бөлімдер",
-    emptyAppeals: "Әзірге өтініш жоқ.",
+    emptyAppeals: "Қызметке немесе оқуға өтінімдер әзірге жоқ.",
     emptyCandidates: "Әзірге кандидат өтінімдері жоқ.",
     details: "Толығырақ",
     status: "Мәртебе",
@@ -103,7 +141,7 @@ const copy = {
 const appealStatuses: AdminAppeal["status"][] = ["received", "in_review", "answered", "rejected"];
 const candidateStatuses: AdminCandidate["status"][] = ["submitted", "in_review", "approved", "rejected"];
 
-type Tab = "overview" | "candidates" | "appeals" | "testing";
+type Tab = "overview" | "candidates" | "appeals" | "testing" | "contacts";
 type StatItem = {
   label: string;
   value: string | number;
@@ -119,23 +157,51 @@ function statusText(locale: Locale, status: string) {
   return status in labels ? labels[status as keyof typeof labels] : status;
 }
 
+const emptyRegionOfficePayload: AdminRegionOfficePayload = {
+  service: "knb",
+  name_ru: "",
+  name_kk: "",
+  region_ru: "",
+  region_kk: "",
+  phones: [""],
+  latitude: "",
+  longitude: ""
+};
+
+function officeToPayload(office: AdminRegionOffice): AdminRegionOfficePayload {
+  return {
+    service: office.service,
+    name_ru: office.name_ru,
+    name_kk: office.name_kk,
+    region_ru: office.region_ru,
+    region_kk: office.region_kk,
+    phones: office.phones,
+    latitude: office.latitude,
+    longitude: office.longitude
+  };
+}
+
 export function AdminPanel({ locale }: { locale: Locale }) {
   const t = copy[locale];
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null);
   const [appeals, setAppeals] = useState<AdminAppeal[]>([]);
   const [candidates, setCandidates] = useState<AdminCandidate[]>([]);
   const [testResults, setTestResults] = useState<AdminPsychologicalTestResult[]>([]);
+  const [regionOffices, setRegionOffices] = useState<AdminRegionOffice[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("appeals");
   const [candidateQuery, setCandidateQuery] = useState("");
   const [candidateStatusFilter, setCandidateStatusFilter] = useState<AdminCandidate["status"] | "all">("all");
   const [selectedAppealId, setSelectedAppealId] = useState<number | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null);
+  const [selectedOfficeId, setSelectedOfficeId] = useState<number | "new" | null>(null);
+  const [officeForm, setOfficeForm] = useState<AdminRegionOfficePayload>(emptyRegionOfficePayload);
   const [candidateComment, setCandidateComment] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const selectedAppeal = useMemo(() => appeals.find((item) => item.id === selectedAppealId) ?? null, [appeals, selectedAppealId]);
   const selectedCandidate = useMemo(() => candidates.find((item) => item.id === selectedCandidateId) ?? null, [candidates, selectedCandidateId]);
+  const selectedOffice = useMemo(() => regionOffices.find((item) => item.id === selectedOfficeId) ?? null, [regionOffices, selectedOfficeId]);
   const candidateStatusCounts = useMemo(() => ({
     submitted: candidates.filter((item) => item.status === "submitted").length,
     in_review: candidates.filter((item) => item.status === "in_review").length,
@@ -161,18 +227,21 @@ export function AdminPanel({ locale }: { locale: Locale }) {
 
   async function loadData() {
     setError("");
-    const [nextDashboard, nextAppeals, nextCandidates] = await Promise.all([
+    const [nextDashboard, nextAppeals, nextCandidates, nextTestResults, nextRegionOffices] = await Promise.all([
       getAdminDashboard(),
       listAdminAppeals(),
-      listAdminCandidates()
+      listAdminCandidates(),
+      listAdminPsychologicalTestResults(),
+      listAdminRegionOffices()
     ]);
-    const nextTestResults = await listAdminPsychologicalTestResults();
     setDashboard(nextDashboard);
     setAppeals(nextAppeals);
     setCandidates(nextCandidates);
     setTestResults(nextTestResults);
+    setRegionOffices(nextRegionOffices);
     setSelectedAppealId((current) => current ?? nextAppeals[0]?.id ?? null);
     setSelectedCandidateId((current) => current ?? nextCandidates[0]?.id ?? null);
+    setSelectedOfficeId((current) => current ?? nextRegionOffices[0]?.id ?? "new");
   }
 
   useEffect(() => {
@@ -193,6 +262,14 @@ export function AdminPanel({ locale }: { locale: Locale }) {
   useEffect(() => {
     setCandidateComment(selectedCandidate?.moderator_comment ?? "");
   }, [selectedCandidate]);
+
+  useEffect(() => {
+    if (selectedOfficeId === "new" || !selectedOffice) {
+      setOfficeForm(emptyRegionOfficePayload);
+      return;
+    }
+    setOfficeForm(officeToPayload(selectedOffice));
+  }, [selectedOffice, selectedOfficeId]);
 
   function refresh() {
     startTransition(async () => {
@@ -224,6 +301,58 @@ export function AdminPanel({ locale }: { locale: Locale }) {
         setCandidates((items) => items.map((item) => (item.id === updated.id ? updated : item)));
       } catch (statusError) {
         setError(statusError instanceof Error ? statusError.message : t.denied);
+      }
+    });
+  }
+
+  function updateOfficeField<K extends keyof AdminRegionOfficePayload>(field: K, value: AdminRegionOfficePayload[K]) {
+    setOfficeForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateOfficePhones(value: string) {
+    updateOfficeField("phones", value.split("\n"));
+  }
+
+  function newOffice() {
+    setSelectedOfficeId("new");
+    setOfficeForm(emptyRegionOfficePayload);
+    setActiveTab("contacts");
+  }
+
+  function saveOffice(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const payload = {
+      ...officeForm,
+      phones: officeForm.phones.map((phone) => phone.trim()).filter(Boolean)
+    };
+    startTransition(async () => {
+      try {
+        if (selectedOfficeId === "new" || selectedOfficeId === null) {
+          const created = await createAdminRegionOffice(payload);
+          setRegionOffices((items) => [...items, created]);
+          setSelectedOfficeId(created.id);
+        } else {
+          const updated = await updateAdminRegionOffice(selectedOfficeId, payload);
+          setRegionOffices((items) => items.map((item) => (item.id === updated.id ? updated : item)));
+        }
+      } catch (officeError) {
+        setError(officeError instanceof Error ? officeError.message : t.denied);
+      }
+    });
+  }
+
+  function removeSelectedOffice() {
+    if (typeof selectedOfficeId !== "number") return;
+    startTransition(async () => {
+      try {
+        await deleteAdminRegionOffice(selectedOfficeId);
+        setRegionOffices((items) => {
+          const next = items.filter((item) => item.id !== selectedOfficeId);
+          setSelectedOfficeId(next[0]?.id ?? "new");
+          return next;
+        });
+      } catch (deleteError) {
+        setError(deleteError instanceof Error ? deleteError.message : t.denied);
       }
     });
   }
@@ -260,7 +389,7 @@ export function AdminPanel({ locale }: { locale: Locale }) {
           { label: t.appeals, value: dashboard.appeals, icon: FileText },
           { label: t.candidates, value: dashboard.candidates, icon: UserRoundCheck },
           { label: t.users, value: dashboard.users, icon: Users },
-          { label: t.needsReview, value: candidateStatusCounts.submitted + candidateStatusCounts.in_review, icon: ClipboardCheck }
+          { label: t.contactsTab, value: dashboard.region_offices, icon: MapPinned }
         ] satisfies StatItem[]).map((item) => {
           const Icon = item.icon;
           return (
@@ -293,9 +422,9 @@ export function AdminPanel({ locale }: { locale: Locale }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex flex-wrap rounded-xl border border-slate-200 bg-white p-1">
-          {(["overview", "candidates", "appeals", "testing"] as const).map((tab) => (
+          {(["overview", "candidates", "appeals", "testing", "contacts"] as const).map((tab) => (
             <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`rounded-lg px-4 py-2 text-sm font-bold transition ${activeTab === tab ? "bg-state-navy text-white" : "text-slate-600 hover:bg-slate-50"}`}>
-              {tab === "overview" ? "Dashboard" : tab === "appeals" ? t.appeals : tab === "candidates" ? t.candidates : t.testing}
+              {tab === "overview" ? "Dashboard" : tab === "appeals" ? t.appeals : tab === "candidates" ? t.candidates : tab === "contacts" ? t.contactsTab : t.testing}
             </button>
           ))}
         </div>
@@ -408,6 +537,84 @@ export function AdminPanel({ locale }: { locale: Locale }) {
               </>
             ) : <p className="text-sm text-slate-500">{t.noSelection}</p>}
           </div>
+        </div>
+      ) : activeTab === "contacts" ? (
+        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4">
+              <h3 className="text-lg font-bold text-state-navy">{t.contactDirectory}</h3>
+              <button type="button" onClick={newOffice} className="rounded-xl bg-state-gold px-3 py-2 text-xs font-bold text-state-navy transition hover:bg-[#e5bd55]">
+                {t.newContact}
+              </button>
+            </div>
+            {regionOffices.length === 0 ? <p className="p-5 text-sm text-slate-500">{t.emptyContacts}</p> : regionOffices.map((office) => (
+              <button key={office.id} type="button" onClick={() => setSelectedOfficeId(office.id)} className={`block w-full border-b border-slate-100 p-4 text-left transition last:border-b-0 ${office.id === selectedOfficeId ? "bg-state-teal/10" : "hover:bg-slate-50"}`}>
+                <span className="text-sm font-bold text-state-navy">{locale === "kk" ? office.name_kk : office.name_ru}</span>
+                <span className="mt-1 block text-xs text-slate-500">
+                  {office.service === "knb" ? t.serviceKnb : t.serviceBorder} · {locale === "kk" ? office.region_kk : office.region_ru}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={saveOffice} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-state-teal">{t.contactsTab}</p>
+                <h3 className="mt-2 text-2xl font-bold text-state-navy">{selectedOfficeId === "new" ? t.newContact : t.contactDirectory}</h3>
+              </div>
+              {typeof selectedOfficeId === "number" ? (
+                <button type="button" onClick={removeSelectedOffice} disabled={isPending} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-60">
+                  {t.deleteContact}
+                </button>
+              ) : null}
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                {t.service}
+                <select value={officeForm.service} onChange={(event) => updateOfficeField("service", event.target.value as AdminRegionOfficePayload["service"])} className="min-h-11 rounded-xl border border-slate-200 px-3">
+                  <option value="knb">{t.serviceKnb}</option>
+                  <option value="border">{t.serviceBorder}</option>
+                </select>
+              </label>
+              <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                {t.regionRu}
+                <input required value={officeForm.region_ru} onChange={(event) => updateOfficeField("region_ru", event.target.value)} className="min-h-11 rounded-xl border border-slate-200 px-3" />
+              </label>
+              <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                {t.nameRu}
+                <input required value={officeForm.name_ru} onChange={(event) => updateOfficeField("name_ru", event.target.value)} className="min-h-11 rounded-xl border border-slate-200 px-3" />
+              </label>
+              <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                {t.nameKk}
+                <input required value={officeForm.name_kk} onChange={(event) => updateOfficeField("name_kk", event.target.value)} className="min-h-11 rounded-xl border border-slate-200 px-3" />
+              </label>
+              <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                {t.regionKk}
+                <input required value={officeForm.region_kk} onChange={(event) => updateOfficeField("region_kk", event.target.value)} className="min-h-11 rounded-xl border border-slate-200 px-3" />
+              </label>
+              <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                {t.latitude}
+                <input required value={officeForm.latitude} onChange={(event) => updateOfficeField("latitude", event.target.value)} className="min-h-11 rounded-xl border border-slate-200 px-3" />
+              </label>
+              <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                {t.longitude}
+                <input required value={officeForm.longitude} onChange={(event) => updateOfficeField("longitude", event.target.value)} className="min-h-11 rounded-xl border border-slate-200 px-3" />
+              </label>
+              <label className="grid gap-2 text-sm font-semibold text-state-navy md:col-span-2">
+                {t.phones}
+                <textarea required value={officeForm.phones.join("\n")} onChange={(event) => updateOfficePhones(event.target.value)} rows={5} className="rounded-xl border border-slate-200 px-4 py-3" />
+                <span className="text-xs font-medium text-slate-500">{t.phonesHint}</span>
+              </label>
+            </div>
+
+            <div className="mt-5">
+              <button type="submit" disabled={isPending} className="rounded-xl bg-state-navy px-5 py-3 text-sm font-bold text-white transition hover:bg-state-tealDark disabled:opacity-60">
+                {t.save}
+              </button>
+            </div>
+          </form>
         </div>
       ) : (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

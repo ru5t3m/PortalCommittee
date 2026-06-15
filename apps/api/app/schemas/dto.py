@@ -65,6 +65,21 @@ class PsychologicalTestResultOut(BaseModel):
     submitted_at: datetime
 
 
+class PsychologicalTestProgressSave(BaseModel):
+    test_slug: str = Field(min_length=1, max_length=120)
+    test_title: str = Field(min_length=1, max_length=255)
+    total_questions: int = Field(ge=1, le=500)
+    answered_questions: int = Field(ge=0, le=500)
+    current_section_index: int = Field(ge=0, le=20)
+    sections: list[PsychologicalTestSectionResult] = Field(min_length=1, max_length=20)
+    answers: dict = Field(default_factory=dict)
+
+
+class PsychologicalTestProgressOut(PsychologicalTestProgressSave):
+    id: int
+    updated_at: datetime
+
+
 class AdminPsychologicalTestResultOut(PsychologicalTestResultOut):
     user: UserOut
     candidate_application: CandidateApplicationOut | None = None
@@ -89,6 +104,20 @@ class TelegramLoginCompleteIn(BaseModel):
     nonce: str = Field(min_length=16, max_length=128)
 
 
+class EdsLoginStartOut(BaseModel):
+    challenge_id: int
+    nonce: str
+    challenge_text: str
+    challenge_base64: str
+    expires_at: datetime
+
+
+class EdsLoginCompleteIn(BaseModel):
+    challenge_id: int
+    nonce: str = Field(min_length=16, max_length=128)
+    cms_base64: str = Field(min_length=64, max_length=200000)
+
+
 class PasswordRegisterIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=10, max_length=128)
@@ -108,21 +137,6 @@ class AdminPanelLoginIn(BaseModel):
     password: str = Field(min_length=8, max_length=128)
 
 
-class NewsOut(BaseModel):
-    id: int
-    title: str
-    summary: str
-    category: str
-    published_at: datetime | None
-
-
-class PageOut(BaseModel):
-    id: int
-    slug: str
-    title: str
-    body: str
-
-
 class AppealCreate(BaseModel):
     full_name: str = Field(min_length=3, max_length=255)
     iin: str | None = Field(default=None, min_length=12, max_length=12)
@@ -140,8 +154,6 @@ class TrackingOut(BaseModel):
 class AdminDashboardOut(BaseModel):
     actor: UserOut
     users: int
-    news: int
-    pages: int
     appeals: int
     candidates: int
     region_offices: int
@@ -191,9 +203,26 @@ class AdminCandidateStatusUpdate(BaseModel):
 
 class RegionOfficeOut(BaseModel):
     id: int
-    region: str
-    address: str
-    phone: str
-    email: EmailStr
-    latitude: str | None
-    longitude: str | None
+    service: str
+    name_ru: str
+    name_kk: str
+    region_ru: str
+    region_kk: str
+    phones: list[str]
+    latitude: str
+    longitude: str
+
+
+class RegionOfficeCreate(BaseModel):
+    service: str = Field(pattern="^(knb|border)$")
+    name_ru: str = Field(min_length=2, max_length=255)
+    name_kk: str = Field(min_length=2, max_length=255)
+    region_ru: str = Field(min_length=2, max_length=160)
+    region_kk: str = Field(min_length=2, max_length=160)
+    phones: list[str] = Field(min_length=1, max_length=10)
+    latitude: str = Field(min_length=1, max_length=40)
+    longitude: str = Field(min_length=1, max_length=40)
+
+
+class RegionOfficeUpdate(RegionOfficeCreate):
+    pass

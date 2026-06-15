@@ -1,4 +1,4 @@
-import { BarChart3, Brain, CheckCircle2, Eye, Hourglass, ListChecks, ShieldCheck } from "lucide-react";
+import { Brain, CheckCircle2, Eye, ListChecks, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
@@ -13,67 +13,61 @@ const copy = {
     badge: "Психологический отбор",
     title: "Первичный психологический тест",
     description:
-      "Тестирование состоит из последовательных секций. Сначала кандидат проходит числовые задания, затем наглядно-образные задания с фигурами, после этого будут добавлены задания на память и итоговая интерпретация.",
+      "Тестирование состоит из двух последовательных секций. Каждый вопрос открывается отдельно, на ответ дается 1 минута.",
     start: "Начать тестирование",
     available: "Доступно сейчас",
-    planned: "Будет добавлено",
     overviewEyebrow: "Структура",
     overviewTitle: "Что входит в тестирование",
     overviewText:
-      "Секции идут по очереди. После завершения одной части появится переход к следующей, чтобы кандидат не смешивал разные типы заданий.",
+      "Секции идут по очереди. Между разделами есть пауза без таймера, чтобы кандидат прочитал информацию о следующей части.",
     numericLabel: "50 вопросов",
     visualLabel: "50 вопросов",
-    memoryLabel: "секция готовится",
-    interpretationLabel: "после ключей оценки",
     processEyebrow: "Прохождение",
     processTitle: "Как будет идти тест",
     steps: [
-      "На стартовой странице кандидат видит описание секций и начинает тестирование.",
-      "Внутри теста задания открываются последовательно в рамках текущей секции.",
-      "После последнего вопроса секции кандидат переходит к следующей части.",
-      "Итоговая оценка будет включена после внесения официальных ключей и шкал."
+      "Перед каждым разделом кандидат читает инструкцию. В это время таймер не идет.",
+      "Вопросы открываются по одному. На каждый вопрос дается 1 минута.",
+      "Если кандидат не успел ответить за минуту, вопрос отмечается как неотвеченный и автоматически открывается следующий.",
+      "После завершения раздела можно сохранить прогресс и выйти, чтобы позже продолжить со следующего раздела.",
+      "Итоговые результаты сохраняются и становятся доступными только после прохождения всего тестирования."
     ],
-    noteTitle: "Сейчас это тренировочный режим",
+    noteTitle: "Результаты только после полного завершения",
     noteText:
-      "Ответы собираются в интерфейсе, но автоматическая оценка отключена до добавления ключей ответов. Это сделано намеренно, чтобы не показывать неподтвержденные результаты.",
+      "Промежуточное сохранение нужно только для продолжения теста. Кандидат и администратор увидят итоговые данные после завершения всех разделов.",
     back: "Вернуться к поступлению"
   },
   kk: {
     badge: "Психологиялық іріктеу",
     title: "Бастапқы психологиялық тест",
     description:
-      "Тестілеу бірізді бөлімдерден тұрады. Алдымен кандидат сандық тапсырмаларды, кейін фигуралармен көрнекі-бейнелік тапсырмаларды орындайды, одан соң жад тапсырмалары мен қорытынды интерпретация қосылады.",
+      "Тестілеу екі бірізді бөлімнен тұрады. Әр сұрақ жеке ашылады, жауап беруге 1 минут беріледі.",
     start: "Тестілеуді бастау",
     available: "Қазір қолжетімді",
-    planned: "Кейін қосылады",
     overviewEyebrow: "Құрылым",
     overviewTitle: "Тестілеуге не кіреді",
     overviewText:
-      "Бөлімдер кезекпен өтеді. Бір бөлік аяқталғаннан кейін кандидат келесі бөлімге өтеді, сондықтан әртүрлі тапсырма түрлері араласпайды.",
+      "Бөлімдер кезекпен өтеді. Келесі бөлім туралы ақпаратты оқу үшін бөлімдер арасында таймерсіз үзіліс болады.",
     numericLabel: "50 сұрақ",
     visualLabel: "50 сұрақ",
-    memoryLabel: "бөлім дайындалуда",
-    interpretationLabel: "бағалау кілттерінен кейін",
     processEyebrow: "Өту тәртібі",
     processTitle: "Тест қалай өтеді",
     steps: [
-      "Бастапқы бетте кандидат бөлімдердің сипаттамасын көріп, тестілеуді бастайды.",
-      "Тест ішінде тапсырмалар ағымдағы бөлім бойынша бірізді ашылады.",
-      "Бөлімнің соңғы сұрағынан кейін кандидат келесі бөлікке өтеді.",
-      "Қорытынды бағалау ресми жауап кілттері мен шкалалар енгізілгеннен кейін қосылады."
+      "Әр бөлімнің алдында кандидат нұсқаулықты оқиды. Бұл кезде таймер жүрмейді.",
+      "Сұрақтар бір-бірден ашылады. Әр сұраққа 1 минут беріледі.",
+      "Кандидат бір минут ішінде жауап бермесе, сұрақ жауапсыз деп белгіленіп, келесі сұрақ автоматты түрде ашылады.",
+      "Бөлім аяқталғаннан кейін прогресті сақтап шығып, кейін келесі бөлімнен жалғастыруға болады.",
+      "Қорытынды нәтижелер барлық тестілеу аяқталғаннан кейін ғана сақталып, қолжетімді болады."
     ],
-    noteTitle: "Қазір бұл жаттығу режимі",
+    noteTitle: "Нәтижелер толық аяқталғаннан кейін ғана",
     noteText:
-      "Жауаптар интерфейсте жиналады, бірақ автоматты бағалау жауап кілттері қосылғанға дейін өшірілген. Бұл расталмаған нәтижелерді көрсетпеу үшін әдейі жасалды.",
+      "Аралық сақтау тек тестті кейін жалғастыру үшін қажет. Кандидат пен әкімші қорытынды деректерді барлық бөлімдер аяқталғаннан кейін көреді.",
     back: "Қабылдауға оралу"
   }
 };
 
 const sectionIcons = {
   numeric: Brain,
-  visual: Eye,
-  memory: Hourglass,
-  interpretation: BarChart3
+  visual: Eye
 };
 
 export default async function PsychologicalTestingPage({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -82,9 +76,7 @@ export default async function PsychologicalTestingPage({ params }: { params: Pro
 
   const sectionLabels = {
     numeric: t.numericLabel,
-    visual: t.visualLabel,
-    memory: t.memoryLabel,
-    interpretation: t.interpretationLabel
+    visual: t.visualLabel
   };
 
   return (
@@ -110,7 +102,6 @@ export default async function PsychologicalTestingPage({ params }: { params: Pro
               <div className="glass grid gap-3 rounded-[2rem] p-6 text-state-navy shadow-premium">
                 {primaryPsychologicalSections.map((section) => {
                   const Icon = sectionIcons[section.id];
-                  const isReady = section.status === "ready";
                   return (
                     <div className="flex items-center gap-3 rounded-2xl bg-white/76 p-4" key={section.id}>
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-state-teal/10">
@@ -120,8 +111,8 @@ export default async function PsychologicalTestingPage({ params }: { params: Pro
                         <p className="text-sm font-semibold text-state-navy">{section.title}</p>
                         <p className="text-xs font-medium text-slate-600">{sectionLabels[section.id]}</p>
                       </div>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${isReady ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
-                        {isReady ? t.available : t.planned}
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                        {t.available}
                       </span>
                     </div>
                   );
@@ -136,7 +127,6 @@ export default async function PsychologicalTestingPage({ params }: { params: Pro
         <div className="grid gap-5 md:grid-cols-2">
           {primaryPsychologicalSections.map((section, index) => {
             const Icon = sectionIcons[section.id];
-            const isReady = section.status === "ready";
             return (
               <PremiumCard className="h-full" key={section.id}>
                 <div className="flex items-start justify-between gap-4">
@@ -151,9 +141,9 @@ export default async function PsychologicalTestingPage({ params }: { params: Pro
                 <p className="mt-3 text-sm leading-6 text-slate-600">{section.description}</p>
                 <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
                   <span className="text-sm font-semibold text-state-tealDark">{sectionLabels[section.id]}</span>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${isReady ? "text-emerald-700" : "text-slate-500"}`}>
-                    {isReady ? <CheckCircle2 className="h-4 w-4" /> : <Hourglass className="h-4 w-4" />}
-                    {isReady ? t.available : t.planned}
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {t.available}
                   </span>
                 </div>
               </PremiumCard>

@@ -12,12 +12,6 @@ class Role(str, enum.Enum):
     candidate = "candidate"
 
 
-class Status(str, enum.Enum):
-    draft = "draft"
-    published = "published"
-    archived = "archived"
-
-
 class AppealStatus(str, enum.Enum):
     received = "received"
     in_review = "in_review"
@@ -44,6 +38,8 @@ class User(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
     full_name: Mapped[str] = mapped_column(String(255))
+    iin: Mapped[str | None] = mapped_column(String(12), unique=True, index=True, nullable=True)
+    eds_certificate_serial: Mapped[str | None] = mapped_column(String(160), nullable=True)
     hashed_password: Mapped[str | None] = mapped_column(String(255), nullable=True)
     telegram_id: Mapped[str | None] = mapped_column(String(40), unique=True, index=True, nullable=True)
     telegram_username: Mapped[str | None] = mapped_column(String(120), nullable=True)
@@ -52,10 +48,8 @@ class User(Base, TimestampMixin):
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.candidate)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
-    failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    two_factor_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     candidate_application: Mapped["CandidateApplication | None"] = relationship(back_populates="user", uselist=False)
     refresh_sessions: Mapped[list["RefreshSession"]] = relationship(back_populates="user")
@@ -80,31 +74,22 @@ class TelegramLoginChallenge(Base, TimestampMixin):
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
-class News(Base, TimestampMixin):
-    __tablename__ = "news"
+class EdsLoginChallenge(Base, TimestampMixin):
+    __tablename__ = "eds_login_challenges"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    title_kk: Mapped[str] = mapped_column(String(300))
-    title_ru: Mapped[str] = mapped_column(String(300))
-    summary_kk: Mapped[str] = mapped_column(Text)
-    summary_ru: Mapped[str] = mapped_column(Text)
-    body_kk: Mapped[str] = mapped_column(Text)
-    body_ru: Mapped[str] = mapped_column(Text)
-    category: Mapped[str] = mapped_column(String(120), index=True)
-    status: Mapped[Status] = mapped_column(Enum(Status), default=Status.draft)
-    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-
-
-class Page(Base, TimestampMixin):
-    __tablename__ = "pages"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    slug: Mapped[str] = mapped_column(String(160), unique=True, index=True)
-    title_kk: Mapped[str] = mapped_column(String(300))
-    title_ru: Mapped[str] = mapped_column(String(300))
-    body_kk: Mapped[str] = mapped_column(Text)
-    body_ru: Mapped[str] = mapped_column(Text)
-    status: Mapped[Status] = mapped_column(Enum(Status), default=Status.draft)
+    nonce: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    status: Mapped[str] = mapped_column(String(40), default="pending", index=True)
+    challenge_text: Mapped[str] = mapped_column(Text)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    signed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    iin: Mapped[str | None] = mapped_column(String(12), index=True, nullable=True)
+    full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    certificate_serial: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    certificate_subject: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_ip: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
 class Appeal(Base, TimestampMixin):
@@ -165,6 +150,23 @@ class PsychologicalTestResult(Base, TimestampMixin):
     candidate_application: Mapped[CandidateApplication | None] = relationship()
 
 
+class PsychologicalTestProgress(Base, TimestampMixin):
+    __tablename__ = "psychological_test_progress"
+    __table_args__ = (UniqueConstraint("user_id", "test_slug", name="uq_psychological_test_progress_user_slug"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    test_slug: Mapped[str] = mapped_column(String(120), index=True)
+    test_title: Mapped[str] = mapped_column(String(255))
+    total_questions: Mapped[int] = mapped_column(Integer)
+    answered_questions: Mapped[int] = mapped_column(Integer)
+    current_section_index: Mapped[int] = mapped_column(Integer, default=0)
+    sections: Mapped[dict] = mapped_column(JSON)
+    answers: Mapped[dict] = mapped_column(JSON)
+
+    user: Mapped[User] = relationship()
+
+
 class RefreshSession(Base, TimestampMixin):
     __tablename__ = "refresh_sessions"
 
@@ -196,12 +198,14 @@ class RegionOffice(Base, TimestampMixin):
     __tablename__ = "region_offices"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    region: Mapped[str] = mapped_column(String(160), index=True)
-    address: Mapped[str] = mapped_column(String(255))
-    phone: Mapped[str] = mapped_column(String(80))
-    email: Mapped[str] = mapped_column(String(255))
-    latitude: Mapped[str | None] = mapped_column(String(40), nullable=True)
-    longitude: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    service: Mapped[str] = mapped_column(String(40), index=True)
+    name_ru: Mapped[str] = mapped_column(String(255))
+    name_kk: Mapped[str] = mapped_column(String(255))
+    region_ru: Mapped[str] = mapped_column(String(160), index=True)
+    region_kk: Mapped[str] = mapped_column(String(160), index=True)
+    phones: Mapped[list[str]] = mapped_column(JSON)
+    latitude: Mapped[str] = mapped_column(String(40))
+    longitude: Mapped[str] = mapped_column(String(40))
 
 
 class AuditLog(Base, TimestampMixin):

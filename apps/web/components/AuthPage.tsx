@@ -7,25 +7,31 @@ import { Container } from "@/components/ui/Container";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import type { Locale } from "@/lib/i18n";
 import {
+  completeEdsLogin,
   completeTelegramLogin,
   getTelegramLoginStatus,
   loginWithPassword,
   registerWithPassword,
+  startEdsLogin,
   startTelegramLogin,
   type TelegramLoginStart
 } from "@/lib/auth";
+import { signAuthChallengeWithNcaLayer } from "@/lib/ncalayer";
 
 type AuthMode = "login" | "register";
-type Provider = "telegram" | "email";
+type Provider = "telegram" | "eds" | "email";
 
 const copy = {
   ru: {
     title: "Вход в личный кабинет",
-    subtitle: "Используйте Telegram с подтверждением телефона или вход по email и паролю.",
+    subtitle: "Используйте Telegram, ЭЦП или вход по email и паролю.",
     registerTitle: "Регистрация кандидата",
     registerSubtitle: "Создайте аккаунт по email и паролю. Эти данные будут использоваться для входа в личный кабинет и прохождения доступных сервисов портала.",
     telegram: "Telegram",
+    eds: "ЭЦП",
     email: "Email",
+    edsTitle: "Вход через ЭЦП",
+    edsText: "Для входа нужен установленный NCALayer и действующий сертификат НУЦ РК для аутентификации.",
     emailTitle: "Вход по email",
     emailRegisterTitle: "Создание аккаунта",
     firstName: "Имя",
@@ -44,26 +50,31 @@ const copy = {
     goRegister: "Зарегистрироваться",
     goLogin: "Уже есть аккаунт? Войти",
     start: "Начать вход через Telegram",
+    startEds: "Подписать и войти",
     openTelegram: "Открыть Telegram",
     starting: "Создаем защищенную заявку...",
     waiting: "Ожидаем подтверждение номера в Telegram",
     verified: "Номер подтвержден. Завершаем вход...",
     expired: "Срок подтверждения истек. Начните вход заново.",
     error: "Не удалось выполнить вход. Повторите попытку.",
+    ncaError: "Не удалось подключиться к NCALayer или подписать запрос. Проверьте, что NCALayer запущен.",
     passwordPolicyError: "Пароль должен содержать не менее 10 символов, а также заглавную букву, строчную букву и цифру.",
     secureTitle: "Защищенная авторизация",
     dataProtection: "Данные используются только для идентификации, авторизации и работы с сервисами портала.",
-    features: ["Telegram с подтверждением телефона", "Email и пароль как дополнительный способ", "Защищенная сессия портала"],
+    features: ["Telegram с подтверждением телефона", "ЭЦП через NCALayer", "Email и пароль как дополнительный способ", "Защищенная сессия портала"],
     registerFeatures: ["Регистрация только по email", "Данные кандидата сохраняются в анкете", "Защищенная сессия портала"],
     steps: ["Нажмите кнопку входа", "Откройте бота в Telegram", "Нажмите «Поделиться номером телефона»"]
   },
   kk: {
     title: "Жеке кабинетке кіру",
-    subtitle: "Телефонды растаумен Telegram немесе email және құпия сөз арқылы кіріңіз.",
+    subtitle: "Telegram, ЭЦҚ немесе email және құпия сөз арқылы кіріңіз.",
     registerTitle: "Кандидатты тіркеу",
     registerSubtitle: "Email және құпия сөз арқылы аккаунт жасаңыз. Бұл деректер жеке кабинетке кіру және портал сервистерін пайдалану үшін қолданылады.",
     telegram: "Telegram",
+    eds: "ЭЦҚ",
     email: "Email",
+    edsTitle: "ЭЦҚ арқылы кіру",
+    edsText: "Кіру үшін NCALayer орнатылып, іске қосылуы және ҚР ҰКО аутентификация сертификаты болуы керек.",
     emailTitle: "Email арқылы кіру",
     emailRegisterTitle: "Аккаунт жасау",
     firstName: "Аты",
@@ -82,16 +93,18 @@ const copy = {
     goRegister: "Тіркелу",
     goLogin: "Аккаунтыңыз бар ма? Кіру",
     start: "Telegram арқылы кіруді бастау",
+    startEds: "Қол қойып кіру",
     openTelegram: "Telegram ашу",
     starting: "Қорғалған сұрау жасалуда...",
     waiting: "Telegram ішінде телефон нөмірін растауды күтіп тұрмыз",
     verified: "Нөмір расталды. Кіру аяқталуда...",
     expired: "Растау мерзімі аяқталды. Кіруді қайта бастаңыз.",
     error: "Кіру орындалмады. Қайта көріңіз.",
+    ncaError: "NCALayer-ге қосылу немесе сұрауға қол қою мүмкін болмады. NCALayer іске қосылғанын тексеріңіз.",
     passwordPolicyError: "Құпия сөз кемінде 10 таңбадан тұрып, бас әріп, кіші әріп және цифр қамтуы керек.",
     secureTitle: "Қорғалған авторизация",
     dataProtection: "Деректер тек жеке басты тексеру, авторизация және портал сервистерімен жұмыс істеу үшін пайдаланылады.",
-    features: ["Телефон растауы бар Telegram", "Email және құпия сөз қосымша тәсіл ретінде", "Порталдың қорғалған сессиясы"],
+    features: ["Телефон растауы бар Telegram", "NCALayer арқылы ЭЦҚ", "Email және құпия сөз қосымша тәсіл ретінде", "Порталдың қорғалған сессиясы"],
     registerFeatures: ["Тіркелу тек email арқылы", "Кандидат деректері анкетаға сақталады", "Порталдың қорғалған сессиясы"],
     steps: ["Кіру батырмасын басыңыз", "Ботты Telegram ішінде ашыңыз", "«Телефон нөмірімен бөлісу» батырмасын басыңыз"]
   }
@@ -113,6 +126,7 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
   const [isStarting, setIsStarting] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
+  const [isEdsSubmitting, setIsEdsSubmitting] = useState(false);
   const t = copy[locale];
   const isRegister = mode === "register";
   const pageTitle = isRegister ? t.registerTitle : t.title;
@@ -133,6 +147,25 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
       setStatus("");
     } finally {
       setIsStarting(false);
+    }
+  }
+
+  async function beginEdsLogin() {
+    setError("");
+    setStatus(t.starting);
+    setIsEdsSubmitting(true);
+    try {
+      const edsChallenge = await startEdsLogin();
+      const cmsBase64 = await signAuthChallengeWithNcaLayer(edsChallenge.challenge_base64);
+      setStatus(t.verified);
+      await completeEdsLogin(edsChallenge.challenge_id, edsChallenge.nonce, cmsBase64);
+      router.push(`/${locale}/account`);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "";
+      setError(message ? humanizeAuthError(message, locale) : t.ncaError);
+      setStatus("");
+    } finally {
+      setIsEdsSubmitting(false);
     }
   }
 
@@ -249,8 +282,8 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
         <div className="mx-auto w-full max-w-xl">
           <div className="rounded-[1.35rem] border border-white/20 bg-white/[0.96] p-6 text-state-navy shadow-[0_30px_90px_rgba(0,0,0,0.24)] md:p-8">
             {!isRegister ? (
-              <div className="mb-6 grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
-                {(["telegram", "email"] as Provider[]).map((item) => (
+              <div className="mb-6 grid grid-cols-3 rounded-2xl bg-slate-100 p-1">
+                {(["telegram", "eds", "email"] as Provider[]).map((item) => (
                   <button
                     key={item}
                     className={`min-h-11 rounded-xl text-sm font-bold transition ${provider === item ? "bg-white text-state-navy shadow-sm" : "text-slate-500 hover:text-state-navy"}`}
@@ -261,7 +294,7 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
                       setStatus("");
                     }}
                   >
-                    {item === "telegram" ? t.telegram : t.email}
+                    {item === "telegram" ? t.telegram : item === "eds" ? t.eds : t.email}
                   </button>
                 ))}
               </div>
@@ -307,6 +340,34 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
                     {t.openTelegram}
                   </a>
                 </div>
+              </>
+            ) : provider === "eds" ? (
+              <>
+                <div className="mb-7">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-tealDark">{t.eds}</p>
+                  <h2 className="mt-2 text-2xl font-bold">{t.edsTitle}</h2>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">{t.edsText}</p>
+                </div>
+
+                <div className="rounded-2xl border border-state-teal/15 bg-state-surface p-5">
+                  <div className="flex gap-3">
+                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-state-tealDark" />
+                    <div>
+                      <p className="font-bold text-state-navy">{t.secureTitle}</p>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">{t.dataProtection}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  disabled={isEdsSubmitting}
+                  className="mt-6 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-button-gradient px-5 py-3 text-sm font-semibold text-white shadow-lift transition hover:-translate-y-0.5 hover:shadow-premium disabled:cursor-not-allowed disabled:opacity-70"
+                  type="button"
+                  onClick={beginEdsLogin}
+                >
+                  {isEdsSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
+                  {t.startEds}
+                </button>
               </>
             ) : (
               <>

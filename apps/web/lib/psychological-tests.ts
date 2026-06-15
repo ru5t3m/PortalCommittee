@@ -20,6 +20,18 @@ export type PsychologicalTestResult = {
   submitted_at: string;
 };
 
+export type PsychologicalTestProgress = {
+  id: number;
+  test_slug: string;
+  test_title: string;
+  total_questions: number;
+  answered_questions: number;
+  current_section_index: number;
+  sections: PsychologicalTestSectionResult[];
+  answers: Record<string, Record<string, string | string[]>>;
+  updated_at: string;
+};
+
 export type PsychologicalTestResultCreate = {
   test_slug: string;
   test_title: string;
@@ -27,6 +39,16 @@ export type PsychologicalTestResultCreate = {
   answered_questions: number;
   duration_seconds: number;
   remaining_seconds: number;
+  sections: PsychologicalTestSectionResult[];
+  answers: Record<string, Record<string, string | string[]>>;
+};
+
+export type PsychologicalTestProgressSave = {
+  test_slug: string;
+  test_title: string;
+  total_questions: number;
+  answered_questions: number;
+  current_section_index: number;
   sections: PsychologicalTestSectionResult[];
   answers: Record<string, Record<string, string | string[]>>;
 };
@@ -46,6 +68,31 @@ export async function savePsychologicalTestResult(payload: PsychologicalTestResu
       body: JSON.stringify(payload)
     })
   );
+}
+
+export async function getPsychologicalTestProgress(testSlug: string) {
+  const response = await authFetch(`${API_URL}/psychological-tests/progress/${testSlug}`);
+  if (response.status === 404) return null;
+  return readJson<PsychologicalTestProgress>(response);
+}
+
+export async function savePsychologicalTestProgress(payload: PsychologicalTestProgressSave) {
+  return readJson<PsychologicalTestProgress>(
+    await authFetch(`${API_URL}/psychological-tests/progress`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+  );
+}
+
+export async function deletePsychologicalTestProgress(testSlug: string) {
+  const response = await authFetch(`${API_URL}/psychological-tests/progress/${testSlug}`, {
+    method: "DELETE"
+  });
+  if (!response.ok && response.status !== 404) {
+    throw new Error(await parseApiError(response));
+  }
 }
 
 export async function listMyPsychologicalTestResults() {

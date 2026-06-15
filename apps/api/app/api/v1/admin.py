@@ -3,13 +3,16 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import current_admin_session_user
 from app.db.session import get_db
-from app.models.entities import Appeal, AppealStatus, AuditLog, CandidateApplication, CandidateStatus, News, Page, RegionOffice, User
+from app.models.entities import Appeal, AppealStatus, AuditLog, CandidateApplication, CandidateStatus, RegionOffice, User
 from app.schemas.dto import (
     AdminAppealOut,
     AdminAppealStatusUpdate,
     AdminCandidateOut,
     AdminCandidateStatusUpdate,
     AdminDashboardOut,
+    RegionOfficeCreate,
+    RegionOfficeOut,
+    RegionOfficeUpdate,
     UserOut,
 )
 
@@ -72,6 +75,38 @@ def serialize_candidate(row: CandidateApplication) -> AdminCandidateOut:
     )
 
 
+def serialize_region_office(row: RegionOffice) -> RegionOfficeOut:
+    return RegionOfficeOut(
+        id=row.id,
+        service=row.service,
+        name_ru=row.name_ru,
+        name_kk=row.name_kk,
+        region_ru=row.region_ru,
+        region_kk=row.region_kk,
+        phones=row.phones,
+        latitude=row.latitude,
+        longitude=row.longitude,
+    )
+
+
+def normalize_phones(phones: list[str]) -> list[str]:
+    normalized = [phone.strip() for phone in phones if phone.strip()]
+    if not normalized:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="At least one phone is required")
+    return normalized
+
+
+def apply_region_office_payload(row: RegionOffice, payload: RegionOfficeCreate | RegionOfficeUpdate) -> None:
+    row.service = payload.service
+    row.name_ru = payload.name_ru.strip()
+    row.name_kk = payload.name_kk.strip()
+    row.region_ru = payload.region_ru.strip()
+    row.region_kk = payload.region_kk.strip()
+    row.phones = normalize_phones(payload.phones)
+    row.latitude = payload.latitude.strip()
+    row.longitude = payload.longitude.strip()
+
+
 def record_audit(db: Session, request: Request, actor: User, action: str, entity: str, entity_id: str) -> None:
     db.add(
         AuditLog(
@@ -89,8 +124,6 @@ def dashboard(db: Session = Depends(get_db), user: User = Depends(current_admin_
     return AdminDashboardOut(
         actor=serialize_user(user),
         users=db.query(User).count(),
-        news=db.query(News).count(),
-        pages=db.query(Page).count(),
         appeals=db.query(Appeal).count(),
         candidates=db.query(CandidateApplication).count(),
         region_offices=db.query(RegionOffice).count(),
@@ -162,3 +195,68 @@ def update_candidate_status(
     db.commit()
     db.refresh(row)
     return serialize_candidate(row)
+
+
+@router.get("/contacts/regions", response_model=list[RegionOfficeOut])
+def list_region_offices(db: Session = Depends(get_db)):
+    rows = db.query(RegionOffice).order_by(RegionOffice.service.asc(), RegionOffice.region_ru.asc(), RegionOffice.name_ru.asc()).all()
+    return [serialize_region_office(row) for row in rows]
+
+
+@router.post("/contacts/regions", response_model=RegionOfficeOut, status_code=201)
+def create_region_office(
+    payload: RegionOfficeCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_admin_session_user),
+):
+    row = RegionOffice(
+        service=payload.service,
+        name_ru=payload.name_ru.strip(),
+        name_kk=payload.name_kk.strip(),
+        region_ru=payload.region_ru.strip(),
+        region_kk=payload.region_kk.strip(),
+        phones=normalize_phones(payload.phones),
+        latitude=payload.latitude.strip(),
+        longitude=payload.longitude.strip(),
+    )
+    db.add(row)
+    db.flush()
+    record_audit(db, request, user, "create", "region_office", str(row.id))
+    db.commit()
+    db.refresh(row)
+    return serialize_region_office(row)
+
+
+@router.put("/contacts/regions/{office_id}", response_model=RegionOfficeOut)
+def update_region_office(
+    office_id: int,
+    payload: RegionOfficeUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_admin_session_user),
+):
+    row = db.get(RegionOffice, office_id)
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Region office not found")
+    apply_region_office_payload(row, payload)
+    record_audit(db, request, user, "update", "region_office", str(row.id))
+    db.commit()
+    db.refresh(row)
+    return serialize_region_office(row)
+
+
+@router.delete("/contacts/regions/{office_id}", status_code=204)
+def delete_region_office(
+    office_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_admin_session_user),
+):
+    row = db.get(RegionOffice, office_id)
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Region office not found")
+    record_audit(db, request, user, "delete", "region_office", str(row.id))
+    db.delete(row)
+    db.commit()
+    return None
