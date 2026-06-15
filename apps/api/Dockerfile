@@ -1,12 +1,14 @@
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    EDS_TRUSTED_CA_FILE=/app/certs/nca-trusted-ca.pem
 
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
+COPY certs ./certs
 COPY alembic ./alembic
 COPY alembic.ini ./alembic.ini
 EXPOSE 8000
