@@ -40,6 +40,9 @@ class PsychologicalTestSectionResult(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     total_questions: int = Field(ge=0, le=500)
     answered_questions: int = Field(ge=0, le=500)
+    scored_questions: int = Field(default=0, ge=0, le=500)
+    correct_answers: int = Field(default=0, ge=0, le=500)
+    score_percent: int = Field(default=0, ge=0, le=100)
 
 
 class PsychologicalTestResultCreate(BaseModel):
@@ -83,6 +86,7 @@ class PsychologicalTestProgressOut(PsychologicalTestProgressSave):
 class AdminPsychologicalTestResultOut(PsychologicalTestResultOut):
     user: UserOut
     candidate_application: CandidateApplicationOut | None = None
+    answers: dict = Field(default_factory=dict)
 
 
 class TelegramLoginStartOut(BaseModel):

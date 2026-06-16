@@ -28,8 +28,15 @@ const primaryCopy = {
     nextQuestion: "Следующий вопрос",
     nextSection: "Перейти к следующему разделу",
     saveAndExit: "Сохранить и выйти",
-    progressSaved: "Прогресс сохранен. Вы сможете продолжить с этого раздела позже.",
+    progressSaved: "Прогресс сохранен. Вы сможете продолжить со следующего раздела позже.",
     progressSaveError: "Не удалось сохранить прогресс. Проверьте подключение и попробуйте еще раз.",
+    exitWarningTitle: "ВНИМАНИЕ",
+    exitWarningText:
+      "Если вы выйдете сейчас, все неотвеченные вопросы текущего раздела будут зафиксированы как пустые. Вернуться к этому разделу и повторно решить его вопросы будет нельзя. Прогресс сохранится, и продолжить тестирование можно будет только со следующего раздела.",
+    exitWarningLastSectionText:
+      "Если вы выйдете сейчас, все неотвеченные вопросы текущего раздела будут зафиксированы как пустые. Так как это последний раздел, тестирование будет завершено, а итоговый результат сохранится без возможности повторного прохождения раздела.",
+    stayInTest: "Остаться в тесте",
+    confirmExit: "Сохранить раздел и выйти",
     sectionComplete: "Раздел завершен",
     sectionCompleteText: "Ответы этого раздела сохранены в текущем прохождении. Сейчас можно сделать паузу или перейти дальше.",
     finish: "Завершить тестирование",
@@ -49,6 +56,7 @@ const primaryCopy = {
     unanswered: "Если за 1 минуту ответ не выбран, вопрос будет отмечен как неотвеченный и тест перейдет дальше.",
     answered: "Отвечено",
     notAnswered: "Не отвечено",
+    correct: "Верно",
     sectionInstructions: {
       numeric: [
         "В этом разделе 50 заданий на числовые закономерности, пропущенные числа и логические связи.",
@@ -59,6 +67,11 @@ const primaryCopy = {
         "В этом разделе 50 заданий с фигурами и наглядными закономерностями.",
         "Выберите номер фигуры или несколько номеров, если в формулировке требуется указать две или три лишние фигуры.",
         "После завершения раздела можно сохранить прогресс и выйти, чтобы продолжить позже со следующего раздела."
+      ],
+      verbal: [
+        "В этом разделе 30 словесных заданий: анаграммы, подбор общего начала или окончания, вставка слова и короткие логические вопросы.",
+        "Ответ вводится в текстовое поле под заданием.",
+        "На каждый вопрос дается 1 минута. Если ответ не введен вовремя, вопрос будет отмечен как неотвеченный."
       ]
     }
   },
@@ -75,8 +88,15 @@ const primaryCopy = {
     nextQuestion: "Келесі сұрақ",
     nextSection: "Келесі бөлімге өту",
     saveAndExit: "Сақтап шығу",
-    progressSaved: "Прогресс сақталды. Кейін осы бөлімнен жалғастыра аласыз.",
+    progressSaved: "Прогресс сақталды. Кейін келесі бөлімнен жалғастыра аласыз.",
     progressSaveError: "Прогресті сақтау мүмкін болмады. Қосылымды тексеріп, қайта көріңіз.",
+    exitWarningTitle: "НАЗАР АУДАРЫҢЫЗ",
+    exitWarningText:
+      "Қазір шықсаңыз, ағымдағы бөлімдегі жауап берілмеген барлық сұрақтар бос деп белгіленеді. Бұл бөлімге қайта оралып, сұрақтарын қайта шешу мүмкін болмайды. Прогресс сақталып, тестілеуді тек келесі бөлімнен жалғастыра аласыз.",
+    exitWarningLastSectionText:
+      "Қазір шықсаңыз, ағымдағы бөлімдегі жауап берілмеген барлық сұрақтар бос деп белгіленеді. Бұл соңғы бөлім болғандықтан, тестілеу аяқталып, қорытынды нәтиже осы күйінде сақталады.",
+    stayInTest: "Тестте қалу",
+    confirmExit: "Бөлімді сақтап шығу",
     sectionComplete: "Бөлім аяқталды",
     sectionCompleteText: "Бұл бөлімнің жауаптары ағымдағы өту ішінде сақталды. Енді үзіліс жасауға немесе әрі қарай өтуге болады.",
     finish: "Тестілеуді аяқтау",
@@ -96,6 +116,7 @@ const primaryCopy = {
     unanswered: "1 минут ішінде жауап таңдалмаса, сұрақ жауапсыз деп белгіленіп, тест келесі сұраққа өтеді.",
     answered: "Жауап берілді",
     notAnswered: "Жауап берілмеді",
+    correct: "Дұрыс",
     sectionInstructions: {
       numeric: [
         "Бұл бөлімде сандық заңдылықтар, жетіспейтін сандар және логикалық байланыстар бойынша 50 тапсырма бар.",
@@ -106,6 +127,11 @@ const primaryCopy = {
         "Бұл бөлімде фигуралар және көрнекі заңдылықтар бойынша 50 тапсырма бар.",
         "Егер тұжырымда екі немесе үш артық фигураны көрсету қажет болса, бір немесе бірнеше нөмірді таңдаңыз.",
         "Бөлім аяқталғаннан кейін прогресті сақтап, кейін келесі бөлімнен жалғастыруға болады."
+      ],
+      verbal: [
+        "Бұл бөлімде 30 сөздік тапсырма бар: анаграммалар, ортақ басын немесе соңын табу, сөз енгізу және қысқа логикалық сұрақтар.",
+        "Жауап тапсырманың астындағы мәтін өрісіне енгізіледі.",
+        "Әр сұраққа 1 минут беріледі. Уақытында жауап берілмесе, сұрақ жауапсыз деп белгіленеді."
       ]
     }
   }
@@ -125,6 +151,30 @@ function hasAnswer(answer: AnswerValue | undefined) {
   return Array.isArray(answer) ? answer.length > 0 : typeof answer === "string" && answer.trim().length > 0;
 }
 
+function normalizeAnswer(value: string) {
+  return value
+    .toLowerCase()
+    .replaceAll("ё", "е")
+    .replace(/[.,;]+/g, " ")
+    .replace(/\s+и\s+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeChoiceList(values: string[]) {
+  return values.map(normalizeAnswer).filter(Boolean).sort().join("|");
+}
+
+function isCorrectAnswer(question: PrimaryPsychologicalQuestion, answer: AnswerValue | undefined) {
+  if (!question.correctAnswers?.length || !hasAnswer(answer)) return false;
+  if (Array.isArray(answer)) {
+    return normalizeChoiceList(answer) === normalizeChoiceList(question.correctAnswers);
+  }
+  if (typeof answer !== "string") return false;
+  const normalized = normalizeAnswer(answer);
+  return question.correctAnswers.some((correctAnswer) => normalizeAnswer(correctAnswer) === normalized);
+}
+
 function PrimarySelectionRunner({ locale }: { locale: Locale }) {
   const t = primaryCopy[locale];
   const readySections = primaryPsychologicalSections;
@@ -142,6 +192,8 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
   const [isSavingResult, setIsSavingResult] = useState(false);
   const [isSavingProgress, setIsSavingProgress] = useState(false);
   const [hasTriedSavingResult, setHasTriedSavingResult] = useState(false);
+  const [showExitWarning, setShowExitWarning] = useState(false);
+  const [isForcedExitSaving, setIsForcedExitSaving] = useState(false);
 
   const activeSection = readySections[sectionIndex] ?? readySections[0];
   const activeQuestion = activeSection.questions[questionIndex] ?? activeSection.questions[0];
@@ -161,14 +213,21 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
     return readySections.map((section) => {
       const answers = sectionAnswers[section.id] ?? {};
       const sectionAnswered = section.questions.filter((question) => hasAnswer(answers[question.id])).length;
+      const scoredQuestions = section.questions.filter((question) => question.correctAnswers?.length).length;
+      const correctAnswers = section.questions.filter((question) => isCorrectAnswer(question, answers[question.id])).length;
       return {
         id: section.id,
         title: section.title,
         total_questions: section.questions.length,
-        answered_questions: sectionAnswered
+        answered_questions: sectionAnswered,
+        scored_questions: scoredQuestions,
+        correct_answers: correctAnswers,
+        score_percent: scoredQuestions > 0 ? Math.round((correctAnswers / scoredQuestions) * 100) : 0
       };
     });
   }, [readySections, sectionAnswers]);
+  const totalScoredQuestions = sectionSummaries.reduce((sum, section) => sum + section.scored_questions, 0);
+  const totalCorrectAnswers = sectionSummaries.reduce((sum, section) => sum + section.correct_answers, 0);
 
   const formattedQuestionTime = useMemo(() => {
     return `00:${String(questionRemainingSeconds).padStart(2, "0")}`;
@@ -281,6 +340,27 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
     totalQuestions
   ]);
 
+  useEffect(() => {
+    if (authStatus !== "allowed" || mode !== "questions") return;
+
+    window.history.pushState({ psychologicalTestGuard: true }, "", window.location.href);
+    const handlePopState = () => {
+      window.history.pushState({ psychologicalTestGuard: true }, "", window.location.href);
+      setShowExitWarning(true);
+    };
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [authStatus, mode]);
+
   function setQuestionAnswer(question: PrimaryPsychologicalQuestion, value: string) {
     setSectionAnswers((current) => {
       const currentSection = current[activeSection.id] ?? {};
@@ -331,6 +411,34 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
       setProgressMessage(t.progressSaveError);
     } finally {
       setIsSavingProgress(false);
+    }
+  }
+
+  async function saveCurrentSectionAndExit() {
+    if (isForcedExitSaving) return;
+    setIsForcedExitSaving(true);
+    setProgressMessage("");
+    const isLastSection = sectionIndex >= readySections.length - 1;
+    try {
+      if (isLastSection) {
+        setShowExitWarning(false);
+        setMode("finished");
+        return;
+      }
+      await savePsychologicalTestProgress({
+        test_slug: TEST_SLUG,
+        test_title: t.testTitle,
+        total_questions: totalQuestions,
+        answered_questions: answeredTotal,
+        current_section_index: Math.min(sectionIndex + 1, readySections.length - 1),
+        sections: sectionSummaries,
+        answers: sectionAnswers
+      });
+      window.location.href = `/${locale}/psychological-testing`;
+    } catch {
+      setProgressMessage(t.progressSaveError);
+    } finally {
+      setIsForcedExitSaving(false);
     }
   }
 
@@ -391,8 +499,8 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
                 <p className="mt-2 text-3xl font-bold">{answeredTotal}/{totalQuestions}</p>
               </div>
               <div className="rounded-2xl bg-slate-50 p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t.timer}</p>
-                <p className="mt-2 text-3xl font-bold">00:00</p>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t.correct}</p>
+                <p className="mt-2 text-3xl font-bold">{totalCorrectAnswers}/{totalScoredQuestions}</p>
               </div>
               <div className="rounded-2xl bg-slate-50 p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{t.section}</p>
@@ -501,6 +609,13 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
               <Clock3 className="h-4 w-4 text-state-gold" />
               {formattedQuestionTime}
             </div>
+            <button
+              type="button"
+              onClick={() => setShowExitWarning(true)}
+              className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
+            >
+              {t.saveAndExit}
+            </button>
           </div>
         </div>
       </div>
@@ -567,6 +682,40 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
           </button>
         </div>
       </div>
+
+      {showExitWarning ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-state-navy/65 px-4 py-6 backdrop-blur-sm">
+          <section className="w-full max-w-2xl rounded-[1.5rem] border border-red-200 bg-white p-6 shadow-[0_30px_90px_rgba(0,0,0,0.28)] md:p-8">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-red-700">{t.exitWarningTitle}</p>
+            <h2 className="mt-3 text-2xl font-bold leading-tight text-state-navy md:text-3xl">{t.saveAndExit}</h2>
+            <p className="mt-4 text-base font-semibold leading-8 text-red-700">
+              {sectionIndex >= readySections.length - 1 ? t.exitWarningLastSectionText : t.exitWarningText}
+            </p>
+            {progressMessage ? <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{progressMessage}</p> : null}
+            <div className="mt-7 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                disabled={isForcedExitSaving}
+                onClick={() => {
+                  setShowExitWarning(false);
+                  setProgressMessage("");
+                }}
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-state-navy transition hover:border-state-teal/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {t.stayInTest}
+              </button>
+              <button
+                type="button"
+                disabled={isForcedExitSaving}
+                onClick={saveCurrentSectionAndExit}
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-red-700 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isForcedExitSaving ? t.saving : t.confirmExit}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -39,6 +39,7 @@ const copy = {
     testsEmptyTitle: "Пока нет результатов",
     testsEmptyText: "После прохождения психотестирования результаты появятся в этом разделе.",
     answered: "Ответов",
+    correct: "Верно",
     submittedAt: "Дата прохождения",
     timeSpent: "Затрачено"
   },
@@ -70,6 +71,7 @@ const copy = {
     testsEmptyTitle: "Әзірге нәтиже жоқ",
     testsEmptyText: "Психотесттен өткеннен кейін нәтижелер осы бөлімде пайда болады.",
     answered: "Жауап",
+    correct: "Дұрыс",
     submittedAt: "Өткен күні",
     timeSpent: "Жұмсалған уақыт"
   }
@@ -125,6 +127,11 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
     const minutes = Math.floor(spent / 60);
     const seconds = spent % 60;
     return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  };
+  const getScore = (result: PsychologicalTestResult) => {
+    const scored = result.sections.reduce((sum, section) => sum + (section.scored_questions ?? 0), 0);
+    const correct = result.sections.reduce((sum, section) => sum + (section.correct_answers ?? 0), 0);
+    return { scored, correct };
   };
 
   return (
@@ -208,7 +215,9 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
               </h2>
               {testResults.length ? (
                 <div className="mt-5 grid gap-3">
-                  {testResults.map((result) => (
+                  {testResults.map((result) => {
+                    const score = getScore(result);
+                    return (
                     <div key={result.id} className="rounded-2xl border border-slate-200 bg-state-surface p-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
@@ -216,15 +225,17 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
                           <p className="mt-1 text-sm font-semibold text-state-tealDark">{t.submittedAt}: {formatDate(result.submitted_at)}</p>
                         </div>
                         <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-state-navy shadow-sm">
-                          {result.answered_questions}/{result.total_questions}
+                          {score.scored ? `${score.correct}/${score.scored}` : `${result.answered_questions}/${result.total_questions}`}
                         </span>
                       </div>
                       <div className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
                         <span className="rounded-xl bg-white px-3 py-2">{t.answered}: {result.answered_questions}/{result.total_questions}</span>
+                        {score.scored ? <span className="rounded-xl bg-white px-3 py-2">{t.correct}: {score.correct}/{score.scored}</span> : null}
                         <span className="rounded-xl bg-white px-3 py-2">{t.timeSpent}: {formatDuration(result.duration_seconds, result.remaining_seconds)}</span>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="mt-5 rounded-2xl border border-dashed border-state-teal/30 bg-state-surface p-8 text-center">

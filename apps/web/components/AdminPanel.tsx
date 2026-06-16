@@ -4,6 +4,7 @@ import { BarChart3, FileText, MapPinned, Search, ShieldCheck, UserRoundCheck, Us
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import type { Locale } from "@/lib/i18n";
+import { primaryPsychologicalSections } from "@/lib/primary-psychological-test";
 import {
   createAdminRegionOffice,
   deleteAdminRegionOffice,
@@ -56,6 +57,11 @@ const copy = {
     allStatuses: "Все статусы",
     noTestingData: "Результатов психологических тестирований пока нет.",
     answered: "Ответов",
+    correct: "Верно",
+    answerKey: "Ключ ответов",
+    userAnswer: "Ответ кандидата",
+    noAnswer: "Нет ответа",
+    explanation: "Пояснение",
     timeSpent: "Затрачено",
     submittedAt: "Дата прохождения",
     sections: "Разделы",
@@ -112,6 +118,11 @@ const copy = {
     allStatuses: "Барлық мәртебелер",
     noTestingData: "Психологиялық тестілеу нәтижелері әзірге жоқ.",
     answered: "Жауап",
+    correct: "Дұрыс",
+    answerKey: "Жауап кілті",
+    userAnswer: "Кандидат жауабы",
+    noAnswer: "Жауап жоқ",
+    explanation: "Түсіндірме",
     timeSpent: "Жұмсалған уақыт",
     submittedAt: "Өткен күні",
     sections: "Бөлімдер",
@@ -155,6 +166,11 @@ function formatDate(value: string) {
 function statusText(locale: Locale, status: string) {
   const labels = copy[locale].statusLabels;
   return status in labels ? labels[status as keyof typeof labels] : status;
+}
+
+function formatTestAnswer(answer: string | string[] | undefined, emptyLabel: string) {
+  if (Array.isArray(answer)) return answer.length ? answer.join(", ") : emptyLabel;
+  return answer?.trim() ? answer : emptyLabel;
 }
 
 const emptyRegionOfficePayload: AdminRegionOfficePayload = {
@@ -647,10 +663,40 @@ export function AdminPanel({ locale }: { locale: Locale }) {
                         {result.sections.map((section) => (
                           <span key={`${result.id}-${section.id}`} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-700">
                             {section.title}: {section.answered_questions}/{section.total_questions}
+                            {typeof section.correct_answers === "number" && section.scored_questions ? ` · ${t.correct}: ${section.correct_answers}/${section.scored_questions}` : ""}
                           </span>
                         ))}
                       </div>
                     </div>
+                    <details className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+                      <summary className="cursor-pointer text-sm font-bold text-state-navy">{t.answerKey}</summary>
+                      <div className="mt-4 grid gap-4">
+                        {primaryPsychologicalSections.slice(0, 2).map((section) => {
+                          const sectionAnswers = result.answers?.[section.id] ?? {};
+                          return (
+                            <div key={`${result.id}-${section.id}-answers`} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                              <h5 className="text-sm font-bold text-state-navy">{section.title}</h5>
+                              <div className="mt-3 grid gap-2">
+                                {section.questions.map((question, index) => (
+                                  <div key={`${result.id}-${question.id}`} className="rounded-lg bg-white px-3 py-2 text-xs leading-5 text-slate-700">
+                                    <div className="font-bold text-state-navy">
+                                      {index + 1}. {question.prompt}
+                                    </div>
+                                    <div className="mt-1">
+                                      {t.userAnswer}: <span className="font-semibold">{formatTestAnswer(sectionAnswers[question.id], t.noAnswer)}</span>
+                                    </div>
+                                    <div>
+                                      {t.correct}: <span className="font-semibold">{question.correctAnswers?.join(", ") ?? "-"}</span>
+                                    </div>
+                                    {question.answerExplanation ? <div className="mt-1 text-slate-500">{t.explanation}: {question.answerExplanation}</div> : null}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </details>
                   </article>
                 );
               })}

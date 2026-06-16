@@ -72,6 +72,7 @@ export type AdminPsychologicalTestResult = PsychologicalTestResult & {
     education_level: string | null;
     desired_direction: string | null;
   } | null;
+  answers: Record<string, Record<string, string | string[]>>;
 };
 
 export type AdminRegionOffice = RegionOffice;

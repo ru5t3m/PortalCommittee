@@ -1,4 +1,4 @@
-import { Brain, CheckCircle2, Eye, ListChecks, ShieldCheck } from "lucide-react";
+import { Brain, CheckCircle2, Eye, ListChecks, MessageSquareText, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
@@ -13,7 +13,7 @@ const copy = {
     badge: "Психологический отбор",
     title: "Первичный психологический тест",
     description:
-      "Тестирование состоит из двух последовательных секций. Каждый вопрос открывается отдельно, на ответ дается 1 минута.",
+      "Тестирование состоит из трех последовательных секций. Каждый вопрос открывается отдельно, на ответ дается 1 минута.",
     start: "Начать тестирование",
     available: "Доступно сейчас",
     overviewEyebrow: "Структура",
@@ -22,6 +22,7 @@ const copy = {
       "Секции идут по очереди. Между разделами есть пауза без таймера, чтобы кандидат прочитал информацию о следующей части.",
     numericLabel: "50 вопросов",
     visualLabel: "50 вопросов",
+    verbalLabel: "30 вопросов",
     processEyebrow: "Прохождение",
     processTitle: "Как будет идти тест",
     steps: [
@@ -40,7 +41,7 @@ const copy = {
     badge: "Психологиялық іріктеу",
     title: "Бастапқы психологиялық тест",
     description:
-      "Тестілеу екі бірізді бөлімнен тұрады. Әр сұрақ жеке ашылады, жауап беруге 1 минут беріледі.",
+      "Тестілеу үш бірізді бөлімнен тұрады. Әр сұрақ жеке ашылады, жауап беруге 1 минут беріледі.",
     start: "Тестілеуді бастау",
     available: "Қазір қолжетімді",
     overviewEyebrow: "Құрылым",
@@ -49,6 +50,7 @@ const copy = {
       "Бөлімдер кезекпен өтеді. Келесі бөлім туралы ақпаратты оқу үшін бөлімдер арасында таймерсіз үзіліс болады.",
     numericLabel: "50 сұрақ",
     visualLabel: "50 сұрақ",
+    verbalLabel: "30 сұрақ",
     processEyebrow: "Өту тәртібі",
     processTitle: "Тест қалай өтеді",
     steps: [
@@ -67,7 +69,8 @@ const copy = {
 
 const sectionIcons = {
   numeric: Brain,
-  visual: Eye
+  visual: Eye,
+  verbal: MessageSquareText
 };
 
 export default async function PsychologicalTestingPage({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -76,7 +79,8 @@ export default async function PsychologicalTestingPage({ params }: { params: Pro
 
   const sectionLabels = {
     numeric: t.numericLabel,
-    visual: t.visualLabel
+    visual: t.visualLabel,
+    verbal: t.verbalLabel
   };
 
   return (

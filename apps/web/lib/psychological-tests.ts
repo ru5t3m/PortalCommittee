@@ -6,6 +6,9 @@ export type PsychologicalTestSectionResult = {
   title: string;
   total_questions: number;
   answered_questions: number;
+  scored_questions?: number;
+  correct_answers?: number;
+  score_percent?: number;
 };
 
 export type PsychologicalTestResult = {

@@ -35,6 +35,7 @@ def serialize_admin_result(row: PsychologicalTestResult) -> AdminPsychologicalTe
         **serialize_result(row).model_dump(),
         user=serialize_user(row.user),
         candidate_application=serialize_candidate(row.candidate_application),
+        answers=row.answers,
     )
 
 
