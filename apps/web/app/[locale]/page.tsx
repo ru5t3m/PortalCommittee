@@ -87,12 +87,13 @@ const homeCopy = {
 
 export default async function HomePage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
-  const dict = getDictionary(locale);
-  const copy = homeCopy[locale];
-  const trustStats = locale === "kk" ? trustStatsKk : trustStatsRu;
-  const activities = getActivities(locale);
-  const psychologicalTests = getPsychologicalTests(locale);
-  const quickActions = getQuickActions(locale);
+  const currentLocale: Locale = locale === "kk" ? "kk" : "ru";
+  const dict = getDictionary(currentLocale);
+  const copy = homeCopy[currentLocale];
+  const trustStats = currentLocale === "kk" ? trustStatsKk : trustStatsRu;
+  const activities = getActivities(currentLocale);
+  const psychologicalTests = getPsychologicalTests(currentLocale);
+  const quickActions = getQuickActions(currentLocale);
 
   return (
     <>
@@ -122,9 +123,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
               {copy.heroDescription}
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Button href={`/${locale}/careers/admission`} variant="gold">{dict.submitAppeal}</Button>
-              <Button href={`/${locale}/psychological-testing`} variant="primary">{dict.reportThreat}</Button>
-              <Button href={`/${locale}/register`} variant="ghost">{copy.register}</Button>
+              <Button href={`/${currentLocale}/careers/admission`} variant="gold">{dict.submitAppeal}</Button>
+              <Button href={`/${currentLocale}/psychological-testing`} variant="primary">{dict.reportThreat}</Button>
+              <Button href={`/${currentLocale}/register`} variant="ghost">{copy.register}</Button>
             </div>
           </Reveal>
 
@@ -145,7 +146,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
           <div className="grid gap-4 md:grid-cols-4">
             {quickActions.map((item, index) => (
               <Reveal delay={index * 0.04} key={item.title}>
-                <ActionCard icon={item.icon} title={item.title} text={item.text} href={`/${locale}/${item.href}`} dark />
+                <ActionCard icon={item.icon} title={item.title} text={item.text} href={`/${currentLocale}/${item.href}`} dark />
               </Reveal>
             ))}
           </div>
@@ -156,7 +157,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {activities.map((item, index) => (
             <Reveal delay={index * 0.035} key={item.slug}>
-              <Link href={`/${locale}/activities#${item.slug}`}>
+              <Link href={`/${currentLocale}/activities#${item.slug}`}>
                 <PremiumCard className="relative h-full overflow-hidden">
                   <span className="absolute right-5 top-5 text-5xl font-black text-state-teal/20">{String(index + 1).padStart(2, "0")}</span>
                   <span className="grid h-12 w-12 place-items-center rounded-2xl bg-state-teal/10 text-state-tealDark transition-colors group-hover:bg-state-teal group-hover:text-white">
@@ -173,14 +174,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
       </Section>
 
       <Section eyebrow={copy.careerEyebrow} title={copy.careerTitle} description={copy.careerDescription} dark>
-        <AdmissionJourney locale={locale} />
+        <AdmissionJourney locale={currentLocale} />
       </Section>
 
       <Section eyebrow={copy.psychEyebrow} title={copy.psychTitle} description={copy.psychDescription}>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {psychologicalTests.map((item, index) => (
             <Reveal delay={index * 0.05} key={item.slug}>
-              <Link href={`/${locale}/psychological-testing/${item.slug}`}>
+              <Link href={`/${currentLocale}/psychological-testing/${item.slug}`}>
                 <PremiumCard className="h-full bg-gradient-to-br from-white via-white to-state-surface">
                   <item.icon className="h-8 w-8 text-state-teal" />
                   <h3 className="mt-5 text-lg font-bold text-state-navy">{item.title}</h3>
@@ -209,7 +210,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button href={`/${locale}/contacts`} variant="gold">{copy.contacts}</Button>
+            <Button href={`/${currentLocale}/contacts`} variant="gold">{copy.contacts}</Button>
           </div>
         </Container>
       </section>

@@ -217,6 +217,26 @@ class RegionOfficeOut(BaseModel):
     longitude: str
 
 
+class FaqAssistantRequest(BaseModel):
+    question: str = Field(min_length=2, max_length=1000)
+    locale: str = Field(default="ru", pattern="^(ru|kk)$")
+
+
+class FaqAssistantSuggestion(BaseModel):
+    question: str
+    section: str
+
+
+class FaqAssistantResponse(BaseModel):
+    answer: str | None
+    matched_question: str | None
+    section: str | None
+    confidence: float
+    source: str
+    llm_used: bool = False
+    suggestions: list[FaqAssistantSuggestion] = Field(default_factory=list)
+
+
 class RegionOfficeCreate(BaseModel):
     service: str = Field(pattern="^(knb|border)$")
     name_ru: str = Field(min_length=2, max_length=255)

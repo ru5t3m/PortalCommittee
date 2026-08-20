@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     admin_panel_email: str = ""
     admin_panel_password_hash: str = ""
     admin_access_token_minutes: int = 60
+    faq_llm_enabled: bool = True
+    faq_llm_base_url: str = "http://127.0.0.1:8080/v1"
+    faq_llm_model: str = "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q2_K"
+    faq_llm_timeout_seconds: float = 15
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
@@ -51,6 +55,9 @@ class Settings(BaseSettings):
         return value
 
     def validate_for_startup(self) -> None:
+        local_llm_hosts = ("http://127.0.0.1:", "http://localhost:")
+        if self.faq_llm_enabled and not self.faq_llm_base_url.startswith(local_llm_hosts):
+            raise RuntimeError("FAQ_LLM_BASE_URL must point to a local LLM server")
         if self.environment.lower() == "production":
             weak_secrets = {"change-me-in-production", "change-this-secret", "replace-with-strong-secret"}
             if self.jwt_secret in weak_secrets or len(self.jwt_secret) < 32:

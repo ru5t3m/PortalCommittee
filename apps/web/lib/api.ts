@@ -26,6 +26,19 @@ export type RegionOffice = {
   longitude: string;
 };
 
+export type FaqAssistantResponse = {
+  answer: string | null;
+  matched_question: string | null;
+  section: string | null;
+  confidence: number;
+  source: string;
+  llm_used: boolean;
+  suggestions: Array<{
+    question: string;
+    section: string;
+  }>;
+};
+
 export async function parseApiError(response: Response) {
   try {
     const payload = await response.json();
@@ -56,4 +69,18 @@ export async function listRegionOffices() {
     throw new Error(await parseApiError(response));
   }
   return (await response.json()) as RegionOffice[];
+}
+
+export async function askFaqAssistant(question: string, locale: "ru" | "kk") {
+  const response = await fetch(`${API_URL}/faq-assistant`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ question, locale })
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as FaqAssistantResponse;
 }

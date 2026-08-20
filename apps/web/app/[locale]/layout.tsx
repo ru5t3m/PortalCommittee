@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
+import { FaqAssistantWidget } from "@/components/FaqAssistantWidget";
 import { Header } from "@/components/Header";
 import { getDictionary, isLocale, type Locale } from "@/lib/i18n";
 
@@ -12,6 +13,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
       <Header locale={locale as Locale} dict={dict} />
       <main>{children}</main>
       <Footer locale={locale as Locale} />
+      <FaqAssistantWidget locale={locale as Locale} />
     </>
   );
 }
