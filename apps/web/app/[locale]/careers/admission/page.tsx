@@ -1,5 +1,7 @@
 import { Award, BadgeCheck, Ban, ClipboardCheck, FileText, HeartPulse, ShieldCheck, UserCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import Image from "next/image";
+import { AdmissionJourney } from "@/components/AdmissionJourney";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
@@ -7,8 +9,7 @@ import { FAQAccordion } from "@/components/ui/FAQAccordion";
 import { PremiumCard } from "@/components/ui/PremiumCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
-import { Timeline } from "@/components/ui/Timeline";
-import { getAdmissionFaq, getAdmissionSteps } from "@/lib/data";
+import { getAdmissionFaq } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
 
 const copy = {
@@ -38,6 +39,14 @@ const copy = {
     processEyebrow: "Процесс",
     processTitle: "Этапы отбора",
     processDescription: "Маршрут отбора показывает основные действия кандидата и комиссии.",
+    physicalEyebrow: "Физическая подготовка",
+    physicalTitle: "Готовность к служебным нагрузкам",
+    physicalDescription: "Физическая подготовленность проверяется как отдельный этап отбора. Конкретный состав упражнений и нормативов определяется требованиями выбранного направления службы и доводится кандидату уполномоченным подразделением.",
+    physicalPoints: [
+      "Выносливость — способность сохранять работоспособность при продолжительной нагрузке.",
+      "Сила и общая подготовка — готовность безопасно выполнять установленные упражнения.",
+      "Скорость и координация — качество выполнения заданий в заданном темпе."
+    ],
     docsEyebrow: "Пакет кандидата",
     docsTitle: "Документы",
     documents: ["Удостоверение личности", "Свидетельство о рождении", "Аттестат или диплом", "Военный билет или приписное", "Фото и документы родственников"],
@@ -76,6 +85,14 @@ const copy = {
     processEyebrow: "Процесс",
     processTitle: "Іріктеу кезеңдері",
     processDescription: "Іріктеу маршруты кандидат пен комиссияның негізгі әрекеттерін көрсетеді.",
+    physicalEyebrow: "Дене даярлығы",
+    physicalTitle: "Қызметтік жүктемелерге дайындық",
+    physicalDescription: "Дене даярлығы іріктеудің жеке кезеңі ретінде тексеріледі. Жаттығулар мен нормативтердің нақты құрамы таңдалған қызмет бағытының талаптарына байланысты айқындалады және кандидатқа уәкілетті бөлімше хабарлайды.",
+    physicalPoints: [
+      "Төзімділік — ұзақ жүктеме кезінде жұмыс қабілетін сақтау.",
+      "Күш және жалпы даярлық — белгіленген жаттығуларды қауіпсіз орындауға дайындық.",
+      "Жылдамдық пен үйлесімділік — тапсырмаларды белгіленген қарқында сапалы орындау."
+    ],
     docsEyebrow: "Кандидат пакеті",
     docsTitle: "Құжаттар",
     documents: ["Жеке куәлік", "Туу туралы куәлік", "Аттестат немесе диплом", "Әскери билет немесе тіркеу куәлігі", "Фото және туыстар құжаттары"],
@@ -90,35 +107,47 @@ const copy = {
   }
 };
 
-export default async function AdmissionPage({ params }: { params: Promise<{ locale: Locale }> }) {
+export default async function AdmissionPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ locale: Locale }>;
+  searchParams: Promise<{ stage?: string | string[] }>;
+}) {
   const { locale } = await params;
+  const query = await searchParams;
   const t = copy[locale];
   const candidate = t.candidate as Array<{ title: string; text: string; icon: LucideIcon }>;
-  const admissionSteps = getAdmissionSteps(locale);
   const admissionFaq = getAdmissionFaq(locale);
+  const requestedStage = Number(Array.isArray(query.stage) ? query.stage[0] : query.stage);
+  const initialStageIndex = Number.isInteger(requestedStage) && requestedStage >= 1 && requestedStage <= 9 ? requestedStage - 1 : 0;
 
   return (
     <>
-      <section className="relative overflow-hidden bg-brand-gradient text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.18),transparent_25rem),radial-gradient(circle_at_80%_60%,rgba(214,168,58,0.22),transparent_24rem)]" />
-        <Container className="relative grid gap-10 py-24 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+      <section className="relative overflow-hidden border-b border-slate-200 bg-[#f5f8fb] text-state-navy">
+        <div className="paper-grid absolute inset-0 opacity-45" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_24%,rgba(0,169,155,0.14),transparent_25rem),radial-gradient(circle_at_82%_60%,rgba(47,111,174,0.10),transparent_24rem)]" />
+        <Container className="relative grid gap-10 py-20 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
           <Reveal>
-            <Badge className="border-white/20 bg-white/10 text-state-gold backdrop-blur">{t.badge}</Badge>
-            <h1 className="mt-6 max-w-4xl text-balance text-5xl font-bold leading-tight md:text-7xl">{t.title}</h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/78">{t.description}</p>
+            <Badge className="border-state-teal/20 bg-white text-state-tealDark shadow-sm">{t.badge}</Badge>
+            <h1 className="mt-6 max-w-4xl text-balance text-4xl font-bold leading-[1.08] md:text-6xl">{t.title}</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">{t.description}</p>
             <div className="mt-9 flex flex-wrap gap-4">
               <Button href={`/${locale}/appeals`} variant="gold">{t.apply}</Button>
               <Button href={`/${locale}/psychological-testing`}>{t.checkAbilities}</Button>
-              <Button href="#timeline" variant="ghost">{t.viewSteps}</Button>
+              <Button href="#timeline" variant="secondary">{t.viewSteps}</Button>
             </div>
           </Reveal>
           <Reveal delay={0.1}>
-            <div className="glass rounded-[2rem] p-6 text-state-navy shadow-premium">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white text-state-navy shadow-[0_26px_74px_rgba(6,27,51,0.13)]">
+              <div className="relative aspect-[16/8] overflow-hidden bg-slate-100">
+                <Image src="/media/official/service-pin.jpg" alt="" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 48vw" />
+              </div>
+              <div className="grid gap-3 p-5 sm:grid-cols-2">
                 {t.highlights.map((item) => (
-                  <div className="rounded-2xl bg-white/76 p-5" key={item}>
+                  <div className="rounded-2xl bg-[#f5f8fa] p-4" key={item}>
                     <ClipboardCheck className="h-7 w-7 text-state-teal" />
-                    <p className="mt-4 font-semibold">{item}</p>
+                    <p className="mt-3 font-semibold">{item}</p>
                   </div>
                 ))}
               </div>
@@ -156,10 +185,34 @@ export default async function AdmissionPage({ params }: { params: Promise<{ loca
       </Section>
 
       <section id="timeline">
-        <Section eyebrow={t.processEyebrow} title={t.processTitle} description={t.processDescription} className="bg-white">
-          <Timeline steps={admissionSteps} activeIndex={0} />
+        <Section eyebrow={t.processEyebrow} title={t.processTitle} description={t.processDescription} dark className="!py-16 md:!py-20">
+          <AdmissionJourney locale={locale} initialIndex={initialStageIndex} />
         </Section>
       </section>
+
+      <Section eyebrow={t.physicalEyebrow} title={t.physicalTitle} description={t.physicalDescription} className="bg-white">
+        <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch">
+          <div className="grid min-h-[24rem] gap-4 sm:grid-cols-2">
+            <div className="relative overflow-hidden rounded-3xl bg-slate-100 sm:row-span-2">
+              <Image src="/media/education/running-track.jpg" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 38vw" />
+            </div>
+            <div className="relative min-h-44 overflow-hidden rounded-3xl bg-slate-100">
+              <Image src="/media/education/sprint-training.jpg" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 24vw" />
+            </div>
+            <div className="relative min-h-44 overflow-hidden rounded-3xl bg-slate-100">
+              <Image src="/media/official/field-training.jpg" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 24vw" />
+            </div>
+          </div>
+          <div className="grid gap-3">
+            {t.physicalPoints.map((point, index) => (
+              <div key={point} className="flex gap-4 rounded-3xl border border-slate-200 bg-[#f7fafb] p-5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-state-navy text-sm font-bold text-white">{index + 1}</span>
+                <p className="text-sm leading-7 text-slate-700">{point}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Section>
 
       <Section eyebrow={t.docsEyebrow} title={t.docsTitle}>
         <div className="grid gap-5 md:grid-cols-5">

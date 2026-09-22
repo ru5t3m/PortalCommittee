@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowUpRight, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, Dumbbell, FileText, HeartPulse, SearchCheck, ShieldCheck, Trophy, UserCheck, UsersRound } from "lucide-react";
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
@@ -255,7 +255,9 @@ const copy = {
     happens: "Что происходит",
     openAdmission: "Открыть раздел поступления",
     register: "Регистрация кандидата",
-    psych: "Демо-психотест"
+    psych: "Демо-психотест",
+    choose: "Открыть этап",
+    chosen: "Выбран"
   },
   kk: {
     left: "Кезеңдерді солға айналдыру",
@@ -264,22 +266,25 @@ const copy = {
     happens: "Не болады",
     openAdmission: "Қабылдау бөлімін ашу",
     register: "Кандидатты тіркеу",
-    psych: "Демо-психотест"
+    psych: "Демо-психотест",
+    choose: "Кезеңді ашу",
+    chosen: "Таңдалды"
   }
 };
 
-export function AdmissionJourney({ locale }: { locale: Locale }) {
+export function AdmissionJourney({ locale, initialIndex = 0 }: { locale: Locale; initialIndex?: number }) {
   const scrollRef = useRef<HTMLOListElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isPending, startTransition] = useTransition();
+  const detailsRef = useRef<HTMLDivElement>(null);
   const journeySteps = locale === "kk" ? journeyStepsKk : journeyStepsRu;
+  const [activeIndex, setActiveIndex] = useState(() => Math.min(Math.max(initialIndex, 0), journeySteps.length - 1));
   const t = copy[locale];
   const active = journeySteps[activeIndex];
   const ActiveIcon = active.icon;
 
   function selectStep(index: number) {
-    startTransition(() => {
-      setActiveIndex(index);
+    setActiveIndex(index);
+    window.requestAnimationFrame(() => {
+      detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
   }
 
@@ -291,14 +296,14 @@ export function AdmissionJourney({ locale }: { locale: Locale }) {
   }
 
   return (
-    <div className="grid gap-7">
-      <div className="relative overflow-hidden rounded-[1.7rem] border border-white/10 bg-white/[0.07] p-5 shadow-premium backdrop-blur">
-        <div className="absolute inset-0 security-grid opacity-35" />
+    <div className="grid gap-4">
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.07] p-3 shadow-premium backdrop-blur">
+        <div className="pointer-events-none absolute inset-0 security-grid opacity-35" />
         <button
           type="button"
           onClick={() => scrollSteps("left")}
           aria-label={t.left}
-          className="absolute left-4 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-state-gold/45 bg-state-gold text-state-navy shadow-lg shadow-black/20 transition hover:bg-[#f0c65a] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-state-gold"
+          className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-state-gold/45 bg-state-gold text-state-navy shadow-lg shadow-black/20 transition hover:bg-[#f0c65a] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-state-gold sm:grid"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -306,36 +311,48 @@ export function AdmissionJourney({ locale }: { locale: Locale }) {
           type="button"
           onClick={() => scrollSteps("right")}
           aria-label={t.right}
-          className="absolute right-4 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-state-gold/45 bg-state-gold text-state-navy shadow-lg shadow-black/20 transition hover:bg-[#f0c65a] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-state-gold"
+          className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-state-gold/45 bg-state-gold text-state-navy shadow-lg shadow-black/20 transition hover:bg-[#f0c65a] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-state-gold sm:grid"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
         <ol
           ref={scrollRef}
-          className="relative flex gap-3 overflow-x-scroll px-14 pb-5 pt-2 [scrollbar-color:#d6a83a_rgba(255,255,255,0.14)] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-state-gold [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-white/15"
+          className="relative z-10 flex gap-2 overflow-x-auto px-1 pb-2 pt-1 sm:px-12 [scrollbar-color:#d6a83a_rgba(255,255,255,0.14)] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-state-gold [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-white/15"
         >
           {journeySteps.map((step, index) => {
             const selected = index === activeIndex;
             const completed = index < activeIndex;
+            const cardClassName = cn(
+              "relative flex h-full min-h-[7rem] w-full flex-col rounded-2xl border p-3 text-left shadow-sm transition-all duration-300 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-state-gold",
+              selected
+                ? "border-state-gold bg-white shadow-lift ring-4 ring-state-gold/10"
+                : "border-white/15 bg-white/[0.92] hover:-translate-y-1 hover:border-state-gold/50 hover:bg-white hover:shadow-lift"
+            );
+            const cardContent = (
+              <>
+                <span className={cn("grid h-9 w-9 place-items-center rounded-xl text-sm font-bold", selected ? "bg-state-gold text-state-navy" : "bg-state-teal/10 text-state-tealDark")}>
+                  {completed ? <CheckCircle2 className="h-5 w-5" /> : index + 1}
+                </span>
+                <span className="mt-2 text-[13px] font-semibold leading-4 text-state-navy">{step.title}</span>
+                <span className="mt-1 text-[11px] leading-4 text-slate-500">{step.label}</span>
+                <span className={cn("mt-auto pt-2 text-[10px] font-bold uppercase tracking-[0.12em]", selected ? "text-state-tealDark" : "text-slate-400")}>
+                  {selected ? t.chosen : t.choose}
+                </span>
+              </>
+            );
             return (
-              <li key={step.title} className="relative w-[15rem] shrink-0">
-                {index < journeySteps.length - 1 ? <div className="absolute left-1/2 top-6 h-px w-full bg-state-gold/35" /> : null}
+              <li key={step.title} className="relative w-[11.75rem] shrink-0">
+                {index < journeySteps.length - 1 ? <div className="absolute left-1/2 top-5 h-px w-full bg-state-gold/35" /> : null}
                 <button
                   type="button"
-                  onClick={() => selectStep(index)}
+                  onClick={(event) => {
+                    selectStep(index);
+                    event.currentTarget.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                  }}
                   aria-pressed={selected}
-                  className={cn(
-                    "relative flex h-full min-h-[10.5rem] w-full flex-col rounded-[1.25rem] border p-4 text-left shadow-sm transition-all duration-300 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-state-gold",
-                    selected
-                      ? "border-state-gold bg-white shadow-lift ring-4 ring-state-gold/10"
-                      : "border-white/15 bg-white/[0.92] hover:-translate-y-1 hover:border-state-gold/50 hover:bg-white hover:shadow-lift"
-                  )}
+                  className={cardClassName}
                 >
-                  <span className={cn("grid h-11 w-11 place-items-center rounded-2xl font-bold", selected ? "bg-state-gold text-state-navy" : "bg-state-teal/10 text-state-tealDark")}>
-                    {completed ? <CheckCircle2 className="h-6 w-6" /> : index + 1}
-                  </span>
-                  <span className="mt-3 text-sm font-semibold leading-5 text-state-navy">{step.title}</span>
-                  <span className="mt-1 text-xs leading-4 text-slate-500">{step.label}</span>
+                    {cardContent}
                 </button>
               </li>
             );
@@ -343,21 +360,21 @@ export function AdmissionJourney({ locale }: { locale: Locale }) {
         </ol>
       </div>
 
-      <div className={cn("relative overflow-hidden rounded-[1.8rem] border border-white/12 bg-white/[0.08] p-6 shadow-premium transition-opacity duration-200 backdrop-blur md:p-8", isPending ? "opacity-80" : "opacity-100")}>
-        <div className={cn("absolute inset-0 bg-gradient-to-br opacity-100", active.accent)} />
-        <div className="relative grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+      <div ref={detailsRef} className="relative scroll-mt-36 overflow-hidden rounded-3xl border border-white/12 bg-white/[0.08] p-5 shadow-premium backdrop-blur md:p-6" aria-live="polite">
+        <div className={cn("pointer-events-none absolute inset-0 bg-gradient-to-br opacity-100", active.accent)} />
+        <div key={activeIndex} className="stage-detail-enter relative grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
           <div>
             <div className="flex items-center gap-4">
-              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-state-gold text-state-navy shadow-lg">
-                <ActiveIcon className="h-7 w-7" />
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-state-gold text-state-navy shadow-lg">
+                <ActiveIcon className="h-6 w-6" />
               </span>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-state-gold">{t.selected}</p>
-                <h3 className="mt-1 text-3xl font-bold text-white md:text-4xl">{active.title}</h3>
+                <h3 className="mt-1 text-2xl font-bold text-white md:text-3xl">{active.title}</h3>
               </div>
             </div>
-            <p className="mt-6 text-lg leading-8 text-white/82">{active.summary}</p>
-            <div className="mt-6 flex flex-wrap gap-2">
+            <p className="mt-4 text-sm leading-6 text-white/82 md:text-base">{active.summary}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
               {active.checks.map((check) => (
                 <span key={check} className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/78">
                   {check}
@@ -366,9 +383,9 @@ export function AdmissionJourney({ locale }: { locale: Locale }) {
             </div>
           </div>
 
-          <div className="rounded-[1.4rem] border border-white/12 bg-[#06182d]/56 p-5">
+          <div className="rounded-2xl border border-white/12 bg-[#06182d]/56 p-4">
             <p className="text-sm font-semibold uppercase tracking-wide text-state-gold">{t.happens}</p>
-            <ul className="mt-4 grid gap-4">
+            <ul className="mt-3 grid gap-2.5">
               {active.details.map((detail) => (
                 <li key={detail} className="flex gap-3 text-sm leading-6 text-white/72">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-state-gold" />
@@ -379,7 +396,7 @@ export function AdmissionJourney({ locale }: { locale: Locale }) {
           </div>
         </div>
 
-        <div className="relative mt-8 flex flex-wrap items-center gap-4 border-t border-white/10 pt-6">
+        <div className="relative mt-5 flex flex-wrap items-center gap-3 border-t border-white/10 pt-5">
           <Button href={`/${locale}/careers/admission`} variant="gold">{t.openAdmission}</Button>
           <Button href={`/${locale}/register`} variant="ghost">{t.register}</Button>
           <Link href={`/${locale}/psychological-testing`} className="inline-flex items-center gap-2 text-sm font-semibold text-white/72 transition hover:text-state-gold">

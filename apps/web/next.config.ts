@@ -7,6 +7,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  allowedDevOrigins: ["127.0.0.1"],
   turbopack: {
     root
   },

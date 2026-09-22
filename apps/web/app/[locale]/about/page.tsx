@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { Container } from "@/components/ui/Container";
 import { PremiumCard } from "@/components/ui/PremiumCard";
@@ -73,6 +74,19 @@ const leadership: Leader[] = [
     role: "Заместитель Председателя КНБ РК - Директор Пограничной службы, генерал-майор",
     image: "/about/leadership/aldazhumanov-erlan.jpg"
   }
+];
+
+const serviceVisuals = [
+  "/media/official/field-training.jpg",
+  "/media/official/drone-system.jpg",
+  "/media/official/special-unit-vehicle.jpg",
+  "/media/official/knb-vest.jpg",
+  "/media/official/aviation-maritime.jpg"
+];
+
+const officialGallery = [
+  "/media/official/ceremony-patch.jpg",
+  "/media/official/award.jpg"
 ];
 
 const copy = {
@@ -270,13 +284,18 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
 
   return (
     <main className="bg-white">
-      <section className="relative overflow-hidden bg-brand-gradient text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.18),transparent_25rem),radial-gradient(circle_at_80%_60%,rgba(214,168,58,0.22),transparent_24rem)]" />
-        <Container className="relative py-20 md:py-24">
+      <section className="relative overflow-hidden border-b border-slate-200 bg-[#f5f8fb] text-state-navy">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_20%,rgba(0,169,155,0.12),transparent_25rem),radial-gradient(circle_at_84%_55%,rgba(47,111,174,0.10),transparent_24rem)]" />
+        <Container className="relative grid gap-10 py-16 md:py-20 lg:grid-cols-[1fr_0.86fr] lg:items-center">
           <Reveal>
-            <Badge className="border-white/20 bg-white/10 text-state-gold backdrop-blur">{t.eyebrow}</Badge>
-            <h1 className="mt-6 max-w-4xl text-balance text-5xl font-bold leading-tight md:text-7xl">{t.title}</h1>
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-white/[0.78]">{t.description}</p>
+            <Badge className="border-state-teal/20 bg-white text-state-tealDark shadow-sm">{t.eyebrow}</Badge>
+            <h1 className="mt-6 max-w-4xl text-balance text-4xl font-bold leading-[1.08] md:text-6xl">{t.title}</h1>
+            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">{t.description}</p>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-slate-100 shadow-[0_26px_70px_rgba(6,27,51,0.14)]">
+              <Image src="/media/official/memorial-ceremony.jpg" alt="" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 44vw" />
+            </div>
           </Reveal>
         </Container>
       </section>
@@ -328,7 +347,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
               <article className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-[18rem_1fr] md:items-center md:p-8 lg:grid-cols-[22rem_1fr]">
                 <div className="flex min-h-64 items-center justify-center rounded-xl bg-slate-50 p-4">
                   <img
-                    src="/about/symbols/flag.jpg"
+                    src="/media/official/committee-flag.jpg"
                     alt={t.flagTitle}
                     className="aspect-[3/2] w-full max-w-sm rounded-lg object-cover shadow-md"
                   />
@@ -348,6 +367,14 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
               <p className="mt-3 text-xl font-semibold leading-tight text-white/82 md:text-3xl">{t.mottoRu}</p>
             </div>
           </Reveal>
+
+          <div className="mt-6 grid auto-rows-[16rem] gap-4 sm:grid-cols-2" aria-hidden="true">
+            {officialGallery.map((src) => (
+              <div key={src} className="relative overflow-hidden rounded-3xl bg-slate-100">
+                <Image src={src} alt="" fill className="object-cover transition duration-500 hover:scale-[1.02]" sizes="(max-width: 640px) 100vw, 50vw" />
+              </div>
+            ))}
+          </div>
         </Container>
       </section>
 
@@ -396,7 +423,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
                 <div className="relative min-h-[19rem] overflow-hidden rounded-2xl border border-white/10 bg-state-navy shadow-elevated">
                   {service.image ? (
                     <img
-                      src={service.image}
+                      src={serviceVisuals[index] ?? service.image}
                       alt=""
                       className="absolute inset-0 h-full w-full object-cover"
                     />

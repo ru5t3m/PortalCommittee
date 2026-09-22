@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowDown, ArrowRight, Gamepad2 } from "lucide-react";
 import { ActivitySlideDeck } from "@/components/ActivitySlideDeck";
 import { KnbEmblem } from "@/components/KnbEmblem";
@@ -10,6 +11,15 @@ import { getActivities } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
 
 const gameUrl = "https://spec-game-pi.vercel.app";
+
+const activityVisuals = [
+  "/media/official/special-unit-winter.jpg",
+  "/media/official/knb-vest.jpg",
+  "/media/official/aviation-field.jpg",
+  "/media/official/notebook-pen.jpg",
+  "/media/official/drone-system.jpg",
+  "/media/official/special-vehicle-front.jpg"
+];
 
 const activityDetailsRu = [
   {
@@ -202,40 +212,40 @@ export default async function ActivitiesOverviewPage({ params }: { params: Promi
 
   return (
     <>
-      <section className="relative min-h-[82vh] overflow-hidden bg-[#06182d] text-white">
-        <div className="security-grid absolute inset-0 opacity-65" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(0,169,155,0.35),transparent_28rem),radial-gradient(circle_at_82%_10%,rgba(248,177,51,0.18),transparent_26rem)]" />
+      <section className="relative min-h-[82vh] overflow-hidden border-b border-slate-200 bg-[#f5f8fb] text-state-navy">
+        <div className="paper-grid absolute inset-0 opacity-50" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(0,169,155,0.14),transparent_28rem),radial-gradient(circle_at_82%_10%,rgba(47,111,174,0.10),transparent_26rem)]" />
         <Container className="relative grid min-h-[82vh] items-center gap-10 py-20 lg:grid-cols-[0.95fr_1.05fr]">
           <Reveal>
-            <Badge className="border-white/20 bg-white/10 text-state-gold backdrop-blur">{copy.eyebrow}</Badge>
-            <h1 className="mt-6 max-w-4xl text-balance text-5xl font-bold leading-tight md:text-7xl">{copy.title}</h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72">{copy.description}</p>
+            <Badge className="border-state-teal/20 bg-white text-state-tealDark shadow-sm">{copy.eyebrow}</Badge>
+            <h1 className="mt-6 max-w-4xl text-balance text-4xl font-bold leading-[1.08] md:text-6xl">{copy.title}</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">{copy.description}</p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Button href="#counter-terrorism" variant="gold">{copy.start}</Button>
-              <Button href={gameUrl} variant="ghost"><Gamepad2 className="h-4 w-4" /> {copy.game}</Button>
+              <Button href="#counter-terrorism">{copy.start}</Button>
+              <Button href={gameUrl} variant="secondary"><Gamepad2 className="h-4 w-4" /> {copy.game}</Button>
             </div>
           </Reveal>
 
           <Reveal delay={0.12}>
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/14 bg-white/[0.08] p-6 shadow-premium backdrop-blur">
+            <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-[0_24px_70px_rgba(6,27,51,0.10)] backdrop-blur">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_55%_45%,rgba(0,169,155,0.22),transparent_18rem)]" />
               <div className="relative flex items-center justify-between gap-6">
                 <KnbEmblem className="h-20 w-20" />
                 <div className="text-right">
-                  <p className="text-sm uppercase tracking-wide text-state-gold">{activities.length} {copy.count}</p>
+                  <p className="text-sm uppercase tracking-wide text-state-tealDark">{activities.length} {copy.count}</p>
                   <p className="mt-1 text-2xl font-bold">{copy.system}</p>
                 </div>
               </div>
               <div className="relative mt-8 grid gap-3 sm:grid-cols-2">
                 {activities.map((activity) => (
-                  <Link key={activity.slug} href={`#${activity.slug}`} className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.07] p-4 transition hover:border-state-gold/45 hover:bg-white/[0.11]">
+                  <Link key={activity.slug} href={`#${activity.slug}`} className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-[#f8fafc] p-4 transition hover:border-state-teal/35 hover:bg-state-teal/5">
                     <span className="flex items-center gap-3">
                       <span className="grid h-10 w-10 place-items-center rounded-xl bg-state-teal/18 text-state-teal">
                         <activity.icon className="h-5 w-5" />
                       </span>
                       <span className="font-semibold">{activity.title}</span>
                     </span>
-                    <ArrowDown className="h-4 w-4 text-state-gold transition group-hover:translate-y-1" />
+                    <ArrowDown className="h-4 w-4 text-state-tealDark transition group-hover:translate-y-1" />
                   </Link>
                 ))}
               </div>
@@ -275,6 +285,10 @@ export default async function ActivitiesOverviewPage({ params }: { params: Promi
                   className="scroll-mt-28 overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-[0_22px_70px_rgba(6,24,45,0.07)]"
                 >
                   <div className="relative overflow-hidden">
+                    <div className="relative aspect-[16/6] overflow-hidden bg-slate-100">
+                      <Image src={activityVisuals[index]} alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 70vw" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-state-navy/25 to-transparent" />
+                    </div>
                     <div className="absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,rgba(0,169,155,0.08),transparent)]" />
                     <Reveal className="relative p-6 pb-0 md:p-8 md:pb-0">
                       <div className="flex items-start justify-between gap-5">

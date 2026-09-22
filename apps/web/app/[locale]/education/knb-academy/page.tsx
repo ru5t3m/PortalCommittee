@@ -1,5 +1,6 @@
 import { BookOpenCheck, CalendarClock, ClipboardCheck, FileText, GraduationCap, MapPinned, ShieldCheck, Stethoscope, Trophy, UsersRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import Image from "next/image";
 import { PageHero } from "@/components/PageHero";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
@@ -12,6 +13,13 @@ type InfoBlock = {
   items?: string[];
   icon: LucideIcon;
 };
+
+const academyVisuals = [
+  "/media/education/academy-building.jpg",
+  "/media/education/sports-campus.jpg",
+  "/media/education/running-track.jpg",
+  "/media/education/sprint-training.jpg"
+];
 
 const copy = {
   ru: {
@@ -183,6 +191,14 @@ export default async function KnbAcademyPage({ params }: { params: Promise<{ loc
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="mt-8 grid auto-rows-[14rem] gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-hidden="true">
+            {academyVisuals.map((src, index) => (
+              <div key={src} className={`relative overflow-hidden rounded-3xl bg-slate-100 ${index === 0 ? "sm:col-span-2 lg:col-span-2" : ""}`}>
+                <Image src={src} alt="" fill className="object-cover transition duration-500 hover:scale-[1.02]" sizes="(max-width: 640px) 100vw, 50vw" />
+              </div>
+            ))}
           </div>
 
           <section className="mt-10 rounded-[1.35rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
