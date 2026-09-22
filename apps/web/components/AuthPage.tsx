@@ -1,33 +1,28 @@
 "use client";
 
-import { CalendarDays, CheckCircle2, ExternalLink, Loader2, LockKeyhole, Mail, MessageCircle, Phone, ShieldCheck, Smartphone, UserRound } from "lucide-react";
+import { CalendarDays, CheckCircle2, Loader2, LockKeyhole, Mail, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import type { Locale } from "@/lib/i18n";
 import {
   completeEdsLogin,
-  completeTelegramLogin,
-  getTelegramLoginStatus,
   loginWithPassword,
   registerWithPassword,
-  startEdsLogin,
-  startTelegramLogin,
-  type TelegramLoginStart
+  startEdsLogin
 } from "@/lib/auth";
 import { signAuthChallengeWithNcaLayer } from "@/lib/ncalayer";
 
 type AuthMode = "login" | "register";
-type Provider = "telegram" | "eds" | "email";
+type Provider = "eds" | "email";
 
 const copy = {
   ru: {
     title: "Вход в личный кабинет",
-    subtitle: "Используйте Telegram, ЭЦП или вход по email и паролю.",
+    subtitle: "Используйте вход по email и паролю или ЭЦП.",
     registerTitle: "Регистрация кандидата",
     registerSubtitle: "Создайте аккаунт по email и паролю. Эти данные будут использоваться для входа в личный кабинет и прохождения доступных сервисов портала.",
-    telegram: "Telegram",
     eds: "ЭЦП",
     email: "Email",
     edsTitle: "Вход через ЭЦП",
@@ -49,28 +44,22 @@ const copy = {
     registerSubmit: "Создать аккаунт",
     goRegister: "Зарегистрироваться",
     goLogin: "Уже есть аккаунт? Войти",
-    start: "Начать вход через Telegram",
     startEds: "Подписать и войти",
-    openTelegram: "Открыть Telegram",
     starting: "Создаем защищенную заявку...",
-    waiting: "Ожидаем подтверждение номера в Telegram",
-    verified: "Номер подтвержден. Завершаем вход...",
-    expired: "Срок подтверждения истек. Начните вход заново.",
+    verified: "Подпись подтверждена. Завершаем вход...",
     error: "Не удалось выполнить вход. Повторите попытку.",
     ncaError: "Не удалось подключиться к NCALayer или подписать запрос. Проверьте, что NCALayer запущен.",
     passwordPolicyError: "Пароль должен содержать не менее 10 символов, а также заглавную букву, строчную букву и цифру.",
     secureTitle: "Защищенная авторизация",
     dataProtection: "Данные используются только для идентификации, авторизации и работы с сервисами портала.",
-    features: ["Telegram с подтверждением телефона", "ЭЦП через NCALayer", "Email и пароль как дополнительный способ", "Защищенная сессия портала"],
+    features: ["Вход по email и паролю", "ЭЦП через NCALayer", "Защищенная сессия портала"],
     registerFeatures: ["Регистрация только по email", "Данные кандидата сохраняются в анкете", "Защищенная сессия портала"],
-    steps: ["Нажмите кнопку входа", "Откройте бота в Telegram", "Нажмите «Поделиться номером телефона»"]
   },
   kk: {
     title: "Жеке кабинетке кіру",
-    subtitle: "Telegram, ЭЦҚ немесе email және құпия сөз арқылы кіріңіз.",
+    subtitle: "Email және құпия сөз немесе ЭЦҚ арқылы кіріңіз.",
     registerTitle: "Кандидатты тіркеу",
     registerSubtitle: "Email және құпия сөз арқылы аккаунт жасаңыз. Бұл деректер жеке кабинетке кіру және портал сервистерін пайдалану үшін қолданылады.",
-    telegram: "Telegram",
     eds: "ЭЦҚ",
     email: "Email",
     edsTitle: "ЭЦҚ арқылы кіру",
@@ -92,21 +81,16 @@ const copy = {
     registerSubmit: "Аккаунт жасау",
     goRegister: "Тіркелу",
     goLogin: "Аккаунтыңыз бар ма? Кіру",
-    start: "Telegram арқылы кіруді бастау",
     startEds: "Қол қойып кіру",
-    openTelegram: "Telegram ашу",
     starting: "Қорғалған сұрау жасалуда...",
-    waiting: "Telegram ішінде телефон нөмірін растауды күтіп тұрмыз",
-    verified: "Нөмір расталды. Кіру аяқталуда...",
-    expired: "Растау мерзімі аяқталды. Кіруді қайта бастаңыз.",
+    verified: "Қолтаңба расталды. Кіру аяқталуда...",
     error: "Кіру орындалмады. Қайта көріңіз.",
     ncaError: "NCALayer-ге қосылу немесе сұрауға қол қою мүмкін болмады. NCALayer іске қосылғанын тексеріңіз.",
     passwordPolicyError: "Құпия сөз кемінде 10 таңбадан тұрып, бас әріп, кіші әріп және цифр қамтуы керек.",
     secureTitle: "Қорғалған авторизация",
     dataProtection: "Деректер тек жеке басты тексеру, авторизация және портал сервистерімен жұмыс істеу үшін пайдаланылады.",
-    features: ["Телефон растауы бар Telegram", "NCALayer арқылы ЭЦҚ", "Email және құпия сөз қосымша тәсіл ретінде", "Порталдың қорғалған сессиясы"],
+    features: ["Email және құпия сөз арқылы кіру", "NCALayer арқылы ЭЦҚ", "Порталдың қорғалған сессиясы"],
     registerFeatures: ["Тіркелу тек email арқылы", "Кандидат деректері анкетаға сақталады", "Порталдың қорғалған сессиясы"],
-    steps: ["Кіру батырмасын басыңыз", "Ботты Telegram ішінде ашыңыз", "«Телефон нөмірімен бөлісу» батырмасын басыңыз"]
   }
 };
 
@@ -119,12 +103,9 @@ function humanizeAuthError(message: string, locale: Locale) {
 
 export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
   const router = useRouter();
-  const [provider, setProvider] = useState<Provider>(mode === "register" ? "email" : "telegram");
-  const [challenge, setChallenge] = useState<TelegramLoginStart | null>(null);
+  const [provider, setProvider] = useState<Provider>("email");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
-  const [isStarting, setIsStarting] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
   const [isEdsSubmitting, setIsEdsSubmitting] = useState(false);
   const t = copy[locale];
@@ -132,23 +113,6 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
   const pageTitle = isRegister ? t.registerTitle : t.title;
   const pageSubtitle = isRegister ? t.registerSubtitle : t.subtitle;
   const pageFeatures = isRegister ? t.registerFeatures : t.features;
-
-  async function beginTelegramLogin() {
-    setError("");
-    setStatus(t.starting);
-    setIsStarting(true);
-    try {
-      const nextChallenge = await startTelegramLogin();
-      setChallenge(nextChallenge);
-      setStatus(t.waiting);
-      window.open(nextChallenge.deep_link, "_blank", "noopener,noreferrer");
-    } catch (caught) {
-      setError(caught instanceof Error ? humanizeAuthError(caught.message, locale) : t.error);
-      setStatus("");
-    } finally {
-      setIsStarting(false);
-    }
-  }
 
   async function beginEdsLogin() {
     setError("");
@@ -196,61 +160,6 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
     }
   }
 
-  useEffect(() => {
-    if (!challenge) return;
-
-    let cancelled = false;
-    let completionStarted = false;
-    const interval = window.setInterval(async () => {
-      if (completionStarted) return;
-      try {
-        const current = await getTelegramLoginStatus(challenge.challenge_id);
-        if (cancelled) return;
-
-        if (current.status === "expired") {
-          setError(t.expired);
-          setStatus("");
-          setChallenge(null);
-          window.clearInterval(interval);
-          return;
-        }
-
-        if (current.status === "verified") {
-          completionStarted = true;
-          setStatus(t.verified);
-          setIsCompleting(true);
-          window.clearInterval(interval);
-          try {
-            await completeTelegramLogin(challenge.challenge_id, challenge.nonce);
-            if (!cancelled) {
-              router.push(`/${locale}/account`);
-            }
-          } catch (caught) {
-            if (!cancelled) {
-              setError(caught instanceof Error ? humanizeAuthError(caught.message, locale) : t.error);
-              setStatus("");
-              setChallenge(null);
-              setIsCompleting(false);
-            }
-          }
-        } else if (current.status === "awaiting_contact") {
-          setStatus(t.waiting);
-        }
-      } catch (caught) {
-        if (!cancelled) {
-          setError(caught instanceof Error ? humanizeAuthError(caught.message, locale) : t.error);
-          setStatus("");
-          setIsCompleting(false);
-        }
-      }
-    }, 2500);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, [challenge, locale, router, t.error, t.expired, t.verified, t.waiting]);
-
   return (
     <section className="relative min-h-[calc(100vh-77px)] overflow-hidden bg-[#06182d] text-white">
       <div className="security-grid absolute inset-0 opacity-60" />
@@ -282,8 +191,8 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
         <div className="mx-auto w-full max-w-xl">
           <div className="rounded-[1.35rem] border border-white/20 bg-white/[0.96] p-6 text-state-navy shadow-[0_30px_90px_rgba(0,0,0,0.24)] md:p-8">
             {!isRegister ? (
-              <div className="mb-6 grid grid-cols-3 rounded-2xl bg-slate-100 p-1">
-                {(["telegram", "eds", "email"] as Provider[]).map((item) => (
+              <div className="mb-6 grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+                {(["email", "eds"] as Provider[]).map((item) => (
                   <button
                     key={item}
                     className={`min-h-11 rounded-xl text-sm font-bold transition ${provider === item ? "bg-white text-state-navy shadow-sm" : "text-slate-500 hover:text-state-navy"}`}
@@ -294,54 +203,13 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
                       setStatus("");
                     }}
                   >
-                    {item === "telegram" ? t.telegram : item === "eds" ? t.eds : t.email}
+                    {item === "eds" ? t.eds : t.email}
                   </button>
                 ))}
               </div>
             ) : null}
 
-            {provider === "telegram" ? (
-              <>
-                <div className="mb-7">
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-tealDark">Telegram</p>
-                  <h2 className="mt-2 text-2xl font-bold">{t.telegram}</h2>
-                </div>
-
-                <div className="grid gap-4">
-                  {t.steps.map((step, index) => (
-                    <div key={step} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-state-teal/10 text-sm font-bold text-state-tealDark">{index + 1}</span>
-                      <span className="text-sm font-semibold leading-6 text-slate-700">{step}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  <button
-                    disabled={isStarting || isCompleting}
-                    className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-button-gradient px-5 py-3 text-sm font-semibold text-white shadow-lift transition hover:-translate-y-0.5 hover:shadow-premium disabled:cursor-not-allowed disabled:opacity-70"
-                    type="button"
-                    onClick={beginTelegramLogin}
-                  >
-                    {isStarting ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
-                    {t.start}
-                  </button>
-
-                  <a
-                    aria-disabled={!challenge}
-                    className={`inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border px-5 py-3 text-sm font-semibold transition ${
-                      challenge ? "border-state-teal/30 bg-state-surface text-state-tealDark hover:border-state-gold hover:text-state-navy" : "pointer-events-none border-slate-200 bg-slate-50 text-slate-400"
-                    }`}
-                    href={challenge?.deep_link ?? "#"}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    <ExternalLink className="h-5 w-5" />
-                    {t.openTelegram}
-                  </a>
-                </div>
-              </>
-            ) : provider === "eds" ? (
+            {provider === "eds" ? (
               <>
                 <div className="mb-7">
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-tealDark">{t.eds}</p>
@@ -437,7 +305,7 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
 
             {status ? (
               <div className="mt-5 flex items-center gap-3 rounded-2xl border border-state-teal/20 bg-state-surface px-4 py-3 text-sm font-semibold leading-6 text-state-tealDark">
-                {isCompleting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Smartphone className="h-5 w-5" />}
+                <ShieldCheck className="h-5 w-5" />
                 {status}
               </div>
             ) : null}

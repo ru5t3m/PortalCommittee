@@ -57,7 +57,57 @@ export type EdsLoginStart = {
 
 const ACCESS_TOKEN_KEY = "knb-access-token";
 const ADMIN_ACCESS_TOKEN_KEY = "knb-admin-access-token";
+const DEMO_SESSION_KEY = "knb-temporary-demo-session";
+const DEMO_EMAIL_KEY = "knb-temporary-demo-email";
+
+// Temporary presentation mode. Set to false to restore real email auth and test access checks.
+export const TEMPORARY_DEMO_AUTH_ENABLED = true;
+
 let refreshPromise: Promise<TokenResponse> | null = null;
+
+export function isTemporaryDemoSession() {
+  return TEMPORARY_DEMO_AUTH_ENABLED && typeof window !== "undefined" && window.sessionStorage.getItem(DEMO_SESSION_KEY) === "active";
+}
+
+function startTemporaryDemoSession(email: string) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(DEMO_SESSION_KEY, "active");
+  window.sessionStorage.setItem(DEMO_EMAIL_KEY, email || "candidate@example.kz");
+  window.dispatchEvent(new CustomEvent("knb-auth-changed"));
+}
+
+function clearTemporaryDemoSession() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(DEMO_SESSION_KEY);
+  window.sessionStorage.removeItem(DEMO_EMAIL_KEY);
+  window.dispatchEvent(new CustomEvent("knb-auth-changed"));
+}
+
+function getTemporaryDemoUser(): AuthMe {
+  const email = typeof window === "undefined" ? "candidate@example.kz" : window.sessionStorage.getItem(DEMO_EMAIL_KEY) || "candidate@example.kz";
+  return {
+    user: {
+      id: -1,
+      email,
+      full_name: "Александр Нурланов",
+      role: "candidate",
+      telegram_username: null,
+      phone: "+7 700 123 45 67",
+      phone_verified: true
+    },
+    candidate_application: {
+      tracking_code: "DEMO-2026-001",
+      status: "На рассмотрении",
+      first_name: "Александр",
+      last_name: "Нурланов",
+      middle_name: "Ерланович",
+      phone: "+7 700 123 45 67",
+      region: "г. Астана",
+      education_level: "Высшее образование",
+      desired_direction: "Информационная безопасность"
+    }
+  };
+}
 
 function getStoredAccessToken() {
   if (typeof window === "undefined") return null;
@@ -70,9 +120,12 @@ function setStoredAccessToken(token: string) {
 }
 
 function clearStoredAccessToken() {
+  const hadStoredSession = window.sessionStorage.getItem(ACCESS_TOKEN_KEY) !== null || window.sessionStorage.getItem(ADMIN_ACCESS_TOKEN_KEY) !== null;
   window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
   window.sessionStorage.removeItem(ADMIN_ACCESS_TOKEN_KEY);
-  window.dispatchEvent(new CustomEvent("knb-auth-changed"));
+  if (hadStoredSession) {
+    window.dispatchEvent(new CustomEvent("knb-auth-changed"));
+  }
 }
 
 async function storeTokenFromResponse(response: Response) {
@@ -137,6 +190,11 @@ export async function completeEdsLogin(challengeId: number, nonce: string, cmsBa
 }
 
 export async function loginWithPassword(email: string, password: string) {
+  if (TEMPORARY_DEMO_AUTH_ENABLED) {
+    startTemporaryDemoSession(email);
+    return { access_token: "temporary-demo-session", token_type: "bearer", expires_in: 24 * 60 * 60 } satisfies TokenResponse;
+  }
+
   const response = await fetch(`${API_URL}/auth/password/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -202,6 +260,12 @@ export async function refreshSession() {
 }
 
 export async function logout() {
+  if (isTemporaryDemoSession()) {
+    clearTemporaryDemoSession();
+    clearStoredAccessToken();
+    return;
+  }
+
   await fetch(`${API_URL}/auth/logout`, {
     method: "POST",
     credentials: "include"
@@ -251,6 +315,13 @@ export async function adminAuthFetch(input: string, init: RequestInit = {}): Pro
 }
 
 export async function getMe() {
+  if (isTemporaryDemoSession()) {
+    return getTemporaryDemoUser();
+  }
+  if (TEMPORARY_DEMO_AUTH_ENABLED) {
+    throw new Error("Temporary demo session is not active");
+  }
+
   const response = await authFetch(`${API_URL}/auth/me`);
   if (!response.ok) {
     clearStoredAccessToken();

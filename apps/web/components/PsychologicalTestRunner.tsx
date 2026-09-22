@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
 import { primaryPsychologicalSections, type PrimaryPsychologicalQuestion } from "@/lib/primary-psychological-test";
-import { getMe } from "@/lib/auth";
+import { getMe, TEMPORARY_DEMO_AUTH_ENABLED } from "@/lib/auth";
 import {
   getPsychologicalTestProgress,
   savePsychologicalTestProgress,
@@ -45,7 +45,7 @@ const primaryCopy = {
     checkingAuth: "Проверяем вход",
     loadingProgress: "Проверяем сохраненный прогресс",
     authRequired: "Для прохождения теста нужен вход",
-    authRequiredText: "Психологическое тестирование доступно только пользователям, которые вошли на портал. Войдите через Telegram или почту, затем вернитесь к тесту.",
+    authRequiredText: "Психологическое тестирование доступно только пользователям, которые вошли на портал. Войдите по email, затем вернитесь к тесту.",
     login: "Войти",
     exitToTests: "Выйти на страницу психотестирования",
     saving: "Сохраняем результат...",
@@ -105,7 +105,7 @@ const primaryCopy = {
     checkingAuth: "Кіру тексерілуде",
     loadingProgress: "Сақталған прогресс тексерілуде",
     authRequired: "Тесттен өту үшін кіру қажет",
-    authRequiredText: "Психологиялық тестілеу порталға кірген пайдаланушыларға ғана қолжетімді. Telegram немесе пошта арқылы кіріп, тестке қайта оралыңыз.",
+    authRequiredText: "Психологиялық тестілеу порталға кірген пайдаланушыларға ғана қолжетімді. Email арқылы кіріп, тестке қайта оралыңыз.",
     login: "Кіру",
     exitToTests: "Психотест бетіне шығу",
     saving: "Нәтиже сақталуда...",
@@ -181,8 +181,10 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
   const [sectionIndex, setSectionIndex] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [mode, setMode] = useState<Mode>("instructions");
-  const [authStatus, setAuthStatus] = useState<"checking" | "allowed" | "denied">("checking");
-  const [isLoadingProgress, setIsLoadingProgress] = useState(true);
+  const [authStatus, setAuthStatus] = useState<"checking" | "allowed" | "denied">(
+    TEMPORARY_DEMO_AUTH_ENABLED ? "allowed" : "checking"
+  );
+  const [isLoadingProgress, setIsLoadingProgress] = useState(!TEMPORARY_DEMO_AUTH_ENABLED);
   const [questionRemainingSeconds, setQuestionRemainingSeconds] = useState(QUESTION_SECONDS);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [sectionAnswers, setSectionAnswers] = useState<Record<string, Record<string, AnswerValue>>>({});
@@ -234,6 +236,7 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
   }, [questionRemainingSeconds]);
 
   useEffect(() => {
+    if (TEMPORARY_DEMO_AUTH_ENABLED) return;
     let active = true;
     getMe()
       .then(() => {

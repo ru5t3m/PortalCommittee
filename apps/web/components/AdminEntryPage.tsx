@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AdminPanel } from "@/components/AdminPanel";
 import { Container } from "@/components/ui/Container";
-import { getMe, hasAdminPanelSession, loginAdminPanel } from "@/lib/auth";
+import { getMe, hasAdminPanelSession, isTemporaryDemoSession, loginAdminPanel } from "@/lib/auth";
 
 const allowedUserEmail = process.env.NEXT_PUBLIC_ADMIN_PORTAL_ALLOWED_USER_EMAIL ?? "test@gmail.com";
 
@@ -18,6 +18,10 @@ export function AdminEntryPage() {
     let active = true;
     const run = async () => {
       try {
+        if (isTemporaryDemoSession()) {
+          setAccessState("denied");
+          return;
+        }
         const auth = await getMe();
         if (!active) return;
         if ((auth.user.email ?? "").toLowerCase() !== allowedUserEmail.toLowerCase()) {
