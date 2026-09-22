@@ -10,3 +10,6 @@ coverage/
 .DS_Store
 .playwright-cli/
 models/
+*.tsbuildinfo
+.render_*/
+~$*.docx
