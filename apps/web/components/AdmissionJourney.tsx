@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowUpRight, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, Dumbbell, FileText, HeartPulse, SearchCheck, ShieldCheck, Trophy, UserCheck, UsersRound } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -271,6 +272,13 @@ const copy = {
     chosen: "Таңдалды"
   }
 };
+
+export function AdmissionJourneyFromQuery({ locale }: { locale: Locale }) {
+  const searchParams = useSearchParams();
+  const requestedStage = Number(searchParams.get("stage"));
+  const initialIndex = Number.isInteger(requestedStage) && requestedStage >= 1 && requestedStage <= 9 ? requestedStage - 1 : 0;
+  return <AdmissionJourney key={initialIndex} locale={locale} initialIndex={initialIndex} />;
+}
 
 export function AdmissionJourney({ locale, initialIndex = 0 }: { locale: Locale; initialIndex?: number }) {
   const scrollRef = useRef<HTMLOListElement>(null);

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { CitizenAppealForm } from "@/components/CitizenAppealForm";
 import { PageHero } from "@/components/PageHero";
 import { Container } from "@/components/ui/Container";

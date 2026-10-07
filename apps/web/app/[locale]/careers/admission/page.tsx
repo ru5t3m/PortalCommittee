@@ -1,7 +1,8 @@
 import { Award, BadgeCheck, Ban, ClipboardCheck, FileText, HeartPulse, ShieldCheck, UserCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
-import { AdmissionJourney } from "@/components/AdmissionJourney";
+import { Suspense } from "react";
+import { AdmissionJourney, AdmissionJourneyFromQuery } from "@/components/AdmissionJourney";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
@@ -108,19 +109,14 @@ const copy = {
 };
 
 export default async function AdmissionPage({
-  params,
-  searchParams
+  params
 }: {
   params: Promise<{ locale: Locale }>;
-  searchParams: Promise<{ stage?: string | string[] }>;
 }) {
   const { locale } = await params;
-  const query = await searchParams;
   const t = copy[locale];
   const candidate = t.candidate as Array<{ title: string; text: string; icon: LucideIcon }>;
   const admissionFaq = getAdmissionFaq(locale);
-  const requestedStage = Number(Array.isArray(query.stage) ? query.stage[0] : query.stage);
-  const initialStageIndex = Number.isInteger(requestedStage) && requestedStage >= 1 && requestedStage <= 9 ? requestedStage - 1 : 0;
 
   return (
     <>
@@ -141,7 +137,7 @@ export default async function AdmissionPage({
           <Reveal delay={0.1}>
             <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white text-state-navy shadow-[0_26px_74px_rgba(6,27,51,0.13)]">
               <div className="relative aspect-[16/8] overflow-hidden bg-slate-100">
-                <Image src="/media/official/service-pin.jpg" alt="" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 48vw" />
+                <Image src="/media/official/service-pin.webp" alt="" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 48vw" />
               </div>
               <div className="grid gap-3 p-5 sm:grid-cols-2">
                 {t.highlights.map((item) => (
@@ -186,7 +182,9 @@ export default async function AdmissionPage({
 
       <section id="timeline">
         <Section eyebrow={t.processEyebrow} title={t.processTitle} description={t.processDescription} dark className="!py-16 md:!py-20">
-          <AdmissionJourney locale={locale} initialIndex={initialStageIndex} />
+          <Suspense fallback={<AdmissionJourney locale={locale} />}>
+            <AdmissionJourneyFromQuery locale={locale} />
+          </Suspense>
         </Section>
       </section>
 
@@ -194,13 +192,13 @@ export default async function AdmissionPage({
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch">
           <div className="grid min-h-[24rem] gap-4 sm:grid-cols-2">
             <div className="relative overflow-hidden rounded-3xl bg-slate-100 sm:row-span-2">
-              <Image src="/media/education/running-track.jpg" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 38vw" />
+              <Image src="/media/education/running-track.webp" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 38vw" />
             </div>
             <div className="relative min-h-44 overflow-hidden rounded-3xl bg-slate-100">
-              <Image src="/media/education/sprint-training.jpg" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 24vw" />
+              <Image src="/media/education/sprint-training.webp" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 24vw" />
             </div>
             <div className="relative min-h-44 overflow-hidden rounded-3xl bg-slate-100">
-              <Image src="/media/official/field-training.jpg" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 24vw" />
+              <Image src="/media/official/field-training.webp" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 24vw" />
             </div>
           </div>
           <div className="grid gap-3">

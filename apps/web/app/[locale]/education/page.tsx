@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight, GraduationCap, Shield } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
@@ -14,8 +15,8 @@ const copy = {
     contentTitle: "Учебные заведения",
     go: "Перейти",
     academies: [
-      { title: "Академия КНБ", text: "Отдельная страница для информации о поступлении, направлениях подготовки и требованиях к кандидатам.", href: "knb-academy", icon: GraduationCap, image: "/education/knb-academy-emblem.png" },
-      { title: "Пограничная академия КНБ", text: "Отдельная страница для поступающих на направления, связанные с пограничной службой.", href: "border-academy", icon: Shield, image: "/education/border-academy-emblem.png" }
+      { title: "Академия КНБ", text: "Отдельная страница для информации о поступлении, направлениях подготовки и требованиях к кандидатам.", href: "knb-academy", icon: GraduationCap, image: "/education/knb-academy-emblem.webp" },
+      { title: "Пограничная академия КНБ", text: "Отдельная страница для поступающих на направления, связанные с пограничной службой.", href: "border-academy", icon: Shield, image: "/education/border-academy-emblem.webp" }
     ]
   },
   kk: {
@@ -25,8 +26,8 @@ const copy = {
     contentTitle: "Оқу орындары",
     go: "Өту",
     academies: [
-      { title: "ҰҚК Академиясы", text: "Оқуға қабылдау, даярлық бағыттары және кандидаттарға қойылатын талаптар туралы бөлек бет.", href: "knb-academy", icon: GraduationCap, image: "/education/knb-academy-emblem.png" },
-      { title: "ҰҚК Шекара академиясы", text: "Шекара қызметімен байланысты бағыттарға түсушілерге арналған бөлек бет.", href: "border-academy", icon: Shield, image: "/education/border-academy-emblem.png" }
+      { title: "ҰҚК Академиясы", text: "Оқуға қабылдау, даярлық бағыттары және кандидаттарға қойылатын талаптар туралы бөлек бет.", href: "knb-academy", icon: GraduationCap, image: "/education/knb-academy-emblem.webp" },
+      { title: "ҰҚК Шекара академиясы", text: "Шекара қызметімен байланысты бағыттарға түсушілерге арналған бөлек бет.", href: "border-academy", icon: Shield, image: "/education/border-academy-emblem.webp" }
     ]
   }
 };
@@ -47,7 +48,7 @@ export default async function EducationPage({ params }: { params: Promise<{ loca
               <Link href={`/${locale}/education/${academy.href}`} key={academy.title}>
                 <PremiumCard className="h-full">
                   {academy.image ? (
-                    <img src={academy.image} alt="" className="h-36 w-36 object-contain sm:h-40 sm:w-40" />
+                    <Image src={academy.image} alt="" width={160} height={160} sizes="160px" className="h-36 w-36 object-contain sm:h-40 sm:w-40" />
                   ) : (
                     <academy.icon className="h-9 w-9 text-state-teal" />
                   )}

@@ -35,12 +35,12 @@ const trustStatsKk = [
 ];
 
 const activityVisuals = [
-  "/media/official/special-unit-winter.jpg",
-  "/media/official/drone-system.jpg",
-  "/media/official/aviation-field.jpg",
-  "/media/official/notebook-pen.jpg",
-  "/media/official/special-vehicle-equipment.jpg",
-  "/media/official/knb-vest.jpg"
+  "/media/official/special-unit-winter.webp",
+  "/media/official/drone-system.webp",
+  "/media/official/aviation-field.webp",
+  "/media/official/notebook-pen.webp",
+  "/media/official/special-vehicle-equipment.webp",
+  "/media/official/knb-vest.webp"
 ];
 
 const homeCopy = {
@@ -154,7 +154,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
           <Reveal delay={0.12}>
             <div className="relative mx-auto max-w-[44rem] pb-14 sm:pl-10">
               <div className="relative aspect-[4/4.35] overflow-hidden rounded-[2.25rem] bg-slate-100 shadow-[0_30px_90px_rgba(6,27,51,0.16)] sm:aspect-[4/3.55]">
-                <Image src="/media/official/honor-guard.jpg" alt="" fill priority className="object-cover object-[58%_center]" sizes="(max-width: 1024px) 100vw, 52vw" />
+                <Image src="/media/official/honor-guard.webp" alt="" fill priority className="object-cover object-[58%_center]" sizes="(max-width: 1024px) 100vw, 52vw" />
                 <div className="absolute inset-0 bg-gradient-to-t from-state-navy/35 via-transparent to-white/5" />
               </div>
               <div className="absolute -bottom-1 left-0 grid w-[88%] grid-cols-2 gap-px overflow-hidden rounded-3xl border border-white bg-white/95 shadow-[0_18px_55px_rgba(6,27,51,0.14)] backdrop-blur sm:grid-cols-4">
@@ -175,7 +175,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
           <Reveal>
             <div className="mx-auto max-w-5xl">
               <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-black shadow-[0_24px_70px_rgba(6,27,51,0.14)]">
-                <video className="block max-h-[72vh] w-full bg-black object-contain" controls playsInline preload="metadata" poster="/media/official/service-pin.jpg">
+                <video className="block max-h-[72vh] w-full bg-black object-contain" controls playsInline preload="metadata" poster="/media/official/service-pin.webp">
                   <source src="/media/video/admission-and-service.mp4" type="video/mp4" />
                 </video>
               </div>
@@ -273,7 +273,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
                   </div>
 
                   <div className="relative min-h-[23rem] overflow-hidden bg-slate-100 lg:min-h-0">
-                    <Image src="/media/official/emblem-notebook.jpg" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 48vw" />
+                    <Image src="/media/official/emblem-notebook.webp" alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 48vw" />
                     <div className="absolute inset-0 bg-gradient-to-t from-state-navy/55 via-transparent to-transparent" />
                     <div className="absolute inset-x-5 bottom-5 grid gap-2.5 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                       <div className="rounded-2xl border border-white/25 bg-white/90 p-4 shadow-lg backdrop-blur-md">

@@ -6,9 +6,15 @@ import { PremiumCard } from "@/components/ui/PremiumCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
 import { getActivities } from "@/lib/data";
-import type { Locale } from "@/lib/i18n";
+import { isLocale, type Locale } from "@/lib/i18n";
 
 const gameUrl = "https://spec-game-pi.vercel.app";
+export const dynamicParams = false;
+
+export function generateStaticParams({ params }: { params: { locale: string } }) {
+  if (!isLocale(params.locale)) return [];
+  return getActivities(params.locale).map(({ slug }) => ({ slug }));
+}
 
 const copy = {
   ru: {

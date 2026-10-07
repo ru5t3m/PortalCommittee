@@ -51,3 +51,33 @@ LLM-сервера, а вход в админ-панель — `ADMIN_PANEL_EMAI
 базовом Compose. Для входа через ЭЦП пользователю также нужен NCALayer.
 
 Текущие учётные данные и настройки Compose предназначены для локальной разработки.
+
+## Проверки перед изменениями
+
+Проверки интерфейса запускаются из `apps/web` при работающем портале:
+
+```powershell
+npm ci
+npm run check
+npm audit --omit=dev --audit-level=high
+$env:PLAYWRIGHT_CHANNEL = 'msedge'
+npm run test:e2e
+```
+
+На компьютере без Edge установите Chromium через `npx playwright install chromium`
+и не задавайте `PLAYWRIGHT_CHANNEL`. Для запуска локального производственного
+сервера тестами выполните `npm run build` и задайте
+`PLAYWRIGHT_START_SERVER=1`. Для другого адреса портала используется `WEB_URL`.
+
+Серверные тесты запускаются из `apps/api`:
+
+```powershell
+pip install -r requirements-dev.txt
+python -m unittest discover -s tests -v
+```
+
+Тесты создают временную базу в памяти; рабочая база PostgreSQL не используется.
+GitHub Actions проверяет код, сборку, браузерные сценарии, API и зависимости.
+
+Результаты первого этапа оптимизации и ограничения проверок:
+[отчёт об оптимизации](docs/optimization-2026-10-08.md).

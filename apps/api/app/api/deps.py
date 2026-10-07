@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -17,9 +18,9 @@ def current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
         user_id = payload.get("sub")
         if not user_id:
-            raise JWTError("Missing subject")
+            raise InvalidTokenError("Missing subject")
         parsed_user_id = int(user_id)
-    except (JWTError, ValueError) as exc:
+    except (InvalidTokenError, ValueError) as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials") from exc
     user = db.query(User).filter(User.id == parsed_user_id, User.is_active.is_(True), User.is_blocked.is_(False)).first()
     if not user:
@@ -34,9 +35,9 @@ def current_admin_session_user(token: str = Depends(oauth2_scheme), db: Session 
         user_id = payload.get("sub")
         is_admin_session = payload.get("admin_session") is True
         if not user_id or not is_admin_session:
-            raise JWTError("Missing admin session")
+            raise InvalidTokenError("Missing admin session")
         parsed_user_id = int(user_id)
-    except (JWTError, ValueError) as exc:
+    except (InvalidTokenError, ValueError) as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid admin session") from exc
     user = db.query(User).filter(User.id == parsed_user_id, User.is_active.is_(True), User.is_blocked.is_(False)).first()
     if not user or (user.email or "").lower() != settings.admin_portal_allowed_user_email.lower():

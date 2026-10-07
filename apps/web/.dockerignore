@@ -6,3 +6,7 @@ node_modules
 !.env.example
 *.tsbuildinfo
 npm-debug.log*
+assets
+.verification
+playwright-report
+test-results

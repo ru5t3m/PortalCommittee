@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Clock3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -176,6 +177,7 @@ function isCorrectAnswer(question: PrimaryPsychologicalQuestion, answer: AnswerV
 }
 
 function PrimarySelectionRunner({ locale }: { locale: Locale }) {
+  const router = useRouter();
   const t = primaryCopy[locale];
   const readySections = primaryPsychologicalSections;
   const [sectionIndex, setSectionIndex] = useState(0);
@@ -408,7 +410,7 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
       });
       setProgressMessage(t.progressSaved);
       if (exitAfterSave) {
-        window.location.href = `/${locale}/psychological-testing`;
+        router.push(`/${locale}/psychological-testing`);
       }
     } catch {
       setProgressMessage(t.progressSaveError);
@@ -437,7 +439,7 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
         sections: sectionSummaries,
         answers: sectionAnswers
       });
-      window.location.href = `/${locale}/psychological-testing`;
+      router.push(`/${locale}/psychological-testing`);
     } catch {
       setProgressMessage(t.progressSaveError);
     } finally {

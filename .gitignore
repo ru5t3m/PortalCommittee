@@ -13,3 +13,7 @@ models/
 *.tsbuildinfo
 .render_*/
 ~$*.docx
+.verification/
+.verification-audit*.json
+playwright-report/
+test-results/

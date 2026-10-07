@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { notFound } from "next/navigation";
 import { PsychologicalTestRunner } from "@/components/PsychologicalTestRunner";
 import type { Locale } from "@/lib/i18n";

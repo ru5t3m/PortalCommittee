@@ -13,12 +13,12 @@ import type { Locale } from "@/lib/i18n";
 const gameUrl = "https://spec-game-pi.vercel.app";
 
 const activityVisuals = [
-  "/media/official/special-unit-winter.jpg",
-  "/media/official/knb-vest.jpg",
-  "/media/official/aviation-field.jpg",
-  "/media/official/notebook-pen.jpg",
-  "/media/official/drone-system.jpg",
-  "/media/official/special-vehicle-front.jpg"
+  "/media/official/special-unit-winter.webp",
+  "/media/official/knb-vest.webp",
+  "/media/official/aviation-field.webp",
+  "/media/official/notebook-pen.webp",
+  "/media/official/drone-system.webp",
+  "/media/official/special-vehicle-front.webp"
 ];
 
 const activityDetailsRu = [

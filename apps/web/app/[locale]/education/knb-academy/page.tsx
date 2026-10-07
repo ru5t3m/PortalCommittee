@@ -15,10 +15,10 @@ type InfoBlock = {
 };
 
 const academyVisuals = [
-  "/media/education/academy-building.jpg",
-  "/media/education/sports-campus.jpg",
-  "/media/education/running-track.jpg",
-  "/media/education/sprint-training.jpg"
+  "/media/education/academy-building.webp",
+  "/media/education/sports-campus.webp",
+  "/media/education/running-track.webp",
+  "/media/education/sprint-training.webp"
 ];
 
 const copy = {

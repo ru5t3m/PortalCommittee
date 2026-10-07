@@ -1,5 +1,8 @@
 "use client";
 
+import "leaflet/dist/leaflet.css";
+import "./contacts-map.css";
+
 import { MapPin, Phone } from "lucide-react";
 import L from "leaflet";
 import { MapContainer, Marker, TileLayer, ZoomControl, useMap } from "react-leaflet";

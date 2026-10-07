@@ -273,7 +273,7 @@ export function AdminPanel({ locale }: { locale: Locale }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t.denied]);
 
   useEffect(() => {
     setCandidateComment(selectedCandidate?.moderator_comment ?? "");

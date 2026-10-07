@@ -27,66 +27,66 @@ const leadership: Leader[] = [
   {
     name: "Сагимбаев Ермек Алдабергенович",
     role: "Председатель Комитета национальной безопасности РК, генерал-лейтенант национальной безопасности",
-    image: "/about/leadership/sagimbayev-ermek.jpg"
+    image: "/about/leadership/sagimbayev-ermek.webp"
   },
   {
     name: "Алтынбаев Али Сапаргалиевич",
     role: "Первый заместитель Председателя КНБ, генерал-майор национальной безопасности",
-    image: "/about/leadership/altynbayev-ali.jpg"
+    image: "/about/leadership/altynbayev-ali.webp"
   },
   {
     name: "Тулеуов Асхат Калмагамбетович",
     role: "Заместитель Председателя КНБ РК, генерал-майор национальной безопасности",
-    image: "/about/leadership/tuleuov-askhat.jpg"
+    image: "/about/leadership/tuleuov-askhat.webp"
   },
   {
     name: "Рахымбердиев Бакытбек Толешевич",
     role: "Заместитель Председателя КНБ, генерал-майор национальной безопасности",
-    image: "/about/leadership/rakhymberdiyev-bakytbek.jpg"
+    image: "/about/leadership/rakhymberdiyev-bakytbek.webp"
   },
   {
     name: "Наймантаев Алмас Тлепбергенович",
     role: "Заместитель Председателя КНБ РК, генерал-майор национальной безопасности",
-    image: "/about/leadership/naimantayev-almas.jpg"
+    image: "/about/leadership/naimantayev-almas.webp"
   },
   {
     name: "Саркулов Руслан Серикович",
     role: "Заместитель Председателя КНБ РК, генерал-майор национальной безопасности",
-    image: "/about/leadership/sarkulov-ruslan.jpg"
+    image: "/about/leadership/sarkulov-ruslan.webp"
   },
   {
     name: "Ирменов Марат Гатауллович",
     role: "Заместитель Председателя КНБ РК, генерал-майор национальной безопасности",
-    image: "/about/leadership/irmenov-marat.jpg"
+    image: "/about/leadership/irmenov-marat.webp"
   },
   {
     name: "Жумабаев Марат Кабиденович",
     role: "Заместитель Председателя КНБ РК - Директор Службы внешней разведки, генерал-майор национальной безопасности",
-    image: "/about/leadership/zhumabayev-marat.jpg"
+    image: "/about/leadership/zhumabayev-marat.webp"
   },
   {
     name: "Кунанбаев Берик Садыкович",
     role: "Заместитель Председателя КНБ РК - Директор Службы специального назначения «А», генерал-майор национальной безопасности",
-    image: "/about/leadership/kunanbayev-berik.jpg"
+    image: "/about/leadership/kunanbayev-berik.webp"
   },
   {
     name: "Алдажұманов Ерлан Ерғалиұлы",
     role: "Заместитель Председателя КНБ РК - Директор Пограничной службы, генерал-майор",
-    image: "/about/leadership/aldazhumanov-erlan.jpg"
+    image: "/about/leadership/aldazhumanov-erlan.webp"
   }
 ];
 
 const serviceVisuals = [
-  "/media/official/field-training.jpg",
-  "/media/official/drone-system.jpg",
-  "/media/official/special-unit-vehicle.jpg",
-  "/media/official/knb-vest.jpg",
-  "/media/official/aviation-maritime.jpg"
+  "/media/official/field-training.webp",
+  "/media/official/drone-system.webp",
+  "/media/official/special-unit-vehicle.webp",
+  "/media/official/knb-vest.webp",
+  "/media/official/aviation-maritime.webp"
 ];
 
 const officialGallery = [
-  "/media/official/ceremony-patch.jpg",
-  "/media/official/award.jpg"
+  "/media/official/ceremony-patch.webp",
+  "/media/official/award.webp"
 ];
 
 const copy = {
@@ -164,13 +164,13 @@ const copy = {
         title: "Академия КНБ Республики Казахстан",
         text: "Ведомственное учебное заведение для подготовки кадров органов национальной безопасности.",
         href: "knb-academy",
-        image: "/education/knb-academy-emblem.png"
+        image: "/education/knb-academy-emblem.webp"
       },
       {
         title: "Пограничная академия КНБ Республики Казахстан",
         text: "Учебное заведение для подготовки специалистов по направлениям Пограничной службы.",
         href: "border-academy",
-        image: "/education/border-academy-emblem.png"
+        image: "/education/border-academy-emblem.webp"
       }
     ],
     go: "Подробнее"
@@ -245,13 +245,13 @@ const copy = {
         title: "Қазақстан Республикасы ҰҚК Академиясы",
         text: "Ұлттық қауіпсіздік органдары үшін кадр даярлайтын ведомстволық оқу орны.",
         href: "knb-academy",
-        image: "/education/knb-academy-emblem.png"
+        image: "/education/knb-academy-emblem.webp"
       },
       {
         title: "Қазақстан Республикасы ҰҚК Шекара академиясы",
         text: "Шекара қызметі бағыттары бойынша мамандар даярлайтын оқу орны.",
         href: "border-academy",
-        image: "/education/border-academy-emblem.png"
+        image: "/education/border-academy-emblem.webp"
       }
     ],
     go: "Толығырақ"
@@ -261,9 +261,12 @@ const copy = {
 function LeaderCard({ leader, large = false }: { leader: Leader; large?: boolean }) {
   return (
     <PremiumCard className={large ? "mx-auto grid max-w-5xl gap-6 rounded-2xl p-5 md:grid-cols-[13rem_1fr] md:p-6" : "h-full rounded-2xl p-5"}>
-      <img
+      <Image
         src={leader.image}
         alt={leader.name}
+        width={208}
+        height={208}
+        sizes="208px"
         className="mx-auto aspect-square w-full max-w-52 rounded-xl object-cover"
       />
       <div className={large ? "self-center" : "mt-4"}>
@@ -294,7 +297,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           </Reveal>
           <Reveal delay={0.1}>
             <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-slate-100 shadow-[0_26px_70px_rgba(6,27,51,0.14)]">
-              <Image src="/media/official/memorial-ceremony.jpg" alt="" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 44vw" />
+              <Image src="/media/official/memorial-ceremony.webp" alt="" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 44vw" />
             </div>
           </Reveal>
         </Container>
@@ -330,9 +333,12 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             <Reveal>
               <article className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-[18rem_1fr] md:items-center md:p-8 lg:grid-cols-[22rem_1fr]">
                 <div className="flex min-h-64 items-center justify-center rounded-xl bg-slate-50 p-8">
-                  <img
-                    src="/about/symbols/emblem.png"
+                  <Image
+                    src="/about/symbols/emblem.webp"
                     alt={t.emblemTitle}
+                    width={288}
+                    height={288}
+                    sizes="288px"
                     className="h-auto w-full max-w-64 object-contain md:max-w-72"
                   />
                 </div>
@@ -346,9 +352,12 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             <Reveal delay={0.08}>
               <article className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-[18rem_1fr] md:items-center md:p-8 lg:grid-cols-[22rem_1fr]">
                 <div className="flex min-h-64 items-center justify-center rounded-xl bg-slate-50 p-4">
-                  <img
-                    src="/media/official/committee-flag.jpg"
+                  <Image
+                    src="/media/official/committee-flag.webp"
                     alt={t.flagTitle}
+                    width={384}
+                    height={256}
+                    sizes="384px"
                     className="aspect-[3/2] w-full max-w-sm rounded-lg object-cover shadow-md"
                   />
                 </div>
@@ -422,9 +431,11 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
               >
                 <div className="relative min-h-[19rem] overflow-hidden rounded-2xl border border-white/10 bg-state-navy shadow-elevated">
                   {service.image ? (
-                    <img
+                    <Image
                       src={serviceVisuals[index] ?? service.image}
                       alt=""
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       className="absolute inset-0 h-full w-full object-cover"
                     />
                   ) : null}
@@ -456,7 +467,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
                 <Link href={`/${locale}/education/${school.href}`} className="block h-full">
                   <PremiumCard className="h-full rounded-2xl">
                     <span className="flex h-36 w-36 items-center justify-center">
-                      <img src={school.image} alt="" className="h-full w-full object-contain" />
+                      <Image src={school.image} alt="" width={144} height={144} sizes="144px" className="h-full w-full object-contain" />
                     </span>
                     <h3 className="mt-5 text-2xl font-bold text-state-navy">{school.title}</h3>
                     <p className="mt-3 text-sm leading-6 text-slate-600">{school.text}</p>

@@ -1,0 +1,215 @@
+{
+  "baseURL": "http://localhost:3000",
+  "viewport": "1365x768",
+  "runs": 3,
+  "results": [
+    {
+      "route": "/ru",
+      "median": {
+        "ttfbMs": 6,
+        "lcpMs": 108,
+        "htmlBytes": 20605,
+        "javascriptBytes": 182519,
+        "cssBytes": 10996,
+        "imageBytes": 410155,
+        "totalBytes": 644473,
+        "requests": 27,
+        "status": 200
+      },
+      "samples": [
+        {
+          "ttfbMs": 7,
+          "lcpMs": 568,
+          "htmlBytes": 20605,
+          "javascriptBytes": 182519,
+          "cssBytes": 10996,
+          "imageBytes": 410155,
+          "totalBytes": 644481,
+          "requests": 28,
+          "status": 200,
+          "cache": "HIT"
+        },
+        {
+          "ttfbMs": 4,
+          "lcpMs": 108,
+          "htmlBytes": 20605,
+          "javascriptBytes": 182519,
+          "cssBytes": 10996,
+          "imageBytes": 410155,
+          "totalBytes": 644473,
+          "requests": 27,
+          "status": 200,
+          "cache": "HIT"
+        },
+        {
+          "ttfbMs": 6,
+          "lcpMs": 108,
+          "htmlBytes": 20605,
+          "javascriptBytes": 182519,
+          "cssBytes": 10996,
+          "imageBytes": 410155,
+          "totalBytes": 644470,
+          "requests": 27,
+          "status": 200,
+          "cache": "HIT"
+        }
+      ]
+    },
+    {
+      "route": "/kk",
+      "median": {
+        "ttfbMs": 7,
+        "lcpMs": 104,
+        "htmlBytes": 20365,
+        "javascriptBytes": 182519,
+        "cssBytes": 10996,
+        "imageBytes": 410155,
+        "totalBytes": 644026,
+        "requests": 27,
+        "status": 200
+      },
+      "samples": [
+        {
+          "ttfbMs": 8,
+          "lcpMs": 112,
+          "htmlBytes": 20365,
+          "javascriptBytes": 182519,
+          "cssBytes": 10996,
+          "imageBytes": 410155,
+          "totalBytes": 644027,
+          "requests": 27,
+          "status": 200,
+          "cache": "HIT"
+        },
+        {
+          "ttfbMs": 7,
+          "lcpMs": 100,
+          "htmlBytes": 20365,
+          "javascriptBytes": 182519,
+          "cssBytes": 10996,
+          "imageBytes": 410155,
+          "totalBytes": 644026,
+          "requests": 27,
+          "status": 200,
+          "cache": "HIT"
+        },
+        {
+          "ttfbMs": 7,
+          "lcpMs": 104,
+          "htmlBytes": 20365,
+          "javascriptBytes": 182519,
+          "cssBytes": 10996,
+          "imageBytes": 410155,
+          "totalBytes": 644026,
+          "requests": 27,
+          "status": 200,
+          "cache": "HIT"
+        }
+      ]
+    },
+    {
+      "route": "/ru/about",
+      "median": {
+        "ttfbMs": 5,
+        "lcpMs": 76,
+        "htmlBytes": 17018,
+        "javascriptBytes": 155529,
+        "cssBytes": 10996,
+        "imageBytes": 50697,
+        "totalBytes": 238937,
+        "requests": 16,
+        "status": 200
+      },
+      "samples": [
+        {
+          "ttfbMs": 6,
+          "lcpMs": 96,
+          "htmlBytes": 17018,
+          "javascriptBytes": 155529,
+          "cssBytes": 10996,
+          "imageBytes": 50697,
+          "totalBytes": 238937,
+          "requests": 16,
+          "status": 200,
+          "cache": "HIT"
+        },
+        {
+          "ttfbMs": 5,
+          "lcpMs": 72,
+          "htmlBytes": 17018,
+          "javascriptBytes": 155529,
+          "cssBytes": 10996,
+          "imageBytes": 50697,
+          "totalBytes": 238937,
+          "requests": 16,
+          "status": 200,
+          "cache": "HIT"
+        },
+        {
+          "ttfbMs": 4,
+          "lcpMs": 76,
+          "htmlBytes": 17018,
+          "javascriptBytes": 155529,
+          "cssBytes": 10996,
+          "imageBytes": 50697,
+          "totalBytes": 238937,
+          "requests": 16,
+          "status": 200,
+          "cache": "HIT"
+        }
+      ]
+    },
+    {
+      "route": "/ru/contacts",
+      "median": {
+        "ttfbMs": 4,
+        "lcpMs": 56,
+        "htmlBytes": 6253,
+        "javascriptBytes": 204741,
+        "cssBytes": 13719,
+        "imageBytes": 10855,
+        "totalBytes": 240265,
+        "requests": 73,
+        "status": 200
+      },
+      "samples": [
+        {
+          "ttfbMs": 4,
+          "lcpMs": 60,
+          "htmlBytes": 6253,
+          "javascriptBytes": 204741,
+          "cssBytes": 13719,
+          "imageBytes": 10855,
+          "totalBytes": 240265,
+          "requests": 73,
+          "status": 200,
+          "cache": "HIT"
+        },
+        {
+          "ttfbMs": 4,
+          "lcpMs": 56,
+          "htmlBytes": 6253,
+          "javascriptBytes": 204741,
+          "cssBytes": 13719,
+          "imageBytes": 10855,
+          "totalBytes": 240265,
+          "requests": 73,
+          "status": 200,
+          "cache": "HIT"
+        },
+        {
+          "ttfbMs": 4,
+          "lcpMs": 56,
+          "htmlBytes": 6253,
+          "javascriptBytes": 204741,
+          "cssBytes": 13719,
+          "imageBytes": 10855,
+          "totalBytes": 240266,
+          "requests": 73,
+          "status": 200,
+          "cache": "HIT"
+        }
+      ]
+    }
+  ]
+}

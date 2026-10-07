@@ -55,7 +55,7 @@ function buildAssistantText(response: FaqAssistantResponse, locale: Locale) {
 
 export function FaqAssistantWidget({ locale }: { locale: Locale }) {
   const text = copy[locale];
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const nextId = useRef(2);

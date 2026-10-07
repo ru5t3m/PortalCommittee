@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { notFound } from "next/navigation";
 import { AccountDashboard } from "@/components/AccountDashboard";
 import { isLocale, type Locale } from "@/lib/i18n";

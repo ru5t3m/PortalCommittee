@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CircleUserRound, LogIn, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Locale } from "@/lib/i18n";
@@ -42,14 +43,13 @@ const authCopy = {
 };
 
 type HeaderDict = {
-  brand: string;
   shortBrand: string;
-  nav: string[];
 };
 
 function HeaderLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const router = useRouter();
   return (
-    <Link className="whitespace-nowrap rounded-xl border border-transparent px-3 py-2.5 text-[13px] font-semibold text-state-navy/80 transition hover:border-state-teal/20 hover:bg-[#eef8f7] hover:text-state-tealDark" href={href}>
+    <Link prefetch={false} onMouseEnter={() => router.prefetch(href)} onFocus={() => router.prefetch(href)} className="whitespace-nowrap rounded-xl border border-transparent px-3 py-2.5 text-[13px] font-semibold text-state-navy/80 transition hover:border-state-teal/20 hover:bg-[#eef8f7] hover:text-state-tealDark" href={href}>
       {children}
     </Link>
   );
@@ -77,7 +77,7 @@ function displayName(authState: AuthMe | null) {
   return candidate ? `${candidate.first_name} ${candidate.last_name}` : authState.user.full_name;
 }
 
-function MobileMenu({ locale, dict, auth, authState }: { locale: Locale; dict: HeaderDict; auth: (typeof authCopy)[Locale]; authState: AuthMe | null }) {
+function MobileMenu({ locale, auth, authState }: { locale: Locale; auth: (typeof authCopy)[Locale]; authState: AuthMe | null }) {
   const name = displayName(authState);
   return (
     <details className="relative xl:hidden">
@@ -107,7 +107,7 @@ function MobileMenu({ locale, dict, auth, authState }: { locale: Locale; dict: H
   );
 }
 
-export function Header({ locale, dict }: { locale: Locale; dict: { brand: string; shortBrand: string; nav: string[] } }) {
+export function Header({ locale, dict }: { locale: Locale; dict: HeaderDict }) {
   const auth = authCopy[locale];
   const [authState, setAuthState] = useState<AuthMe | null>(null);
 
@@ -140,7 +140,7 @@ export function Header({ locale, dict }: { locale: Locale; dict: { brand: string
     <header className="sticky top-0 z-[1200] border-b border-slate-200 bg-white text-state-navy shadow-[0_10px_32px_rgba(6,24,45,0.08)]">
       <div className="h-[3px] bg-[linear-gradient(90deg,#00a99b,#2f6fae,#d6a83a)]" />
       <Container className="flex items-center justify-between gap-3 py-3 xl:gap-4">
-        <Link href={`/${locale}`} className="flex shrink-0 items-center gap-3">
+        <Link prefetch={false} href={`/${locale}`} className="flex shrink-0 items-center gap-3">
           <KnbEmblem className="h-12 w-12 shrink-0" />
           <span className="text-sm font-bold uppercase tracking-wide text-state-navy">{dict.shortBrand}</span>
         </Link>
@@ -148,12 +148,12 @@ export function Header({ locale, dict }: { locale: Locale; dict: { brand: string
           <AccessibilityToggle />
           <div className="hidden gap-1 sm:flex">
             {(["kk", "ru"] as const).map((item) => (
-              <Link key={item} className={`grid h-9 min-w-9 place-items-center rounded-xl px-2.5 text-xs font-bold uppercase transition ${item === locale ? "bg-state-navy text-white shadow-sm" : "border border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-state-navy"}`} href={`/${item}`}>
+              <Link prefetch={false} key={item} className={`grid h-9 min-w-9 place-items-center rounded-xl px-2.5 text-xs font-bold uppercase transition ${item === locale ? "bg-state-navy text-white shadow-sm" : "border border-transparent text-slate-500 hover:border-slate-200 hover:bg-slate-50 hover:text-state-navy"}`} href={`/${item}`}>
                 {item}
               </Link>
             ))}
           </div>
-          <MobileMenu locale={locale} dict={dict} auth={auth} authState={authState} />
+          <MobileMenu locale={locale} auth={auth} authState={authState} />
           {authState ? (
             <Link href={`/${locale}/account`} className="hidden h-10 w-10 place-items-center rounded-xl bg-state-navy text-white shadow-lg shadow-state-navy/10 transition hover:bg-state-tealDark sm:grid" aria-label={name}>
               <CircleUserRound className="h-5 w-5" />
