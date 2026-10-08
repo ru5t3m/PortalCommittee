@@ -7,7 +7,7 @@ from passlib.context import CryptContext
 from app.core.config import get_settings
 
 
-password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+password_context = CryptContext(schemes=["bcrypt_sha256", "bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
@@ -15,7 +15,10 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    return password_context.verify(password, hashed_password)
+    try:
+        return password_context.verify(password, hashed_password)
+    except (ValueError, TypeError):
+        return False
 
 
 def create_access_token(subject: str, role: str, extra_claims: dict | None = None, expires_minutes: int | None = None) -> str:

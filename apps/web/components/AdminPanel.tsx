@@ -686,9 +686,9 @@ export function AdminPanel({ locale }: { locale: Locale }) {
                                       {t.userAnswer}: <span className="font-semibold">{formatTestAnswer(sectionAnswers[question.id], t.noAnswer)}</span>
                                     </div>
                                     <div>
-                                      {t.correct}: <span className="font-semibold">{question.correctAnswers?.join(", ") ?? "-"}</span>
+                                      {t.correct}: <span className="font-semibold">{result.answer_key?.[question.id]?.values.join(", ") ?? "-"}</span>
                                     </div>
-                                    {question.answerExplanation ? <div className="mt-1 text-slate-500">{t.explanation}: {question.answerExplanation}</div> : null}
+                                    {result.answer_key?.[question.id]?.explanation ? <div className="mt-1 text-slate-500">{t.explanation}: {result.answer_key?.[question.id]?.explanation}</div> : null}
                                   </div>
                                 ))}
                               </div>

@@ -7,8 +7,6 @@ import { AdminPanel } from "@/components/AdminPanel";
 import { Container } from "@/components/ui/Container";
 import { getMe, hasAdminPanelSession, isTemporaryDemoSession, loginAdminPanel } from "@/lib/auth";
 
-const allowedUserEmail = process.env.NEXT_PUBLIC_ADMIN_PORTAL_ALLOWED_USER_EMAIL ?? "test@gmail.com";
-
 export function AdminEntryPage() {
   const [accessState, setAccessState] = useState<"checking" | "denied" | "login" | "panel">("checking");
   const [error, setError] = useState("");
@@ -24,7 +22,7 @@ export function AdminEntryPage() {
         }
         const auth = await getMe();
         if (!active) return;
-        if ((auth.user.email ?? "").toLowerCase() !== allowedUserEmail.toLowerCase()) {
+        if (!auth.can_access_admin) {
           setAccessState("denied");
           return;
         }
@@ -33,9 +31,14 @@ export function AdminEntryPage() {
         if (active) setAccessState("denied");
       }
     };
+    const onAdminSessionExpired = () => {
+      if (active) setAccessState("login");
+    };
+    window.addEventListener("knb-admin-auth-changed", onAdminSessionExpired);
     void run();
     return () => {
       active = false;
+      window.removeEventListener("knb-admin-auth-changed", onAdminSessionExpired);
     };
   }, []);
 

@@ -60,6 +60,7 @@ export type AdminCandidate = {
 };
 
 export type AdminPsychologicalTestResult = PsychologicalTestResult & {
+  answer_key?: Record<string, { values: string[]; explanation: string }>;
   user: AdminDashboard["actor"];
   candidate_application: {
     tracking_code: string;

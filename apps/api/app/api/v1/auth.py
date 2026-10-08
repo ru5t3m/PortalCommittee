@@ -1,5 +1,7 @@
 import json
 import secrets
+import jwt
+from uuid import uuid4
 import base64
 from datetime import datetime, timedelta, timezone
 from urllib import request as urllib_request
@@ -13,7 +15,7 @@ from app.api.deps import current_user
 from app.core.config import get_settings
 from app.core.security import create_access_token, create_refresh_token, hash_password, hash_token, verify_password
 from app.db.session import get_db
-from app.models.entities import CandidateApplication, EdsLoginChallenge, LoginAttempt, RefreshSession, Role, TelegramLoginChallenge, User
+from app.models.entities import AuthSession, CandidateApplication, EdsLoginChallenge, LoginAttempt, RefreshSession, Role, TelegramLoginChallenge, User
 from app.schemas.dto import (
     AuthMeOut,
     AdminPanelLoginIn,
@@ -75,21 +77,28 @@ def clear_refresh_cookie(response: Response) -> None:
     response.delete_cookie(key=REFRESH_COOKIE_NAME, path="/api/v1/auth")
 
 
-def token_out(user: User) -> TokenOut:
+def validate_cookie_origin(request: Request) -> None:
+    origin = request.headers.get("origin")
+    allowed = {str(value).rstrip("/") for value in get_settings().cors_origins}
+    if origin is not None and origin.rstrip("/") not in allowed:
+        raise HTTPException(403, "Untrusted request origin")
+
+
+def token_out(user: User, session_id: str) -> TokenOut:
     settings = get_settings()
     return TokenOut(
-        access_token=create_access_token(str(user.id), user.role.value),
+        access_token=create_access_token(str(user.id), user.role.value, extra_claims={"sid": session_id}),
         expires_in=settings.access_token_minutes * 60,
     )
 
 
-def admin_token_out(user: User) -> TokenOut:
+def admin_token_out(user: User, session_id: str) -> TokenOut:
     settings = get_settings()
     return TokenOut(
         access_token=create_access_token(
             str(user.id),
             "admin",
-            extra_claims={"admin_session": True},
+            extra_claims={"admin_session": True, "sid": session_id},
             expires_minutes=settings.admin_access_token_minutes,
         ),
         expires_in=settings.admin_access_token_minutes * 60,
@@ -194,18 +203,17 @@ def too_many_recent_failures(db: Session, identifier: str, request: Request) -> 
     return query.count() >= MAX_FAILED_ATTEMPTS
 
 
-def create_refresh_session(db: Session, user: User, request: Request, response: Response) -> None:
-    settings = get_settings()
+def create_refresh_session(db: Session, user: User, request: Request, response: Response, auth_session: AuthSession | None = None) -> str:
+    if auth_session is None:
+        auth_session = AuthSession(id=str(uuid4()), user_id=user.id,
+                                   expires_at=datetime.now(timezone.utc) + timedelta(days=get_settings().refresh_token_days))
+        db.add(auth_session)
+        db.flush()
     raw_token = create_refresh_token()
-    session = RefreshSession(
-        user_id=user.id,
-        token_hash=hash_token(raw_token),
-        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_days),
-        created_ip=client_ip(request),
-        user_agent=user_agent(request),
-    )
-    db.add(session)
+    db.add(RefreshSession(user_id=user.id, auth_session_id=auth_session.id, token_hash=hash_token(raw_token),
+                          expires_at=auth_session.expires_at, created_ip=client_ip(request), user_agent=user_agent(request)))
     set_refresh_cookie(response, raw_token)
+    return auth_session.id
 
 
 def is_expired(expires_at: datetime, now: datetime) -> bool:
@@ -288,7 +296,7 @@ def register_with_password(payload: PasswordRegisterIn, request: Request, respon
 
     user = db.query(User).filter(User.email == email).first()
     now = datetime.now(timezone.utc)
-    if user and user.hashed_password:
+    if user:
         record_login_attempt(db, email=email, request=request, user=user, success=False, reason="account_exists")
         db.commit()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Account already exists")
@@ -338,10 +346,10 @@ def register_with_password(payload: PasswordRegisterIn, request: Request, respon
 
     user.last_login_at = now
     record_login_attempt(db, email=email, request=request, user=user, success=True, reason="password_registered")
-    create_refresh_session(db, user, request, response)
+    session_id = create_refresh_session(db, user, request, response)
     db.commit()
     db.refresh(user)
-    return token_out(user)
+    return token_out(user, session_id)
 
 
 @router.post("/auth/password/login", response_model=TokenOut)
@@ -363,10 +371,10 @@ def login_with_password(payload: PasswordLoginIn, request: Request, response: Re
         user.role = role
     user.last_login_at = datetime.now(timezone.utc)
     record_login_attempt(db, email=email, request=request, user=user, success=True, reason="password_login")
-    create_refresh_session(db, user, request, response)
+    session_id = create_refresh_session(db, user, request, response)
     db.commit()
     db.refresh(user)
-    return token_out(user)
+    return token_out(user, session_id)
 
 
 @router.post("/auth/admin/login", response_model=TokenOut)
@@ -397,7 +405,7 @@ def login_admin_panel(
 
     record_login_attempt(db, email=admin_identifier, request=request, user=user, success=True, reason="admin_panel_login")
     db.commit()
-    return admin_token_out(user)
+    return admin_token_out(user, request.state.auth_session_id)
 
 
 @router.post("/auth/eds/start", response_model=EdsLoginStartOut, status_code=201)
@@ -501,10 +509,10 @@ def complete_eds_login(payload: EdsLoginCompleteIn, request: Request, response: 
     challenge.certificate_serial = signer.certificate_serial
     challenge.certificate_subject = signer.certificate_subject
     record_eds_attempt(db, iin=signer.iin, request=request, user=user, success=True, reason="eds_login")
-    create_refresh_session(db, user, request, response)
+    session_id = create_refresh_session(db, user, request, response)
     db.commit()
     db.refresh(user)
-    return token_out(user)
+    return token_out(user, session_id)
 
 
 @router.post("/auth/telegram/start", response_model=TelegramLoginStartOut, status_code=201)
@@ -609,19 +617,20 @@ def complete_telegram_login(payload: TelegramLoginCompleteIn, request: Request, 
     challenge.status = "consumed"
     challenge.consumed_at = now
     record_telegram_attempt(db, telegram_id=challenge.telegram_id, request=request, user=user, success=True, reason="telegram_phone")
-    create_refresh_session(db, user, request, response)
+    session_id = create_refresh_session(db, user, request, response)
     db.commit()
     db.refresh(user)
-    return token_out(user)
+    return token_out(user, session_id)
 
 
 @router.post("/auth/telegram/webhook")
 def telegram_webhook(request: Request, update: dict = Body(...), db: Session = Depends(get_db)):
     settings = get_settings()
-    if settings.telegram_webhook_secret:
-        supplied_secret = request.headers.get("x-telegram-bot-api-secret-token")
-        if supplied_secret != settings.telegram_webhook_secret:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Telegram webhook secret")
+    if not settings.telegram_webhook_secret:
+        raise HTTPException(503, "Telegram webhook is not configured")
+    supplied_secret = request.headers.get("x-telegram-bot-api-secret-token", "")
+    if not secrets.compare_digest(supplied_secret, settings.telegram_webhook_secret):
+        raise HTTPException(401, "Invalid Telegram webhook secret")
 
     message = update.get("message") or {}
     chat = message.get("chat") or {}
@@ -640,7 +649,7 @@ def telegram_webhook(request: Request, update: dict = Body(...), db: Session = D
             telegram_api_call("sendMessage", {"chat_id": chat_id, "text": "Заявка на вход не найдена. Вернитесь на сайт и начните вход заново."})
             return {"ok": True}
         expire_challenge_if_needed(challenge, now)
-        if challenge.status == "expired":
+        if challenge.status in {"expired", "consumed"} or challenge.consumed_at is not None:
             db.commit()
             telegram_api_call("sendMessage", {"chat_id": chat_id, "text": "Срок подтверждения истек. Вернитесь на сайт и начните вход заново."})
             return {"ok": True}
@@ -680,7 +689,7 @@ def telegram_webhook(request: Request, update: dict = Body(...), db: Session = D
             telegram_api_call("sendMessage", {"chat_id": chat_id, "text": "Активная заявка на вход не найдена. Вернитесь на сайт и начните вход заново."})
             return {"ok": True}
         expire_challenge_if_needed(challenge, now)
-        if challenge.status == "expired":
+        if challenge.status in {"expired", "consumed"} or challenge.consumed_at is not None:
             db.commit()
             telegram_api_call("sendMessage", {"chat_id": chat_id, "text": "Срок подтверждения истек. Вернитесь на сайт и начните вход заново."})
             return {"ok": True}
@@ -710,42 +719,62 @@ def telegram_webhook(request: Request, update: dict = Body(...), db: Session = D
 
 @router.post("/auth/refresh", response_model=TokenOut)
 def refresh(request: Request, response: Response, db: Session = Depends(get_db)):
+    validate_cookie_origin(request)
     raw_token = request.cookies.get(REFRESH_COOKIE_NAME)
     if not raw_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token")
-
-    session = db.query(RefreshSession).filter(RefreshSession.token_hash == hash_token(raw_token)).first()
+        raise HTTPException(401, "Missing refresh token")
+    refresh_row = db.query(RefreshSession).filter_by(token_hash=hash_token(raw_token)).first()
     now = datetime.now(timezone.utc)
-    if not session or session.revoked_at is not None or is_expired(session.expires_at, now):
-        clear_refresh_cookie(response)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-
-    user = db.query(User).filter(User.id == session.user_id, User.is_active.is_(True), User.is_blocked.is_(False)).first()
+    if not refresh_row or not refresh_row.auth_session_id:
+        raise HTTPException(401, "Invalid refresh token")
+    auth_session = db.query(AuthSession).filter_by(id=refresh_row.auth_session_id).with_for_update().first()
+    refresh_row = db.query(RefreshSession).filter_by(id=refresh_row.id).populate_existing().with_for_update().one()
+    if not auth_session or auth_session.revoked_at or is_expired(auth_session.expires_at, now) or refresh_row.revoked_at or is_expired(refresh_row.expires_at, now):
+        raise HTTPException(401, "Invalid refresh token")
+    user = db.query(User).filter(User.id == auth_session.user_id, User.is_active.is_(True), User.is_blocked.is_(False)).first()
     if not user:
-        session.revoked_at = now
-        clear_refresh_cookie(response)
+        auth_session.revoked_at = now
         db.commit()
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-
-    session.revoked_at = now
-    create_refresh_session(db, user, request, response)
+        raise HTTPException(401, "Invalid refresh token")
+    refresh_row.revoked_at = now
+    session_id = create_refresh_session(db, user, request, response, auth_session)
     db.commit()
-    db.refresh(user)
-    return token_out(user)
+    return token_out(user, session_id)
 
 
 @router.post("/auth/logout")
 def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    validate_cookie_origin(request)
+    session_ids = set()
     raw_token = request.cookies.get(REFRESH_COOKIE_NAME)
     if raw_token:
-        session = db.query(RefreshSession).filter(RefreshSession.token_hash == hash_token(raw_token), RefreshSession.revoked_at.is_(None)).first()
-        if session:
-            session.revoked_at = datetime.now(timezone.utc)
-            db.commit()
+        row = db.query(RefreshSession).filter_by(token_hash=hash_token(raw_token)).first()
+        if row and row.auth_session_id:
+            session_ids.add(row.auth_session_id)
+    authorization = request.headers.get("authorization", "")
+    if authorization.startswith("Bearer "):
+        try:
+            settings = get_settings()
+            payload = jwt.decode(authorization[7:], settings.jwt_secret, algorithms=[settings.jwt_algorithm], options={"require": ["exp", "sub", "sid"]})
+            row = db.query(AuthSession).filter_by(id=payload["sid"], user_id=int(payload["sub"])).first()
+            if row:
+                session_ids.add(row.id)
+        except (jwt.InvalidTokenError, ValueError, TypeError):
+            pass
+    now = datetime.now(timezone.utc)
+    for session_id in sorted(session_ids):
+        row = db.query(AuthSession).filter_by(id=session_id).with_for_update().first()
+        if row:
+            row.revoked_at = now
+            db.query(RefreshSession).filter_by(auth_session_id=session_id).update({"revoked_at": now})
+    db.commit()
     clear_refresh_cookie(response)
     return {"ok": True}
 
 
+
+
+
 @router.get("/auth/me", response_model=AuthMeOut)
 def me(user: User = Depends(current_user)):
-    return AuthMeOut(user=serialize_user(user), candidate_application=serialize_candidate(user.candidate_application))
+    return AuthMeOut(user=serialize_user(user), candidate_application=serialize_candidate(user.candidate_application), can_access_admin=bool(user.email) and user.email.lower() == get_settings().admin_portal_allowed_user_email.lower())

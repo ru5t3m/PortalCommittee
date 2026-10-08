@@ -1,9 +1,9 @@
 from functools import lru_cache
 import json
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import AnyHttpUrl, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 30
     refresh_token_days: int = 14
-    cors_origins: list[AnyHttpUrl] | list[str] = ["http://localhost:3000"]
-    allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
+    cors_origins: Annotated[list[AnyHttpUrl] | list[str], NoDecode] = ["http://localhost:3000"]
+    allowed_hosts: Annotated[list[str], NoDecode] = ["localhost", "127.0.0.1"]
     rate_limit_per_minute: int = 120
     telegram_bot_token: str = ""
     telegram_bot_username: str = ""

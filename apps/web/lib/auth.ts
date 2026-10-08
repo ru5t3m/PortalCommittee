@@ -25,6 +25,7 @@ export type CandidateApplication = {
 export type AuthMe = {
   user: AuthUser;
   candidate_application: CandidateApplication | null;
+  can_access_admin: boolean;
 };
 
 type TokenResponse = {
@@ -60,8 +61,7 @@ const ADMIN_ACCESS_TOKEN_KEY = "knb-admin-access-token";
 const DEMO_SESSION_KEY = "knb-temporary-demo-session";
 const DEMO_EMAIL_KEY = "knb-temporary-demo-email";
 
-// Temporary presentation mode. Set to false to restore real email auth and test access checks.
-export const TEMPORARY_DEMO_AUTH_ENABLED = true;
+export const TEMPORARY_DEMO_AUTH_ENABLED = false;
 
 let refreshPromise: Promise<TokenResponse> | null = null;
 
@@ -86,6 +86,7 @@ function clearTemporaryDemoSession() {
 function getTemporaryDemoUser(): AuthMe {
   const email = typeof window === "undefined" ? "candidate@example.kz" : window.sessionStorage.getItem(DEMO_EMAIL_KEY) || "candidate@example.kz";
   return {
+    can_access_admin: false,
     user: {
       id: -1,
       email,
@@ -266,11 +267,17 @@ export async function logout() {
     return;
   }
 
-  await fetch(`${API_URL}/auth/logout`, {
-    method: "POST",
-    credentials: "include"
-  });
-  clearStoredAccessToken();
+  try {
+    const response = await fetch(`${API_URL}/auth/logout`, {
+      method: "POST",
+      headers: getStoredAccessToken() ? { Authorization: `Bearer ${getStoredAccessToken()}` } : {},
+      credentials: "include"
+    });
+    if (!response.ok) throw new Error(await parseApiError(response));
+  } finally {
+    clearStoredAccessToken();
+    clearTemporaryDemoSession();
+  }
 }
 
 export async function authFetch(input: string, init: RequestInit = {}, retry = true): Promise<Response> {
@@ -293,10 +300,15 @@ export async function authFetch(input: string, init: RequestInit = {}, retry = t
   });
 
   if (response.status === 401 && retry) {
-    const refreshed = await refreshSession();
-    const retryHeaders = new Headers(init.headers);
-    retryHeaders.set("Authorization", `Bearer ${refreshed.access_token}`);
-    return authFetch(input, { ...init, headers: retryHeaders }, false);
+    try {
+      const refreshed = await refreshSession();
+      const retryHeaders = new Headers(init.headers);
+      retryHeaders.set("Authorization", `Bearer ${refreshed.access_token}`);
+      return authFetch(input, { ...init, headers: retryHeaders }, false);
+    } catch {
+      clearStoredAccessToken();
+      return response;
+    }
   }
 
   return response;
@@ -307,11 +319,16 @@ export async function adminAuthFetch(input: string, init: RequestInit = {}): Pro
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  return fetch(input, {
+  const response = await fetch(input, {
     ...init,
     headers,
     credentials: "include"
   });
+  if (response.status === 401) {
+    clearAdminPanelSession();
+    window.dispatchEvent(new CustomEvent("knb-admin-auth-changed"));
+  }
+  return response;
 }
 
 export async function getMe() {

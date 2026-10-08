@@ -38,6 +38,7 @@ const copy = {
     testsTitle: "Результаты психотестирований",
     testsEmptyTitle: "Пока нет результатов",
     testsEmptyText: "После прохождения психотестирования результаты появятся в этом разделе.",
+    testsLoadError: "Не удалось загрузить результаты. Обновите страницу, чтобы повторить попытку.",
     answered: "Ответов",
     correct: "Верно",
     submittedAt: "Дата прохождения",
@@ -70,6 +71,7 @@ const copy = {
     testsTitle: "Психотест нәтижелері",
     testsEmptyTitle: "Әзірге нәтиже жоқ",
     testsEmptyText: "Психотесттен өткеннен кейін нәтижелер осы бөлімде пайда болады.",
+    testsLoadError: "Нәтижелерді жүктеу мүмкін болмады. Қайталап көру үшін бетті жаңартыңыз.",
     answered: "Жауап",
     correct: "Дұрыс",
     submittedAt: "Өткен күні",
@@ -82,13 +84,18 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
   const t = copy[locale];
   const [authState, setAuthState] = useState<AuthMe | null>(null);
   const [testResults, setTestResults] = useState<PsychologicalTestResult[]>([]);
+  const [resultsLoadFailed, setResultsLoadFailed] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     const load = async () => {
       try {
-        const [next, results] = await Promise.all([getMe(), listMyPsychologicalTestResults()]);
+        const next = await getMe();
+        const results = await listMyPsychologicalTestResults().catch(() => {
+          if (isMounted) setResultsLoadFailed(true);
+          return [];
+        });
         if (isMounted) {
           setAuthState(next);
           setTestResults(results);
@@ -105,8 +112,13 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
   }, [locale, router]);
 
   async function handleLogout() {
-    await logout();
-    router.push(`/${locale}/login`);
+    try {
+      await logout();
+    } catch {
+      return;
+    } finally {
+      router.replace(`/${locale}/login`);
+    }
   }
 
   if (isChecking || !authState) {
@@ -243,7 +255,7 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
                     <Brain className="h-7 w-7" />
                   </span>
                   <h3 className="mt-4 text-xl font-bold text-state-navy">{t.testsEmptyTitle}</h3>
-                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{t.testsEmptyText}</p>
+                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{resultsLoadFailed ? t.testsLoadError : t.testsEmptyText}</p>
                 </div>
               )}
             </section>

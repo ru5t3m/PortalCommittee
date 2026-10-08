@@ -134,6 +134,7 @@ class PsychologicalTestResult(Base, TimestampMixin):
     __tablename__ = "psychological_test_results"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    attempt_id: Mapped[str | None] = mapped_column(ForeignKey("psychological_test_attempts.id"), nullable=True, unique=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     candidate_application_id: Mapped[int | None] = mapped_column(ForeignKey("candidate_applications.id"), nullable=True, index=True)
     test_slug: Mapped[str] = mapped_column(String(120), index=True)
@@ -167,10 +168,41 @@ class PsychologicalTestProgress(Base, TimestampMixin):
     user: Mapped[User] = relationship()
 
 
+class PsychologicalTestAttempt(Base, TimestampMixin):
+    __tablename__ = "psychological_test_attempts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    test_slug: Mapped[str] = mapped_column(String(120))
+    bank_version: Mapped[str] = mapped_column(String(80))
+    locale: Mapped[str] = mapped_column(String(2))
+    active_key: Mapped[str | None] = mapped_column(String(160), unique=True, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="instructions")
+    section_index: Mapped[int] = mapped_column(Integer, default=0)
+    question_index: Mapped[int] = mapped_column(Integer, default=0)
+    answers: Mapped[dict] = mapped_column(JSON, default=dict)
+    question_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    elapsed_milliseconds: Mapped[int] = mapped_column(Integer, default=0)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    last_event_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    last_event_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    __mapper_args__ = {"version_id_col": version}
+
+
+class AuthSession(Base, TimestampMixin):
+    __tablename__ = "auth_sessions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class RefreshSession(Base, TimestampMixin):
     __tablename__ = "refresh_sessions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    auth_session_id: Mapped[str | None] = mapped_column(ForeignKey("auth_sessions.id"), nullable=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

@@ -237,10 +237,16 @@ def _select_with_local_llm(question: str, candidates: list[FaqItem]) -> str | No
     try:
         with urllib.request.urlopen(request, timeout=settings.faq_llm_timeout_seconds) as response:
             response_payload = json.loads(response.read().decode("utf-8"))
-    except (OSError, urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+    except (OSError, urllib.error.URLError, TimeoutError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise LocalLlmUnavailable("Local FAQ LLM server is unavailable") from exc
 
-    content = response_payload.get("choices", [{}])[0].get("message", {}).get("content", "")
+    choices = response_payload.get("choices") if isinstance(response_payload, dict) else None
+    if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+        raise LocalLlmUnavailable("Local FAQ LLM returned an invalid response")
+    message = choices[0].get("message")
+    content = message.get("content") if isinstance(message, dict) else None
+    if not isinstance(content, str):
+        raise LocalLlmUnavailable("Local FAQ LLM returned an invalid response")
     parsed = _extract_json_object(content)
     faq_id = parsed.get("faq_id") if parsed else None
     if not isinstance(faq_id, str):
