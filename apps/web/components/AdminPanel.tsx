@@ -1,28 +1,29 @@
 "use client";
 
-import { BarChart3, FileText, MapPinned, Search, ShieldCheck, UserRoundCheck, Users } from "lucide-react";
+import { BarChart3, FileText, MapPinned, ShieldCheck, UserRoundCheck, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import type { Locale } from "@/lib/i18n";
 import { primaryPsychologicalSections } from "@/lib/primary-psychological-test";
 import {
+  adminPage,
+  type PageData,
   createAdminRegionOffice,
   deleteAdminRegionOffice,
   getAdminDashboard,
-  listAdminPsychologicalTestResults,
-  listAdminAppeals,
   listAdminCandidates,
   listAdminRegionOffices,
-  updateAdminAppealStatus,
-  updateAdminCandidateStatus,
   updateAdminRegionOffice,
-  type AdminAppeal,
   type AdminCandidate,
   type AdminDashboard,
   type AdminPsychologicalTestResult,
   type AdminRegionOffice,
   type AdminRegionOfficePayload
 } from "@/lib/admin";
+
+import { CaseWorkspace } from "@/components/admin/CaseWorkspace";
+import { StaffManager } from "@/components/admin/StaffManager";
+import { Pager, buttonClass, fieldClass } from "@/components/admin/ListControls";
 
 const copy = {
   ru: {
@@ -149,10 +150,8 @@ const copy = {
   }
 } as const;
 
-const appealStatuses: AdminAppeal["status"][] = ["received", "in_review", "answered", "rejected"];
-const candidateStatuses: AdminCandidate["status"][] = ["submitted", "in_review", "approved", "rejected"];
+type Tab = "overview" | "candidates" | "appeals" | "testing" | "contacts" | "staff";
 
-type Tab = "overview" | "candidates" | "appeals" | "testing" | "contacts";
 type StatItem = {
   label: string;
   value: string | number;
@@ -200,63 +199,35 @@ function officeToPayload(office: AdminRegionOffice): AdminRegionOfficePayload {
 export function AdminPanel({ locale }: { locale: Locale }) {
   const t = copy[locale];
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null);
-  const [appeals, setAppeals] = useState<AdminAppeal[]>([]);
   const [candidates, setCandidates] = useState<AdminCandidate[]>([]);
-  const [testResults, setTestResults] = useState<AdminPsychologicalTestResult[]>([]);
+  const [testPage, setTestPage] = useState<PageData<AdminPsychologicalTestResult>>({ items: [], total: 0, limit: 10, offset: 0 });
+  const testResults = testPage.items;
+  const [testOffset, setTestOffset] = useState(0);
+  const [testQuery, setTestQuery] = useState("");
+  const [testSearch, setTestSearch] = useState("");
+  const [testBusy, setTestBusy] = useState(false);
+  const [testRevision, setTestRevision] = useState(0);
+  const [caseRevision, setCaseRevision] = useState(0);
   const [regionOffices, setRegionOffices] = useState<AdminRegionOffice[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("appeals");
-  const [candidateQuery, setCandidateQuery] = useState("");
-  const [candidateStatusFilter, setCandidateStatusFilter] = useState<AdminCandidate["status"] | "all">("all");
-  const [selectedAppealId, setSelectedAppealId] = useState<number | null>(null);
-  const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null);
   const [selectedOfficeId, setSelectedOfficeId] = useState<number | "new" | null>(null);
   const [officeForm, setOfficeForm] = useState<AdminRegionOfficePayload>(emptyRegionOfficePayload);
-  const [candidateComment, setCandidateComment] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const selectedAppeal = useMemo(() => appeals.find((item) => item.id === selectedAppealId) ?? null, [appeals, selectedAppealId]);
-  const selectedCandidate = useMemo(() => candidates.find((item) => item.id === selectedCandidateId) ?? null, [candidates, selectedCandidateId]);
   const selectedOffice = useMemo(() => regionOffices.find((item) => item.id === selectedOfficeId) ?? null, [regionOffices, selectedOfficeId]);
-  const candidateStatusCounts = useMemo(() => ({
-    submitted: candidates.filter((item) => item.status === "submitted").length,
-    in_review: candidates.filter((item) => item.status === "in_review").length,
-    approved: candidates.filter((item) => item.status === "approved").length,
-    rejected: candidates.filter((item) => item.status === "rejected").length
-  }), [candidates]);
-  const filteredCandidates = useMemo(() => {
-    const query = candidateQuery.trim().toLowerCase();
-    return candidates.filter((item) => {
-      if (candidateStatusFilter !== "all" && item.status !== candidateStatusFilter) return false;
-      if (!query) return true;
-      return [
-        item.first_name,
-        item.last_name,
-        item.middle_name ?? "",
-        item.phone,
-        item.tracking_code,
-        item.user.email ?? "",
-        item.user.phone ?? ""
-      ].join(" ").toLowerCase().includes(query);
-    });
-  }, [candidateQuery, candidateStatusFilter, candidates]);
+  const candidateStatusCounts = dashboard?.candidate_status_counts ?? {};
 
   async function loadData() {
     setError("");
-    const [nextDashboard, nextAppeals, nextCandidates, nextTestResults, nextRegionOffices] = await Promise.all([
+    const [nextDashboard, nextCandidates, nextRegionOffices] = await Promise.all([
       getAdminDashboard(),
-      listAdminAppeals(),
       listAdminCandidates(),
-      listAdminPsychologicalTestResults(),
       listAdminRegionOffices()
     ]);
     setDashboard(nextDashboard);
-    setAppeals(nextAppeals);
     setCandidates(nextCandidates);
-    setTestResults(nextTestResults);
     setRegionOffices(nextRegionOffices);
-    setSelectedAppealId((current) => current ?? nextAppeals[0]?.id ?? null);
-    setSelectedCandidateId((current) => current ?? nextCandidates[0]?.id ?? null);
     setSelectedOfficeId((current) => current ?? nextRegionOffices[0]?.id ?? "new");
   }
 
@@ -276,8 +247,11 @@ export function AdminPanel({ locale }: { locale: Locale }) {
   }, [t.denied]);
 
   useEffect(() => {
-    setCandidateComment(selectedCandidate?.moderator_comment ?? "");
-  }, [selectedCandidate]);
+    if (activeTab !== "testing") return;
+    const controller = new AbortController(); setTestBusy(true); setError("");
+    void adminPage<AdminPsychologicalTestResult>("psychological-tests/results", { q: testSearch, offset: testOffset, limit: 10 }, controller.signal).then(setTestPage).catch(e => { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : t.denied); }).finally(() => { if (!controller.signal.aborted) setTestBusy(false); });
+    return () => controller.abort();
+  }, [activeTab, testSearch, testOffset, testRevision, t.denied]);
 
   useEffect(() => {
     if (selectedOfficeId === "new" || !selectedOffice) {
@@ -291,32 +265,10 @@ export function AdminPanel({ locale }: { locale: Locale }) {
     startTransition(async () => {
       try {
         await loadData();
+        setCaseRevision(value => value + 1);
+        setTestRevision(value => value + 1);
       } catch (refreshError) {
         setError(refreshError instanceof Error ? refreshError.message : t.denied);
-      }
-    });
-  }
-
-  function changeAppealStatus(status: AdminAppeal["status"]) {
-    if (!selectedAppeal) return;
-    startTransition(async () => {
-      try {
-        const updated = await updateAdminAppealStatus(selectedAppeal.id, status);
-        setAppeals((items) => items.map((item) => (item.id === updated.id ? updated : item)));
-      } catch (statusError) {
-        setError(statusError instanceof Error ? statusError.message : t.denied);
-      }
-    });
-  }
-
-  function changeCandidateStatus(status: AdminCandidate["status"]) {
-    if (!selectedCandidate) return;
-    startTransition(async () => {
-      try {
-        const updated = await updateAdminCandidateStatus(selectedCandidate.id, status, candidateComment.trim() || null);
-        setCandidates((items) => items.map((item) => (item.id === updated.id ? updated : item)));
-      } catch (statusError) {
-        setError(statusError instanceof Error ? statusError.message : t.denied);
       }
     });
   }
@@ -421,9 +373,9 @@ export function AdminPanel({ locale }: { locale: Locale }) {
       <div className="grid gap-4 md:grid-cols-4">
         {([
           { label: t.candidatePipeline, value: dashboard.candidates, icon: BarChart3 },
-          { label: statusText(locale, "submitted"), value: candidateStatusCounts.submitted, icon: UserRoundCheck },
-          { label: t.approved, value: candidateStatusCounts.approved, icon: ShieldCheck },
-          { label: t.rejected, value: candidateStatusCounts.rejected, icon: FileText }
+          { label: statusText(locale, "submitted"), value: candidateStatusCounts.submitted ?? 0, icon: UserRoundCheck },
+          { label: t.approved, value: candidateStatusCounts.approved ?? 0, icon: ShieldCheck },
+          { label: t.rejected, value: candidateStatusCounts.rejected ?? 0, icon: FileText }
         ] satisfies StatItem[]).map((item) => {
           const Icon = item.icon;
           return (
@@ -438,9 +390,9 @@ export function AdminPanel({ locale }: { locale: Locale }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex flex-wrap rounded-xl border border-slate-200 bg-white p-1">
-          {(["overview", "candidates", "appeals", "testing", "contacts"] as const).map((tab) => (
+          {(["overview", "candidates", "appeals", "testing", "contacts", "staff"] as const).filter((tab) => (tab !== "contacts" || dashboard.permissions?.includes("contacts:manage")) && (tab !== "staff" || dashboard.permissions?.includes("users:manage"))).map((tab) => (
             <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`rounded-lg px-4 py-2 text-sm font-bold transition ${activeTab === tab ? "bg-state-navy text-white" : "text-slate-600 hover:bg-slate-50"}`}>
-              {tab === "overview" ? "Dashboard" : tab === "appeals" ? t.appeals : tab === "candidates" ? t.candidates : tab === "contacts" ? t.contactsTab : t.testing}
+              {tab === "overview" ? "Dashboard" : tab === "appeals" ? t.appeals : tab === "candidates" ? t.candidates : tab === "contacts" ? t.contactsTab : tab === "staff" ? (locale === "kk" ? "Қызметкерлер мен бөлімшелер" : "Сотрудники и подразделения") : t.testing}
             </button>
           ))}
         </div>
@@ -454,7 +406,7 @@ export function AdminPanel({ locale }: { locale: Locale }) {
             <h3 className="text-xl font-bold text-state-navy">{t.needsReview}</h3>
             <div className="mt-4 grid gap-3">
               {candidates.filter((item) => item.status === "submitted" || item.status === "in_review").slice(0, 8).map((item) => (
-                <button key={item.id} type="button" onClick={() => { setActiveTab("candidates"); setSelectedCandidateId(item.id); }} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-left transition hover:border-state-teal/40">
+                <button key={item.id} type="button" onClick={() => { setActiveTab("candidates"); }} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-left transition hover:border-state-teal/40">
                   <span>
                     <span className="block text-sm font-bold text-state-navy">{item.last_name} {item.first_name}</span>
                     <span className="mt-1 block text-xs text-slate-500">{item.tracking_code} · {item.phone}</span>
@@ -474,86 +426,11 @@ export function AdminPanel({ locale }: { locale: Locale }) {
             </div>
           </section>
         </div>
-      ) : activeTab === "appeals" ? (
-        <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            {appeals.length === 0 ? <p className="p-5 text-sm text-slate-500">{t.emptyAppeals}</p> : appeals.map((item) => (
-              <button key={item.id} type="button" onClick={() => setSelectedAppealId(item.id)} className={`block w-full border-b border-slate-100 p-4 text-left transition last:border-b-0 ${item.id === selectedAppealId ? "bg-state-teal/10" : "hover:bg-slate-50"}`}>
-                <span className="text-sm font-bold text-state-navy">{item.subject}</span>
-                <span className="mt-1 block text-xs text-slate-500">{item.tracking_code} · {statusText(locale, item.status)}</span>
-              </button>
-            ))}
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            {selectedAppeal ? (
-              <>
-                <p className="text-sm font-semibold uppercase tracking-wide text-state-teal">{t.details}</p>
-                <h3 className="mt-2 text-2xl font-bold text-state-navy">{selectedAppeal.subject}</h3>
-                <p className="mt-2 text-sm text-slate-500">{t.created}: {formatDate(selectedAppeal.created_at)}</p>
-                <p className="mt-5 whitespace-pre-wrap text-sm leading-6 text-slate-700">{selectedAppeal.message}</p>
-                <div className="mt-5 grid gap-2 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
-                  <span>{selectedAppeal.full_name}</span>
-                  <span>{selectedAppeal.email} · {selectedAppeal.phone}</span>
-                  {selectedAppeal.iin ? <span>{selectedAppeal.iin}</span> : null}
-                </div>
-                <label className="mt-5 grid gap-2 text-sm font-semibold text-state-navy">
-                  {t.status}
-                  <select value={selectedAppeal.status} onChange={(event) => changeAppealStatus(event.target.value as AdminAppeal["status"])} className="min-h-11 rounded-xl border border-slate-200 px-3">
-                    {appealStatuses.map((status) => <option key={status} value={status}>{statusText(locale, status)}</option>)}
-                  </select>
-                </label>
-              </>
-            ) : <p className="text-sm text-slate-500">{t.noSelection}</p>}
-          </div>
-        </div>
+      ) : activeTab === "appeals" || activeTab === "candidates" ? (
+        <CaseWorkspace key={`${activeTab}-${caseRevision}`} kind={activeTab} locale={locale} permissions={dashboard.permissions} onChanged={() => { void getAdminDashboard().then(setDashboard).catch(e => setError(e instanceof Error ? e.message : t.denied)); }} />
       ) : (
-      activeTab === "candidates" ? (
-        <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="lg:col-span-2 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_220px]">
-            <label className="flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 px-3">
-              <Search className="h-5 w-5 text-state-tealDark" />
-              <input value={candidateQuery} onChange={(event) => setCandidateQuery(event.target.value)} className="w-full bg-transparent text-sm font-semibold outline-none" placeholder={t.searchPlaceholder} />
-            </label>
-            <select value={candidateStatusFilter} onChange={(event) => setCandidateStatusFilter(event.target.value as AdminCandidate["status"] | "all")} className="min-h-11 rounded-xl border border-slate-200 px-3 text-sm font-semibold">
-              <option value="all">{t.allStatuses}</option>
-              {candidateStatuses.map((status) => <option key={status} value={status}>{statusText(locale, status)}</option>)}
-            </select>
-          </div>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            {filteredCandidates.length === 0 ? <p className="p-5 text-sm text-slate-500">{t.emptyCandidates}</p> : filteredCandidates.map((item) => (
-              <button key={item.id} type="button" onClick={() => setSelectedCandidateId(item.id)} className={`block w-full border-b border-slate-100 p-4 text-left transition last:border-b-0 ${item.id === selectedCandidateId ? "bg-state-teal/10" : "hover:bg-slate-50"}`}>
-                <span className="text-sm font-bold text-state-navy">{item.last_name} {item.first_name}</span>
-                <span className="mt-1 block text-xs text-slate-500">{item.tracking_code} · {statusText(locale, item.status)}</span>
-              </button>
-            ))}
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            {selectedCandidate ? (
-              <>
-                <p className="text-sm font-semibold uppercase tracking-wide text-state-teal">{t.application}</p>
-                <h3 className="mt-2 text-2xl font-bold text-state-navy">{selectedCandidate.last_name} {selectedCandidate.first_name}</h3>
-                <p className="mt-2 text-sm text-slate-500">{t.created}: {formatDate(selectedCandidate.created_at)}</p>
-                <div className="mt-5 grid gap-2 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
-                  <span>{selectedCandidate.user.email ?? selectedCandidate.user.phone ?? selectedCandidate.user.telegram_username ?? selectedCandidate.user.full_name} · {selectedCandidate.phone}</span>
-                  {selectedCandidate.iin ? <span>{selectedCandidate.iin}</span> : null}
-                  {selectedCandidate.region ? <span>{selectedCandidate.region}</span> : null}
-                  {selectedCandidate.education_level ? <span>{selectedCandidate.education_level}</span> : null}
-                  {selectedCandidate.desired_direction ? <span>{selectedCandidate.desired_direction}</span> : null}
-                </div>
-                <label className="mt-5 grid gap-2 text-sm font-semibold text-state-navy">
-                  {t.comment}
-                  <textarea value={candidateComment} onChange={(event) => setCandidateComment(event.target.value)} rows={4} maxLength={4000} className="rounded-xl border border-slate-200 px-4 py-3" />
-                </label>
-                <label className="mt-5 grid gap-2 text-sm font-semibold text-state-navy">
-                  {t.status}
-                  <select value={selectedCandidate.status} onChange={(event) => changeCandidateStatus(event.target.value as AdminCandidate["status"])} className="min-h-11 rounded-xl border border-slate-200 px-3">
-                    {candidateStatuses.map((status) => <option key={status} value={status}>{statusText(locale, status)}</option>)}
-                  </select>
-                </label>
-              </>
-            ) : <p className="text-sm text-slate-500">{t.noSelection}</p>}
-          </div>
-        </div>
+      activeTab === "staff" ? (
+        <StaffManager locale={locale} actorId={dashboard.actor.id} />
       ) : activeTab === "contacts" ? (
         <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -635,7 +512,12 @@ export function AdminPanel({ locale }: { locale: Locale }) {
       ) : (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="text-xl font-bold text-state-navy">{t.testing}</h3>
-          {testResults.length ? (
+          <form className="mt-4 flex gap-3" onSubmit={e => { e.preventDefault(); setTestOffset(0); setTestSearch(testQuery.trim()); setTestRevision(value => value + 1); }}>
+            <input aria-label={locale === "kk" ? "Нәтижелерді іздеу" : "Поиск результатов"} className={fieldClass} maxLength={200} value={testQuery} onChange={e => setTestQuery(e.target.value)} placeholder={t.searchPlaceholder} />
+            <button className={buttonClass} disabled={testBusy}>{locale === "kk" ? "Іздеу" : "Найти"}</button>
+          </form>
+          <Pager data={testPage} onOffset={setTestOffset} busy={testBusy} locale={locale} />
+          {testBusy ? <p>{t.loading}</p> : testResults.length ? (
             <div className="mt-5 grid gap-4">
               {testResults.map((result) => {
                 const application = result.candidate_application;

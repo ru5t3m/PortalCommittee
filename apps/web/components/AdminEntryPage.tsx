@@ -90,19 +90,19 @@ export function AdminEntryPage() {
               <ShieldCheck className="h-6 w-6" />
             </div>
             <h1 className="mt-5 text-2xl font-bold">Вход в админ-панель</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Введите отдельные учетные данные администратора.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Подтвердите вход в служебную панель.</p>
           </div>
 
           <div className="grid gap-4">
             <label className="grid gap-2 text-sm font-semibold">
-              Email администратора
+              Email для служебного входа
               <span className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-3">
                 <Mail className="h-5 w-5 text-state-tealDark" />
                 <input name="email" type="email" autoComplete="username" className="w-full bg-transparent outline-none" required />
               </span>
             </label>
             <label className="grid gap-2 text-sm font-semibold">
-              Пароль администратора
+              Пароль для служебного входа
               <span className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-3">
                 <LockKeyhole className="h-5 w-5 text-state-tealDark" />
                 <input name="password" type="password" autoComplete="current-password" className="w-full bg-transparent outline-none" required />

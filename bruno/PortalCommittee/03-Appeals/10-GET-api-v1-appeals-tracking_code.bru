@@ -1,0 +1,23 @@
+meta {
+  name: Статус обращения
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url}}/api/v1/appeals/{{tracking_code}}
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  for (const name of ["tracking_code"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+docs {
+  GET /api/v1/appeals/{tracking_code}
+
+  Токен пользователя не требуется.
+}

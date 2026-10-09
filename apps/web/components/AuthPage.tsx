@@ -6,27 +6,16 @@ import { useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import type { Locale } from "@/lib/i18n";
-import {
-  completeEdsLogin,
-  loginWithPassword,
-  registerWithPassword,
-  startEdsLogin
-} from "@/lib/auth";
-import { signAuthChallengeWithNcaLayer } from "@/lib/ncalayer";
+import { loginWithPassword, registerWithPassword } from "@/lib/auth";
 
 type AuthMode = "login" | "register";
-type Provider = "eds" | "email";
 
 const copy = {
   ru: {
     title: "Вход в личный кабинет",
-    subtitle: "Используйте вход по email и паролю или ЭЦП.",
+    subtitle: "Используйте email и пароль для входа в личный кабинет.",
     registerTitle: "Регистрация кандидата",
     registerSubtitle: "Создайте аккаунт по email и паролю. Эти данные будут использоваться для входа в личный кабинет и прохождения доступных сервисов портала.",
-    eds: "ЭЦП",
-    email: "Email",
-    edsTitle: "Вход через ЭЦП",
-    edsText: "Для входа нужен установленный NCALayer и действующий сертификат НУЦ РК для аутентификации.",
     emailTitle: "Вход по email",
     emailRegisterTitle: "Создание аккаунта",
     firstName: "Имя",
@@ -44,26 +33,18 @@ const copy = {
     registerSubmit: "Создать аккаунт",
     goRegister: "Зарегистрироваться",
     goLogin: "Уже есть аккаунт? Войти",
-    startEds: "Подписать и войти",
-    starting: "Создаем защищенную заявку...",
-    verified: "Подпись подтверждена. Завершаем вход...",
     error: "Не удалось выполнить вход. Повторите попытку.",
-    ncaError: "Не удалось подключиться к NCALayer или подписать запрос. Проверьте, что NCALayer запущен.",
     passwordPolicyError: "Пароль должен содержать не менее 10 символов, а также заглавную букву, строчную букву и цифру.",
     secureTitle: "Защищенная авторизация",
     dataProtection: "Данные используются только для идентификации, авторизации и работы с сервисами портала.",
-    features: ["Вход по email и паролю", "ЭЦП через NCALayer", "Защищенная сессия портала"],
+    features: ["Вход по email и паролю", "Доступ к сервисам портала", "Защищенная сессия портала"],
     registerFeatures: ["Регистрация только по email", "Данные кандидата сохраняются в анкете", "Защищенная сессия портала"],
   },
   kk: {
     title: "Жеке кабинетке кіру",
-    subtitle: "Email және құпия сөз немесе ЭЦҚ арқылы кіріңіз.",
+    subtitle: "Жеке кабинетке email және құпия сөз арқылы кіріңіз.",
     registerTitle: "Кандидатты тіркеу",
     registerSubtitle: "Email және құпия сөз арқылы аккаунт жасаңыз. Бұл деректер жеке кабинетке кіру және портал сервистерін пайдалану үшін қолданылады.",
-    eds: "ЭЦҚ",
-    email: "Email",
-    edsTitle: "ЭЦҚ арқылы кіру",
-    edsText: "Кіру үшін NCALayer орнатылып, іске қосылуы және ҚР ҰКО аутентификация сертификаты болуы керек.",
     emailTitle: "Email арқылы кіру",
     emailRegisterTitle: "Аккаунт жасау",
     firstName: "Аты",
@@ -81,15 +62,11 @@ const copy = {
     registerSubmit: "Аккаунт жасау",
     goRegister: "Тіркелу",
     goLogin: "Аккаунтыңыз бар ма? Кіру",
-    startEds: "Қол қойып кіру",
-    starting: "Қорғалған сұрау жасалуда...",
-    verified: "Қолтаңба расталды. Кіру аяқталуда...",
     error: "Кіру орындалмады. Қайта көріңіз.",
-    ncaError: "NCALayer-ге қосылу немесе сұрауға қол қою мүмкін болмады. NCALayer іске қосылғанын тексеріңіз.",
     passwordPolicyError: "Құпия сөз кемінде 10 таңбадан тұрып, бас әріп, кіші әріп және цифр қамтуы керек.",
     secureTitle: "Қорғалған авторизация",
     dataProtection: "Деректер тек жеке басты тексеру, авторизация және портал сервистерімен жұмыс істеу үшін пайдаланылады.",
-    features: ["Email және құпия сөз арқылы кіру", "NCALayer арқылы ЭЦҚ", "Порталдың қорғалған сессиясы"],
+    features: ["Email және құпия сөз арқылы кіру", "Портал сервистеріне қол жеткізу", "Порталдың қорғалған сессиясы"],
     registerFeatures: ["Тіркелу тек email арқылы", "Кандидат деректері анкетаға сақталады", "Порталдың қорғалған сессиясы"],
   }
 };
@@ -103,40 +80,17 @@ function humanizeAuthError(message: string, locale: Locale) {
 
 export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
   const router = useRouter();
-  const [provider, setProvider] = useState<Provider>("email");
-  const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
-  const [isEdsSubmitting, setIsEdsSubmitting] = useState(false);
   const t = copy[locale];
   const isRegister = mode === "register";
   const pageTitle = isRegister ? t.registerTitle : t.title;
   const pageSubtitle = isRegister ? t.registerSubtitle : t.subtitle;
   const pageFeatures = isRegister ? t.registerFeatures : t.features;
 
-  async function beginEdsLogin() {
-    setError("");
-    setStatus(t.starting);
-    setIsEdsSubmitting(true);
-    try {
-      const edsChallenge = await startEdsLogin();
-      const cmsBase64 = await signAuthChallengeWithNcaLayer(edsChallenge.challenge_base64);
-      setStatus(t.verified);
-      await completeEdsLogin(edsChallenge.challenge_id, edsChallenge.nonce, cmsBase64);
-      router.push(`/${locale}/account`);
-    } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "";
-      setError(message ? humanizeAuthError(message, locale) : t.ncaError);
-      setStatus("");
-    } finally {
-      setIsEdsSubmitting(false);
-    }
-  }
-
   async function handleEmailSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setStatus("");
     setIsEmailSubmitting(true);
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
@@ -190,125 +144,67 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
 
         <div className="mx-auto w-full max-w-xl">
           <div className="rounded-[1.35rem] border border-white/20 bg-white/[0.96] p-6 text-state-navy shadow-[0_30px_90px_rgba(0,0,0,0.24)] md:p-8">
-            {!isRegister ? (
-              <div className="mb-6 grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
-                {(["email", "eds"] as Provider[]).map((item) => (
-                  <button
-                    key={item}
-                    className={`min-h-11 rounded-xl text-sm font-bold transition ${provider === item ? "bg-white text-state-navy shadow-sm" : "text-slate-500 hover:text-state-navy"}`}
-                    type="button"
-                    onClick={() => {
-                      setProvider(item);
-                      setError("");
-                      setStatus("");
-                    }}
-                  >
-                    {item === "eds" ? t.eds : t.email}
-                  </button>
-                ))}
-              </div>
-            ) : null}
+            <div className="mb-7">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-tealDark">Email</p>
+              <h2 className="mt-2 text-2xl font-bold">{isRegister ? t.emailRegisterTitle : t.emailTitle}</h2>
+            </div>
 
-            {provider === "eds" ? (
-              <>
-                <div className="mb-7">
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-tealDark">{t.eds}</p>
-                  <h2 className="mt-2 text-2xl font-bold">{t.edsTitle}</h2>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">{t.edsText}</p>
-                </div>
-
-                <div className="rounded-2xl border border-state-teal/15 bg-state-surface p-5">
-                  <div className="flex gap-3">
-                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-state-tealDark" />
-                    <div>
-                      <p className="font-bold text-state-navy">{t.secureTitle}</p>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">{t.dataProtection}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  disabled={isEdsSubmitting}
-                  className="mt-6 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-button-gradient px-5 py-3 text-sm font-semibold text-white shadow-lift transition hover:-translate-y-0.5 hover:shadow-premium disabled:cursor-not-allowed disabled:opacity-70"
-                  type="button"
-                  onClick={beginEdsLogin}
-                >
-                  {isEdsSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
-                  {t.startEds}
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="mb-7">
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-state-tealDark">Email</p>
-                  <h2 className="mt-2 text-2xl font-bold">{isRegister ? t.emailRegisterTitle : t.emailTitle}</h2>
-                </div>
-
-                <form className="grid gap-4" onSubmit={handleEmailSubmit}>
-                  {isRegister ? (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <label className="grid gap-2 text-sm font-semibold text-state-navy">
-                        {t.firstName}
-                        <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
-                          <UserRound className="h-5 w-5 text-state-tealDark" />
-                          <input name="firstName" autoComplete="given-name" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.firstNamePlaceholder} required />
-                        </span>
-                      </label>
-                      <label className="grid gap-2 text-sm font-semibold text-state-navy">
-                        {t.lastName}
-                        <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
-                          <UserRound className="h-5 w-5 text-state-tealDark" />
-                          <input name="lastName" autoComplete="family-name" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.lastNamePlaceholder} required />
-                        </span>
-                      </label>
-                    </div>
-                  ) : null}
-                  {isRegister ? (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <label className="grid gap-2 text-sm font-semibold text-state-navy">
-                        {t.birthDate}
-                        <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
-                          <CalendarDays className="h-5 w-5 text-state-tealDark" />
-                          <input name="birthDate" type="date" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" required />
-                        </span>
-                      </label>
-                      <label className="grid gap-2 text-sm font-semibold text-state-navy">
-                        {t.phone}
-                        <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
-                          <Phone className="h-5 w-5 text-state-tealDark" />
-                          <input name="phone" type="tel" autoComplete="tel" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.phonePlaceholder} required />
-                        </span>
-                      </label>
-                    </div>
-                  ) : null}
+            <form className="grid gap-4" onSubmit={handleEmailSubmit}>
+              {isRegister ? (
+                <div className="grid gap-4 sm:grid-cols-2">
                   <label className="grid gap-2 text-sm font-semibold text-state-navy">
-                    {t.emailLabel}
+                    {t.firstName}
                     <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
-                      <Mail className="h-5 w-5 text-state-tealDark" />
-                      <input name="email" type="email" autoComplete="email" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.emailPlaceholder} required />
+                      <UserRound className="h-5 w-5 text-state-tealDark" />
+                      <input name="firstName" autoComplete="given-name" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.firstNamePlaceholder} required />
                     </span>
                   </label>
                   <label className="grid gap-2 text-sm font-semibold text-state-navy">
-                    {t.password}
+                    {t.lastName}
                     <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
-                      <LockKeyhole className="h-5 w-5 text-state-tealDark" />
-                      <input name="password" type="password" autoComplete={isRegister ? "new-password" : "current-password"} className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.passwordPlaceholder} required />
+                      <UserRound className="h-5 w-5 text-state-tealDark" />
+                      <input name="lastName" autoComplete="family-name" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.lastNamePlaceholder} required />
                     </span>
                   </label>
-                  <button disabled={isEmailSubmitting} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-button-gradient px-5 py-3 text-sm font-semibold text-white shadow-lift transition hover:-translate-y-0.5 hover:shadow-premium disabled:cursor-not-allowed disabled:opacity-70" type="submit">
-                    {isEmailSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
-                    {isRegister ? t.registerSubmit : t.emailSubmit}
-                  </button>
-                </form>
-              </>
-            )}
-
-            {status ? (
-              <div className="mt-5 flex items-center gap-3 rounded-2xl border border-state-teal/20 bg-state-surface px-4 py-3 text-sm font-semibold leading-6 text-state-tealDark">
-                <ShieldCheck className="h-5 w-5" />
-                {status}
-              </div>
-            ) : null}
+                </div>
+              ) : null}
+              {isRegister ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                    {t.birthDate}
+                    <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
+                      <CalendarDays className="h-5 w-5 text-state-tealDark" />
+                      <input name="birthDate" type="date" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" required />
+                    </span>
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                    {t.phone}
+                    <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
+                      <Phone className="h-5 w-5 text-state-tealDark" />
+                      <input name="phone" type="tel" autoComplete="tel" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.phonePlaceholder} required />
+                    </span>
+                  </label>
+                </div>
+              ) : null}
+              <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                {t.emailLabel}
+                <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
+                  <Mail className="h-5 w-5 text-state-tealDark" />
+                  <input name="email" type="email" autoComplete="email" className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.emailPlaceholder} required />
+                </span>
+              </label>
+              <label className="grid gap-2 text-sm font-semibold text-state-navy">
+                {t.password}
+                <span className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 shadow-sm">
+                  <LockKeyhole className="h-5 w-5 text-state-tealDark" />
+                  <input name="password" type="password" autoComplete={isRegister ? "new-password" : "current-password"} className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.passwordPlaceholder} required />
+                </span>
+              </label>
+              <button disabled={isEmailSubmitting} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-button-gradient px-5 py-3 text-sm font-semibold text-white shadow-lift transition hover:-translate-y-0.5 hover:shadow-premium disabled:cursor-not-allowed disabled:opacity-70" type="submit">
+                {isEmailSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
+                {isRegister ? t.registerSubmit : t.emailSubmit}
+              </button>
+            </form>
 
             {error ? (
               <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold leading-6 text-red-700" role="alert">

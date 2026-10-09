@@ -1,0 +1,27 @@
+meta {
+  name: GET /api/v1/admin/psychological-tests/results
+  type: http
+  seq: 24
+}
+
+get {
+  url: {{base_url}}/api/v1/admin/psychological-tests/results
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{admin_token}}
+}
+
+script:pre-request {
+  for (const name of ["admin_token"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+docs {
+  GET /api/v1/admin/psychological-tests/results
+
+  Нужен отдельный токен админ-панели (admin_token).
+}

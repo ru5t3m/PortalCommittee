@@ -16,9 +16,16 @@ export type AdminDashboard = {
   appeals: number;
   candidates: number;
   region_offices: number;
+  permissions: string[];
+  candidate_status_counts: Record<string, number>;
 };
 
 export type AdminAppeal = {
+  assigned_to_name?: string | null;
+  organizational_unit_name_ru?: string | null;
+  organizational_unit_name_kk?: string | null;
+  organizational_unit_id: number | null;
+  assigned_to_id: number | null;
   id: number;
   tracking_code: string;
   full_name: string;
@@ -33,6 +40,11 @@ export type AdminAppeal = {
 };
 
 export type AdminCandidate = {
+  assigned_to_name?: string | null;
+  organizational_unit_name_ru?: string | null;
+  organizational_unit_name_kk?: string | null;
+  organizational_unit_id: number | null;
+  assigned_to_id: number | null;
   id: number;
   tracking_code: string;
   status: "draft" | "submitted" | "in_review" | "approved" | "rejected";
@@ -151,4 +163,26 @@ export async function deleteAdminRegionOffice(id: number) {
   if (!response.ok) {
     throw new Error(await parseApiError(response));
   }
+}
+
+export type PageData<T> = { items: T[]; total: number; limit: number; offset: number };
+export type Unit = { id: number; code: string; name_ru: string; name_kk: string };
+export type StaffUser = AdminDashboard["actor"] & { staff_scope: "central" | "territorial" | null; organizational_unit_id: number | null; is_active: boolean; is_blocked: boolean };
+export type Assignee = Pick<StaffUser, "id" | "full_name" | "staff_scope" | "organizational_unit_id">;
+export type CaseComment = { id: number; author_name: string; visibility: "internal" | "candidate"; text: string; created_at: string };
+export type CaseHistory = { id: number; actor_name: string | null; action: string; created_at: string; details: Record<string, unknown> | null };
+export type QueryValues = Record<string, string | number | boolean | null | undefined>;
+
+export async function adminPage<T>(path: string, values: QueryValues = {}, signal?: AbortSignal) {
+  const params = new URLSearchParams({ paginated: "true" });
+  Object.entries(values).forEach(([key, value]) => { if (value !== undefined && value !== null && value !== "") params.set(key, String(value)); });
+  return readJson<PageData<T>>(await adminAuthFetch(`${API_URL}/admin/${path}?${params}`, { signal }));
+}
+
+export async function adminGet<T>(path: string, signal?: AbortSignal) {
+  return readJson<T>(await adminAuthFetch(`${API_URL}/admin/${path}`, { signal }));
+}
+
+export async function adminWrite<T>(path: string, payload: unknown, method = "PATCH") {
+  return readJson<T>(await adminAuthFetch(`${API_URL}/admin/${path}`, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }));
 }

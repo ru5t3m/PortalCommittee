@@ -1,0 +1,47 @@
+meta {
+  name: Создать обращение
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/api/v1/appeals
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{access_token}}
+}
+
+body:json {
+  {
+    "full_name": "Тестовый пользователь",
+    "iin": null,
+    "email": "{{email}}",
+    "phone": "+70000000000",
+    "subject": "Тестовое обращение",
+    "message": "Тестовое обращение из локальной коллекции Bruno."
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("allow_writes")) !== "true") {
+    throw new Error("Этот запрос изменяет данные. Для тестирования явно задайте allow_writes=true в выбранном окружении.");
+  }
+  for (const name of ["access_token"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) bru.setVar("tracking_code", res.getBody().tracking_code);
+}
+
+docs {
+  POST /api/v1/appeals
+
+  Нужен токен пользователя (access_token).
+  Запрос запускается вручную после включения allow_writes=true. Используйте тестовые данные.
+}

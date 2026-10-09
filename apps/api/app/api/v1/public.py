@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import current_user
 from app.db.session import get_db
-from app.models.entities import Appeal, RegionOffice, User
+from app.models.entities import Appeal, CaseComment, CandidateApplication, RegionOffice, User
+from app.schemas.dto import PageOut, CandidateMessageOut
+from app.services.case_workflow import ListOptions, page
 from app.schemas.dto import AppealCreate, FaqAssistantRequest, FaqAssistantResponse, FaqAssistantSuggestion, RegionOfficeOut, TrackingOut
 from app.services.faq_assistant import LocalLlmUnavailable, faq_source_name, find_faq_answer
 from app.services.tracking import make_tracking_code
@@ -13,11 +15,27 @@ router = APIRouter()
 
 @router.post("/appeals", response_model=TrackingOut, status_code=201)
 def create_appeal(payload: AppealCreate, db: Session = Depends(get_db), _user: User = Depends(current_user)):
-    row = Appeal(tracking_code=make_tracking_code("APL"), **payload.model_dump())
+    row = Appeal(tracking_code=make_tracking_code("APL"), owner_id=_user.id, **payload.model_dump())
     db.add(row)
     db.commit()
     db.refresh(row)
     return TrackingOut(tracking_code=row.tracking_code, status=row.status.value)
+
+
+@router.get("/candidate/messages", response_model=PageOut[CandidateMessageOut])
+def candidate_messages(options: ListOptions = Depends(), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    options.paginated = True
+    query = db.query(CaseComment).join(CandidateApplication, CaseComment.candidate_application_id == CandidateApplication.id).filter(CandidateApplication.user_id == user.id, CaseComment.visibility == "candidate")
+    return page(query.order_by(CaseComment.created_at.desc(), CaseComment.id.desc()), options)
+
+
+@router.get("/appeals/{tracking_code}/messages", response_model=PageOut[CandidateMessageOut])
+def appeal_messages(tracking_code: str, options: ListOptions = Depends(), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    row = db.query(Appeal).filter(Appeal.tracking_code == tracking_code, Appeal.owner_id == user.id).first()
+    if row is None:
+        raise HTTPException(404, "Appeal not found")
+    options.paginated = True
+    return page(db.query(CaseComment).filter(CaseComment.appeal_id == row.id, CaseComment.visibility == "candidate").order_by(CaseComment.created_at.desc(), CaseComment.id.desc()), options)
 
 
 @router.get("/appeals/{tracking_code}", response_model=TrackingOut)

@@ -1,0 +1,58 @@
+meta {
+  name: PUT /api/v1/psychological-tests/progress
+  type: http
+  seq: 21
+}
+
+put {
+  url: {{base_url}}/api/v1/psychological-tests/progress
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{access_token}}
+}
+
+body:json {
+  {
+    "test_slug": "{{test_slug}}",
+    "test_title": "Тест Bruno",
+    "total_questions": 1,
+    "answered_questions": 1,
+    "current_section_index": 0,
+    "sections": [
+      {
+        "id": "sample",
+        "title": "Тестовый раздел",
+        "total_questions": 1,
+        "answered_questions": 1,
+        "scored_questions": 1,
+        "correct_answers": 1,
+        "score_percent": 100
+      }
+    ],
+    "answers": {
+      "sample": {
+        "1": "example"
+      }
+    }
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("allow_writes")) !== "true") {
+    throw new Error("Этот запрос изменяет данные. Для тестирования явно задайте allow_writes=true в выбранном окружении.");
+  }
+  for (const name of ["access_token"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+docs {
+  PUT /api/v1/psychological-tests/progress
+
+  Нужен токен пользователя (access_token).
+  Запрос запускается вручную после включения allow_writes=true. Используйте тестовые данные.
+}

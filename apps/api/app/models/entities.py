@@ -1,6 +1,6 @@
 import enum
 from datetime import date, datetime
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, JSON, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Enum, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -34,6 +34,9 @@ class TimestampMixin:
 
 class User(Base, TimestampMixin):
     __tablename__ = "users"
+    __table_args__ = (
+        CheckConstraint("(staff_scope IS NULL AND organizational_unit_id IS NULL) OR (role = 'moderator' AND staff_scope IS NOT NULL AND ((staff_scope = 'central' AND organizational_unit_id IS NULL) OR (staff_scope = 'territorial' AND organizational_unit_id IS NOT NULL)))", name="ck_user_staff_scope"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
@@ -46,13 +49,24 @@ class User(Base, TimestampMixin):
     phone: Mapped[str | None] = mapped_column(String(60), index=True, nullable=True)
     phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.candidate)
+    staff_scope: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    organizational_unit_id: Mapped[int | None] = mapped_column(ForeignKey("organizational_units.id"), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    candidate_application: Mapped["CandidateApplication | None"] = relationship(back_populates="user", uselist=False)
+    candidate_application: Mapped["CandidateApplication | None"] = relationship(back_populates="user", uselist=False, foreign_keys="CandidateApplication.user_id")
     refresh_sessions: Mapped[list["RefreshSession"]] = relationship(back_populates="user")
+
+
+class OrganizationalUnit(Base, TimestampMixin):
+    __tablename__ = "organizational_units"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(80), unique=True)
+    name_ru: Mapped[str] = mapped_column(String(255))
+    name_kk: Mapped[str] = mapped_column(String(255))
 
 
 class TelegramLoginChallenge(Base, TimestampMixin):
@@ -94,6 +108,7 @@ class EdsLoginChallenge(Base, TimestampMixin):
 
 class Appeal(Base, TimestampMixin):
     __tablename__ = "appeals"
+    __table_args__ = (Index("ix_appeals_created_at", "created_at"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     tracking_code: Mapped[str] = mapped_column(String(40), unique=True, index=True)
@@ -104,13 +119,19 @@ class Appeal(Base, TimestampMixin):
     subject: Mapped[str] = mapped_column(String(255))
     message: Mapped[str] = mapped_column(Text)
     status: Mapped[AppealStatus] = mapped_column(Enum(AppealStatus), default=AppealStatus.received)
-    assigned_to_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
-    assigned_to: Mapped[User | None] = relationship()
+    assigned_to_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    assigned_to: Mapped[User | None] = relationship(foreign_keys=[assigned_to_id])
+    organizational_unit_id: Mapped[int | None] = mapped_column(ForeignKey("organizational_units.id"), nullable=True, index=True)
+    owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    organizational_unit: Mapped[OrganizationalUnit | None] = relationship()
 
 
 class CandidateApplication(Base, TimestampMixin):
     __tablename__ = "candidate_applications"
-    __table_args__ = (UniqueConstraint("user_id", name="uq_candidate_applications_user_id"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_candidate_applications_user_id"),
+        Index("ix_candidate_applications_created_at", "created_at"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
@@ -126,12 +147,21 @@ class CandidateApplication(Base, TimestampMixin):
     desired_direction: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[CandidateStatus] = mapped_column(Enum(CandidateStatus), default=CandidateStatus.submitted)
     moderator_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    organizational_unit_id: Mapped[int | None] = mapped_column(ForeignKey("organizational_units.id"), nullable=True, index=True)
+    assigned_to_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
 
-    user: Mapped[User] = relationship(back_populates="candidate_application")
+    user: Mapped[User] = relationship(back_populates="candidate_application", foreign_keys=[user_id])
+    assigned_to: Mapped[User | None] = relationship(foreign_keys=[assigned_to_id])
+    organizational_unit: Mapped[OrganizationalUnit | None] = relationship()
 
 
 class PsychologicalTestResult(Base, TimestampMixin):
     __tablename__ = "psychological_test_results"
+    __table_args__ = (
+        CheckConstraint("total_questions > 0 AND answered_questions >= 0 AND answered_questions <= total_questions", name="ck_test_result_counts"),
+        CheckConstraint("duration_seconds >= 0 AND remaining_seconds >= 0 AND remaining_seconds <= duration_seconds", name="ck_test_result_time"),
+        Index("ix_test_results_user_submitted", "user_id", "submitted_at"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     attempt_id: Mapped[str | None] = mapped_column(ForeignKey("psychological_test_attempts.id"), nullable=True, unique=True)
@@ -153,7 +183,11 @@ class PsychologicalTestResult(Base, TimestampMixin):
 
 class PsychologicalTestProgress(Base, TimestampMixin):
     __tablename__ = "psychological_test_progress"
-    __table_args__ = (UniqueConstraint("user_id", "test_slug", name="uq_psychological_test_progress_user_slug"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "test_slug", name="uq_psychological_test_progress_user_slug"),
+        CheckConstraint("total_questions > 0 AND answered_questions >= 0 AND answered_questions <= total_questions", name="ck_test_progress_counts"),
+        CheckConstraint("current_section_index >= 0", name="ck_test_progress_section"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
@@ -170,6 +204,16 @@ class PsychologicalTestProgress(Base, TimestampMixin):
 
 class PsychologicalTestAttempt(Base, TimestampMixin):
     __tablename__ = "psychological_test_attempts"
+    __table_args__ = (
+        CheckConstraint("status IN ('instructions', 'questions', 'sectionComplete', 'ready', 'completed')", name="ck_test_attempt_status"),
+        CheckConstraint("locale IN ('ru', 'kk')", name="ck_test_attempt_locale"),
+        CheckConstraint("section_index >= 0 AND question_index >= 0 AND elapsed_milliseconds >= 0 AND version >= 1", name="ck_test_attempt_counters"),
+        CheckConstraint("(status = 'questions' AND question_started_at IS NOT NULL) OR (status <> 'questions' AND question_started_at IS NULL)", name="ck_test_attempt_timer"),
+        CheckConstraint("(status = 'completed' AND active_key IS NULL) OR (status <> 'completed' AND active_key IS NOT NULL AND active_key = CAST(user_id AS VARCHAR) || ':' || test_slug)", name="ck_test_attempt_active_key"),
+        CheckConstraint("status <> 'instructions' OR question_index = 0", name="ck_test_attempt_instructions"),
+        CheckConstraint("bank_version <> 'primary-selection.v1' OR (test_slug = 'primary-selection' AND section_index BETWEEN 0 AND 2 AND question_index < CASE WHEN section_index < 2 THEN 50 ELSE 30 END AND elapsed_milliseconds <= 7800000 AND (status NOT IN ('ready', 'completed') OR section_index = 2) AND (status <> 'sectionComplete' OR section_index < 2))", name="ck_test_attempt_primary_v1_bounds"),
+        Index("ix_test_attempts_user_slug_created", "user_id", "test_slug", "created_at", "id"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -200,6 +244,11 @@ class AuthSession(Base, TimestampMixin):
 
 class RefreshSession(Base, TimestampMixin):
     __tablename__ = "refresh_sessions"
+    __table_args__ = (
+        Index("uq_refresh_session_unrevoked", "auth_session_id", unique=True,
+              postgresql_where=text("auth_session_id IS NOT NULL AND revoked_at IS NULL"),
+              sqlite_where=text("auth_session_id IS NOT NULL AND revoked_at IS NULL")),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     auth_session_id: Mapped[str | None] = mapped_column(ForeignKey("auth_sessions.id"), nullable=True, index=True)
@@ -215,12 +264,16 @@ class RefreshSession(Base, TimestampMixin):
 
 class LoginAttempt(Base, TimestampMixin):
     __tablename__ = "login_attempts"
+    __table_args__ = (
+        Index("ix_login_failed_email_created", "email", "created_at", postgresql_where=text("success IS FALSE"), sqlite_where=text("success IS FALSE")),
+        Index("ix_login_failed_ip_created", "ip_address", "created_at", postgresql_where=text("success IS FALSE"), sqlite_where=text("success IS FALSE")),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    email: Mapped[str] = mapped_column(String(255), index=True)
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    email: Mapped[str] = mapped_column(String(255))
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     success: Mapped[bool] = mapped_column(Boolean, default=False)
-    ip_address: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    ip_address: Mapped[str | None] = mapped_column(String(80), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
     reason: Mapped[str | None] = mapped_column(String(120), nullable=True)
     user: Mapped[User | None] = relationship()
@@ -240,13 +293,34 @@ class RegionOffice(Base, TimestampMixin):
     longitude: Mapped[str] = mapped_column(String(40))
 
 
+class CaseComment(Base):
+    __tablename__ = "case_comments"
+    __table_args__ = (
+        CheckConstraint("(appeal_id IS NOT NULL AND candidate_application_id IS NULL) OR (appeal_id IS NULL AND candidate_application_id IS NOT NULL)", name="ck_case_comment_target"),
+        CheckConstraint("visibility IN ('internal', 'candidate')", name="ck_case_comment_visibility"),
+        Index("ix_case_comments_appeal_created", "appeal_id", "created_at", "id"),
+        Index("ix_case_comments_candidate_created", "candidate_application_id", "created_at", "id"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    appeal_id: Mapped[int | None] = mapped_column(ForeignKey("appeals.id"), nullable=True)
+    candidate_application_id: Mapped[int | None] = mapped_column(ForeignKey("candidate_applications.id"), nullable=True)
+    author_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    author_name: Mapped[str] = mapped_column(String(255))
+    visibility: Mapped[str] = mapped_column(String(20))
+    text: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class AuditLog(Base, TimestampMixin):
     __tablename__ = "audit_logs"
+    __table_args__ = (Index("ix_audit_case_history", "entity", "entity_id", "created_at", "id"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     action: Mapped[str] = mapped_column(String(120))
     entity: Mapped[str] = mapped_column(String(120))
     entity_id: Mapped[str] = mapped_column(String(80))
     ip_address: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    actor_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     actor: Mapped[User | None] = relationship()

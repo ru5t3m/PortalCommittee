@@ -1,0 +1,31 @@
+meta {
+  name: DELETE /api/v1/psychological-tests/progress/{test_slug}
+  type: http
+  seq: 20
+}
+
+delete {
+  url: {{base_url}}/api/v1/psychological-tests/progress/{{test_slug}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{access_token}}
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("allow_writes")) !== "true") {
+    throw new Error("Этот запрос изменяет данные. Для тестирования явно задайте allow_writes=true в выбранном окружении.");
+  }
+  for (const name of ["test_slug","access_token"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+docs {
+  DELETE /api/v1/psychological-tests/progress/{test_slug}
+
+  Нужен токен пользователя (access_token).
+  Запрос запускается вручную после включения allow_writes=true. Используйте тестовые данные.
+}

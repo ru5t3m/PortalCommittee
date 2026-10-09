@@ -1,0 +1,27 @@
+meta {
+  name: GET /api/v1/admin/candidates/{application_id}
+  type: http
+  seq: 30
+}
+
+get {
+  url: {{base_url}}/api/v1/admin/candidates/{{application_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{admin_token}}
+}
+
+script:pre-request {
+  for (const name of ["application_id","admin_token"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+docs {
+  GET /api/v1/admin/candidates/{application_id}
+
+  Нужен отдельный токен админ-панели (admin_token).
+}

@@ -1,0 +1,47 @@
+meta {
+  name: DELETE /api/v1/admin/contacts/regions/{office_id}
+  type: http
+  seq: 35
+}
+
+delete {
+  url: {{base_url}}/api/v1/admin/contacts/regions/{{office_id}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{admin_token}}
+}
+
+body:json {
+  {
+    "service": "knb",
+    "name_ru": "Тестовый контакт",
+    "name_kk": "Тест байланысы",
+    "region_ru": "Тестовый регион",
+    "region_kk": "Тест аймағы",
+    "phones": [
+      "+70000000000"
+    ],
+    "latitude": "51.1694",
+    "longitude": "71.4491"
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("allow_writes")) !== "true") {
+    throw new Error("Этот запрос изменяет данные. Для тестирования явно задайте allow_writes=true в выбранном окружении.");
+  }
+  for (const name of ["office_id","admin_token"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+docs {
+  DELETE /api/v1/admin/contacts/regions/{office_id}
+
+  Нужен отдельный токен админ-панели (admin_token).
+  Запрос запускается вручную после включения allow_writes=true. Используйте тестовые данные.
+}

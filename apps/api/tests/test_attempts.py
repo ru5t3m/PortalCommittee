@@ -166,6 +166,10 @@ class AttemptTests(unittest.TestCase):
 
     def test_logout_revokes_admin_session_too(self):
         headers = self.register()
+        from app.models.entities import User, Role
+        with self.session_factory() as db:
+            db.query(User).filter_by(email="candidate@example.kz").one().role = Role.admin
+            db.commit()
         settings = get_settings()
         with patch.object(settings, "admin_portal_allowed_user_email", "candidate@example.kz"), patch.object(settings, "admin_panel_email", "admin@example.kz"), patch.object(settings, "admin_panel_password_hash", hash_password("AdminTest123!")):
             response = self.client.post("/api/v1/auth/admin/login", headers=headers, json={"email": "admin@example.kz", "password": "AdminTest123!"})

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { KnbEmblem } from "@/components/KnbEmblem";
+import { CandidateMessages } from "@/components/CandidateMessages";
 import type { Locale } from "@/lib/i18n";
 import { getMe, logout, type AuthMe } from "@/lib/auth";
 import { listMyPsychologicalTestResults, type PsychologicalTestResult } from "@/lib/psychological-tests";
@@ -207,6 +208,7 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
           </aside>
 
           <div className="grid gap-6">
+            {application && <CandidateMessages locale={locale} />}
             <section>
               <h2 className="text-2xl font-bold">{t.actionsTitle}</h2>
               <div className="mt-4 grid gap-4 md:grid-cols-3">

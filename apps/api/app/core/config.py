@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     app_name: str = "KNB RK Official Portal API"
     environment: str = "development"
     database_url: str = "sqlite:///./knb_portal.dev.db"
+    migration_runtime_role: str = ""
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 30
@@ -17,13 +18,6 @@ class Settings(BaseSettings):
     cors_origins: Annotated[list[AnyHttpUrl] | list[str], NoDecode] = ["http://localhost:3000"]
     allowed_hosts: Annotated[list[str], NoDecode] = ["localhost", "127.0.0.1"]
     rate_limit_per_minute: int = 120
-    telegram_bot_token: str = ""
-    telegram_bot_username: str = ""
-    telegram_webhook_secret: str = ""
-    telegram_login_challenge_minutes: int = 10
-    eds_login_challenge_minutes: int = 5
-    eds_trusted_ca_file: str = ""
-    eds_allow_untrusted_certificates: bool = False
     admin_portal_allowed_user_email: str = "test@gmail.com"
     admin_panel_email: str = ""
     admin_panel_password_hash: str = ""
@@ -66,16 +60,6 @@ class Settings(BaseSettings):
                 raise RuntimeError("ALLOWED_HOSTS must not contain '*' in production")
             if "*" in [str(origin) for origin in self.cors_origins]:
                 raise RuntimeError("CORS_ORIGINS must not contain '*' in production")
-            if not self.telegram_bot_token:
-                raise RuntimeError("TELEGRAM_BOT_TOKEN must be configured in production")
-            if not self.telegram_bot_username:
-                raise RuntimeError("TELEGRAM_BOT_USERNAME must be configured in production")
-            if not self.telegram_webhook_secret or len(self.telegram_webhook_secret) < 24:
-                raise RuntimeError("TELEGRAM_WEBHOOK_SECRET must be configured with a strong value in production")
-            if not self.eds_trusted_ca_file:
-                raise RuntimeError("EDS_TRUSTED_CA_FILE must be configured in production")
-            if self.eds_allow_untrusted_certificates:
-                raise RuntimeError("EDS_ALLOW_UNTRUSTED_CERTIFICATES must be false in production")
 
 
 @lru_cache

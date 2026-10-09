@@ -1,0 +1,21 @@
+meta {
+  name: Список подразделений
+  type: http
+  seq: 38
+}
+
+get {
+  url: {{base_url}}/api/v1/admin/organizational-units
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{admin_token}}
+}
+
+script:pre-request {
+  for (const name of ["admin_token"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}

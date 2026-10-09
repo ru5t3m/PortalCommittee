@@ -1,0 +1,36 @@
+meta {
+  name: FAQ-помощник
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/v1/faq-assistant
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "question": "Как поступить на службу?",
+    "locale": "ru"
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("allow_writes")) !== "true") {
+    throw new Error("Этот запрос изменяет данные. Для тестирования явно задайте allow_writes=true в выбранном окружении.");
+  }
+}
+
+docs {
+  POST /api/v1/faq-assistant
+
+  Токен пользователя не требуется.
+  Запрос запускается вручную после включения allow_writes=true. Используйте тестовые данные.
+  В текущем Docker Compose сервис LLM не запущен; возможен ответ 503.
+}

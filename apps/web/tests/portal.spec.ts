@@ -12,6 +12,7 @@ async function authenticate(page: Page) {
   await page.addInitScript(() => window.sessionStorage.setItem("knb-access-token", "test-access-token"));
   await page.route("**/api/v1/auth/me", (route) => route.fulfill({ json: authenticatedProfile }));
   await page.route("**/api/v1/psychological-tests/results/me", (route) => route.fulfill({ json: [] }));
+  await page.route("**/api/v1/candidate/messages?*", (route) => route.fulfill({ json: { items: [], total: 0, limit: 10, offset: 0 } }));
   await page.route("**/api/v1/psychological-tests/progress/primary-selection", (route) => route.fulfill({ status: 404, json: { detail: "Psychological test progress not found" } }));
 }
 
@@ -70,6 +71,45 @@ test("mobile menu, FAQ and reduced motion", async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
+for (const locale of ["ru", "kk"]) {
+  for (const mode of ["login", "register"]) {
+    test(`${locale}: ${mode} offers email and password only`, async ({ page }) => {
+      const unsupportedRequests: string[] = [];
+      page.on("request", (request) => {
+        if (/\/auth\/(eds|telegram)\//.test(request.url())) unsupportedRequests.push(request.url());
+      });
+      await page.goto(`/${locale}/${mode}`);
+      await expect(page.locator('input[name="email"]')).toBeVisible();
+      await expect(page.locator('input[name="password"]')).toBeVisible();
+      await expect(page.locator("main")).not.toContainText(/ЭЦП|ЭЦҚ|NCALayer|Telegram/i);
+      await expect(page.getByRole("button", { name: /ЭЦП|ЭЦҚ|Telegram/i })).toHaveCount(0);
+      expect(unsupportedRequests).toEqual([]);
+    });
+  }
+}
+
+test("email registration sends candidate data and opens the account", async ({ page }) => {
+  await page.route("**/api/v1/candidate/messages?*", (route) => route.fulfill({ json: { items: [], total: 0, limit: 10, offset: 0 } }));
+  let registration: unknown;
+  await page.route("**/api/v1/auth/password/register", (route) => {
+    registration = route.request().postDataJSON();
+    return route.fulfill({ status: 201, json: { access_token: "test-access-token", token_type: "bearer", expires_in: 3600 } });
+  });
+  await page.route("**/api/v1/auth/me", (route) => route.fulfill({ json: authenticatedProfile }));
+  await page.route("**/api/v1/psychological-tests/results/me", (route) => route.fulfill({ json: [] }));
+  await page.goto("/ru/register");
+  await page.locator('input[name="firstName"]').fill("Тестовый");
+  await page.locator('input[name="lastName"]').fill("Кандидат");
+  await page.locator('input[name="birthDate"]').fill("2000-01-01");
+  await page.locator('input[name="phone"]').fill("+77000000000");
+  await page.locator('input[name="email"]').fill("candidate@example.kz");
+  await page.locator('input[name="password"]').fill("PortalTest123!");
+  await page.getByRole("button", { name: "Создать аккаунт", exact: true }).click();
+  await expect(page).toHaveURL(/\/ru\/account$/);
+  expect(registration).toEqual({ email: "candidate@example.kz", password: "PortalTest123!", first_name: "Тестовый",
+    last_name: "Кандидат", birth_date: "2000-01-01", phone: "+77000000000" });
+});
+
 test("login sends credentials to the API and displays the real profile", async ({ page }) => {
   let credentials: unknown;
   await page.route("**/api/v1/auth/password/login", (route) => {
@@ -79,7 +119,6 @@ test("login sends credentials to the API and displays the real profile", async (
   await page.route("**/api/v1/auth/me", (route) => route.fulfill({ json: authenticatedProfile }));
   await page.route("**/api/v1/psychological-tests/results/me", (route) => route.fulfill({ json: [] }));
   await page.goto("/ru/login");
-  await page.getByRole("button", { name: "Email", exact: true }).click();
   await page.locator('input[name="email"]').fill("candidate@example.kz");
   await page.locator('input[name="password"]').fill("PortalTest123!");
   await page.getByRole("button", { name: "Войти", exact: true }).click();
@@ -91,7 +130,6 @@ test("login sends credentials to the API and displays the real profile", async (
 test("invalid credentials do not create a session", async ({ page }) => {
   await page.route("**/api/v1/auth/password/login", (route) => route.fulfill({ status: 401, json: { detail: "Invalid credentials" } }));
   await page.goto("/ru/login");
-  await page.getByRole("button", { name: "Email", exact: true }).click();
   await page.locator('input[name="email"]').fill("candidate@example.kz");
   await page.locator('input[name="password"]').fill("WrongPassword123!");
   await page.getByRole("button", { name: "Войти", exact: true }).click();
@@ -138,6 +176,23 @@ test("an expired admin session returns to the admin login", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Вход в админ-панель", exact: true })).toBeVisible();
   expect(await page.evaluate(() => sessionStorage.getItem("knb-admin-access-token"))).toBeNull();
 });
+
+for (const managesContacts of [false, true]) {
+  test(`staff panel contact management permission: ${managesContacts}`, async ({ page }) => {
+    await authenticate(page);
+    await page.addInitScript(() => sessionStorage.setItem("knb-admin-access-token", "staff-token"));
+    await page.route("**/api/v1/auth/me", (route) => route.fulfill({ json: { ...authenticatedProfile, can_access_admin: true } }));
+    await page.route("**/api/v1/admin/**", (route) => {
+      if (new URL(route.request().url()).pathname.endsWith("/dashboard")) {
+        return route.fulfill({ json: { actor: authenticatedProfile.user, users: 0, appeals: 0, candidates: 0, region_offices: 0, permissions: managesContacts ? ["contacts:manage"] : ["cases:read"] } });
+      }
+      return route.fulfill({ json: new URL(route.request().url()).searchParams.has("paginated") ? { items: [], total: 0, limit: 25, offset: 0 } : [] });
+    });
+    await page.goto("/ru/admin");
+    await expect(page.getByRole("heading", { name: "Панель управления", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Контакты", exact: true })).toHaveCount(managesContacts ? 1 : 0);
+  });
+}
 
 test("admission links keep the requested stage on a static page", async ({ page }) => {
   await page.goto("/ru/careers/admission?stage=3");

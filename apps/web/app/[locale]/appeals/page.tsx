@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { CitizenAppealForm } from "@/components/CitizenAppealForm";
+import { AppealTracking } from "@/components/AppealTracking";
 import { PageHero } from "@/components/PageHero";
 import { Container } from "@/components/ui/Container";
 import type { Locale } from "@/lib/i18n";
@@ -29,6 +30,7 @@ export default async function AppealsPage({ params }: { params: Promise<{ locale
       <PageHero badge={t.eyebrow} title={t.title} description={t.description} />
       <section className="bg-white py-20 md:py-24">
         <Container>
+          <AppealTracking locale={locale} />
           <h2 className="text-3xl font-bold text-state-navy md:text-4xl">{t.contentTitle}</h2>
           <div className="mt-8">
             <CitizenAppealForm locale={locale} />

@@ -1,0 +1,32 @@
+meta {
+  name: Выход
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{base_url}}/api/v1/auth/logout
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("allow_writes")) !== "true") {
+    throw new Error("Этот запрос изменяет данные. Для тестирования явно задайте allow_writes=true в выбранном окружении.");
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    bru.setVar("access_token", "");
+    bru.setVar("admin_token", "");
+  }
+}
+
+docs {
+  POST /api/v1/auth/logout
+
+  Токен пользователя не требуется.
+  Запрос запускается вручную после включения allow_writes=true. Используйте тестовые данные.
+  Используется refresh-cookie из успешного входа. Bruno должен сохранять cookies между запросами.
+}

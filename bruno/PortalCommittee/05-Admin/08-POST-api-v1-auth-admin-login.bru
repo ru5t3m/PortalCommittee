@@ -1,0 +1,43 @@
+meta {
+  name: Вход в админ-панель
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/api/v1/auth/admin/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{access_token}}
+}
+
+body:json {
+  {
+    "email": "{{admin_email}}",
+    "password": "{{admin_password}}"
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("allow_writes")) !== "true") {
+    throw new Error("Этот запрос изменяет данные. Для тестирования явно задайте allow_writes=true в выбранном окружении.");
+  }
+  for (const name of ["access_token","admin_email","admin_password"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) bru.setVar("admin_token", res.getBody().access_token);
+}
+
+docs {
+  POST /api/v1/auth/admin/login
+
+  Нужен токен пользователя (access_token).
+  Запрос запускается вручную после включения allow_writes=true. Используйте тестовые данные.
+}

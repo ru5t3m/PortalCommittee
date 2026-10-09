@@ -22,7 +22,7 @@ from app.core.config import get_settings
 from app.core.config import Settings
 from app.core.security import hash_password, verify_password
 from app.main import create_app
-from app.models.entities import User, TelegramLoginChallenge, PsychologicalTestProgress
+from app.models.entities import AuthSession, EdsLoginChallenge, User, TelegramLoginChallenge, PsychologicalTestProgress
 
 
 class PortalTests(unittest.TestCase):
@@ -149,29 +149,51 @@ class PortalTests(unittest.TestCase):
             self.assertEqual(self.client.post(f"/api/v1/auth/{endpoint}", headers={"Origin": "https://untrusted.example"}).status_code, 403)
         self.assertEqual(self.client.post("/api/v1/auth/refresh", headers={"Origin": "http://localhost:3000"}).status_code, 200)
 
-    def test_telegram_webhook_requires_configured_secret(self):
-        settings = get_settings()
-        with patch.object(settings, "telegram_webhook_secret", ""):
-            self.assertEqual(self.client.post("/api/v1/auth/telegram/webhook", json={"update_id": 1}).status_code, 503)
-        with patch.object(settings, "telegram_webhook_secret", "webhook-test-secret"):
-            self.assertEqual(self.client.post("/api/v1/auth/telegram/webhook", json={"update_id": 1}).status_code, 401)
-            self.assertEqual(self.client.post("/api/v1/auth/telegram/webhook", json={"update_id": 1}, headers={"X-Telegram-Bot-Api-Secret-Token": "webhook-test-secret"}).status_code, 200)
-
-    def test_telegram_consumed_challenge_cannot_be_reopened(self):
-        nonce = "challenge-nonce-that-is-long-enough"
+    def test_removed_login_providers_cannot_create_sessions(self):
+        now = datetime.now(timezone.utc)
         with self.session_factory() as db:
-            db.add(TelegramLoginChallenge(nonce=nonce, status="consumed", consumed_at=datetime.now(timezone.utc), expires_at=datetime.now(timezone.utc) + timedelta(minutes=5)))
+            db.add(User(email=None, full_name="Legacy account", telegram_id="123", iin="000000000001"))
+            db.add(TelegramLoginChallenge(nonce="legacy-telegram-nonce", status="verified", telegram_id="123",
+                                         phone="+77000000000", expires_at=now + timedelta(minutes=5)))
+            db.add(EdsLoginChallenge(nonce="legacy-eds-nonce", challenge_text="legacy-challenge",
+                                    expires_at=now + timedelta(minutes=5)))
             db.commit()
-        with patch.object(get_settings(), "telegram_webhook_secret", "webhook-test-secret"), patch("app.api.v1.auth.telegram_api_call"):
-            response = self.client.post("/api/v1/auth/telegram/webhook", headers={"X-Telegram-Bot-Api-Secret-Token": "webhook-test-secret"}, json={"message": {"chat": {"id": 1}, "from": {"id": 1}, "text": f"/start {nonce}"}})
-        self.assertEqual(response.status_code, 200)
+        endpoints = (
+            ("post", "/api/v1/auth/telegram/start"),
+            ("get", "/api/v1/auth/telegram/status/1"),
+            ("post", "/api/v1/auth/telegram/complete"),
+            ("post", "/api/v1/auth/telegram/webhook"),
+            ("post", "/api/v1/auth/eds/start"),
+            ("post", "/api/v1/auth/eds/complete"),
+        )
+        for method, endpoint in endpoints:
+            with self.subTest(endpoint=endpoint):
+                kwargs = {"json": {"challenge_id": 1, "nonce": "legacy-telegram-nonce"}} if method == "post" else {}
+                self.assertEqual(getattr(self.client, method)(endpoint, **kwargs).status_code, 404)
         with self.session_factory() as db:
-            self.assertEqual(db.query(TelegramLoginChallenge).one().status, "consumed")
+            self.assertEqual(db.query(User).count(), 1)
+            self.assertEqual(db.query(AuthSession).count(), 0)
+            self.assertEqual(db.query(TelegramLoginChallenge).one().status, "verified")
+            self.assertEqual(db.query(EdsLoginChallenge).one().challenge_text, "legacy-challenge")
 
-    def test_admin_access_flag_uses_server_configuration(self):
+    def test_api_schema_exposes_only_supported_login_providers(self):
+        schema = self.client.get("/openapi.json").json()
+        self.assertFalse(any(path.startswith(("/api/v1/auth/telegram", "/api/v1/auth/eds")) for path in schema["paths"]))
+        self.assertEqual(schema["components"]["securitySchemes"]["OAuth2PasswordBearer"]["flows"]["password"]["tokenUrl"],
+                         "/api/v1/auth/password/login")
+
+    def test_production_startup_requires_no_telegram_or_eds_configuration(self):
+        settings = Settings(_env_file=None, environment="production", jwt_secret="production-test-secret-of-at-least-32-characters",
+                            allowed_hosts=["portal.example.kz"], cors_origins=["https://portal.example.kz"])
+        settings.validate_for_startup()
+        settings.jwt_secret = "short"
+        with self.assertRaisesRegex(RuntimeError, "JWT_SECRET"):
+            settings.validate_for_startup()
+
+    def test_allowlisted_email_does_not_grant_administrator_role(self):
         headers = self.register()
         with patch.object(get_settings(), "admin_portal_allowed_user_email", "candidate@example.kz"):
-            self.assertTrue(self.client.get("/api/v1/auth/me", headers=headers).json()["can_access_admin"])
+            self.assertFalse(self.client.get("/api/v1/auth/me", headers=headers).json()["can_access_admin"])
         with patch.object(get_settings(), "admin_portal_allowed_user_email", "someone-else@example.kz"):
             self.assertFalse(self.client.get("/api/v1/auth/me", headers=headers).json()["can_access_admin"])
 

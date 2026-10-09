@@ -1,0 +1,27 @@
+meta {
+  name: Мои результаты тестов
+  type: http
+  seq: 23
+}
+
+get {
+  url: {{base_url}}/api/v1/psychological-tests/results/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{access_token}}
+}
+
+script:pre-request {
+  for (const name of ["access_token"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+docs {
+  GET /api/v1/psychological-tests/results/me
+
+  Нужен токен пользователя (access_token).
+}

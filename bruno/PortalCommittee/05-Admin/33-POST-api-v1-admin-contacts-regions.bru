@@ -1,0 +1,47 @@
+meta {
+  name: POST /api/v1/admin/contacts/regions
+  type: http
+  seq: 33
+}
+
+post {
+  url: {{base_url}}/api/v1/admin/contacts/regions
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{admin_token}}
+}
+
+body:json {
+  {
+    "service": "knb",
+    "name_ru": "Тестовый контакт",
+    "name_kk": "Тест байланысы",
+    "region_ru": "Тестовый регион",
+    "region_kk": "Тест аймағы",
+    "phones": [
+      "+70000000000"
+    ],
+    "latitude": "51.1694",
+    "longitude": "71.4491"
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("allow_writes")) !== "true") {
+    throw new Error("Этот запрос изменяет данные. Для тестирования явно задайте allow_writes=true в выбранном окружении.");
+  }
+  for (const name of ["admin_token"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+docs {
+  POST /api/v1/admin/contacts/regions
+
+  Нужен отдельный токен админ-панели (admin_token).
+  Запрос запускается вручную после включения allow_writes=true. Используйте тестовые данные.
+}

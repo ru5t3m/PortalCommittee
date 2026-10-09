@@ -4,9 +4,12 @@ from sqlalchemy.orm import Session, joinedload
 from app.api.deps import current_admin_session_user, current_user
 from app.api.v1.auth import serialize_candidate, serialize_user
 from app.db.session import get_db
-from app.models.entities import PsychologicalTestProgress, PsychologicalTestResult, User
+from app.models.entities import CandidateApplication, PsychologicalTestProgress, PsychologicalTestResult, User
+from app.schemas.dto import PageOut
+from app.services.case_workflow import ListOptions, search, page
 from app.schemas.dto import AdminPsychologicalTestResultOut, PsychologicalTestProgressOut, PsychologicalTestProgressSave, PsychologicalTestResultCreate, PsychologicalTestResultOut
 from app.services.test_attempts import bank, result_state, SLUG
+from app.services.staff_access import scope_records
 
 router = APIRouter()
 
@@ -53,7 +56,10 @@ def list_my_results(db: Session = Depends(get_db), user: User = Depends(current_
     return [serialize_result(row) for row in rows]
 
 
-@router.get("/admin/psychological-tests/results", response_model=list[AdminPsychologicalTestResultOut])
-def list_admin_results(db: Session = Depends(get_db), user: User = Depends(current_admin_session_user)):
-    rows = db.query(PsychologicalTestResult).options(joinedload(PsychologicalTestResult.user), joinedload(PsychologicalTestResult.candidate_application)).order_by(PsychologicalTestResult.submitted_at.desc()).limit(300).all()
-    return [serialize_admin_result(row) for row in rows]
+@router.get("/admin/psychological-tests/results", response_model=PageOut[AdminPsychologicalTestResultOut] | list[AdminPsychologicalTestResultOut])
+def list_admin_results(options: ListOptions = Depends(), db: Session = Depends(get_db), user: User = Depends(current_admin_session_user)):
+    query = db.query(PsychologicalTestResult).join(User, PsychologicalTestResult.user_id == User.id).outerjoin(CandidateApplication, PsychologicalTestResult.candidate_application_id == CandidateApplication.id)
+    if user.staff_scope == "territorial":
+        query = scope_records(query.filter(PsychologicalTestResult.user_id == CandidateApplication.user_id), CandidateApplication, user)
+    query = search(query, options.q, [User.full_name, User.email, User.phone, CandidateApplication.tracking_code, PsychologicalTestResult.test_title])
+    return page(query.options(joinedload(PsychologicalTestResult.user), joinedload(PsychologicalTestResult.candidate_application)).order_by(PsychologicalTestResult.submitted_at.desc(), PsychologicalTestResult.id.desc()), options, serialize_admin_result)

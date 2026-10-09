@@ -8,9 +8,10 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.entities import AuthSession, Role, User
+from app.services.staff_access import can_access_staff
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/telegram/complete")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/password/login")
 
 
 def current_user(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
@@ -18,7 +19,7 @@ def current_user(request: Request, token: str = Depends(oauth2_scheme), db: Sess
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm], options={"require": ["exp", "sub", "sid"]})
         user_id = payload.get("sub")
-        if not user_id:
+        if not user_id or payload.get("admin_session") is True:
             raise InvalidTokenError("Missing subject")
         parsed_user_id = int(user_id)
     except (InvalidTokenError, ValueError, TypeError) as exc:
@@ -49,7 +50,7 @@ def current_admin_session_user(request: Request, token: str = Depends(oauth2_sch
         raise HTTPException(status_code=401, detail="Session expired or revoked")
     request.state.auth_session_id = session.id
     user = db.query(User).filter(User.id == parsed_user_id, User.is_active.is_(True), User.is_blocked.is_(False)).first()
-    if not user or (user.email or "").lower() != settings.admin_portal_allowed_user_email.lower():
+    if not user or not can_access_staff(user):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     return user
 

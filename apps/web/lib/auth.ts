@@ -34,28 +34,6 @@ type TokenResponse = {
   expires_in: number;
 };
 
-export type TelegramLoginStart = {
-  challenge_id: number;
-  nonce: string;
-  deep_link: string;
-  expires_at: string;
-};
-
-export type TelegramLoginStatus = {
-  challenge_id: number;
-  status: "pending" | "awaiting_contact" | "verified" | "consumed" | "expired";
-  expires_at: string;
-  phone_verified: boolean;
-};
-
-export type EdsLoginStart = {
-  challenge_id: number;
-  nonce: string;
-  challenge_text: string;
-  challenge_base64: string;
-  expires_at: string;
-};
-
 const ACCESS_TOKEN_KEY = "knb-access-token";
 const ADMIN_ACCESS_TOKEN_KEY = "knb-admin-access-token";
 const DEMO_SESSION_KEY = "knb-temporary-demo-session";
@@ -136,58 +114,6 @@ async function storeTokenFromResponse(response: Response) {
   const token = (await response.json()) as TokenResponse;
   setStoredAccessToken(token.access_token);
   return token;
-}
-
-export async function startTelegramLogin() {
-  const response = await fetch(`${API_URL}/auth/telegram/start`, {
-    method: "POST",
-    credentials: "include"
-  });
-  if (!response.ok) {
-    throw new Error(await parseApiError(response));
-  }
-  return (await response.json()) as TelegramLoginStart;
-}
-
-export async function getTelegramLoginStatus(challengeId: number) {
-  const response = await fetch(`${API_URL}/auth/telegram/status/${challengeId}`, {
-    credentials: "include"
-  });
-  if (!response.ok) {
-    throw new Error(await parseApiError(response));
-  }
-  return (await response.json()) as TelegramLoginStatus;
-}
-
-export async function completeTelegramLogin(challengeId: number, nonce: string) {
-  const response = await fetch(`${API_URL}/auth/telegram/complete`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ challenge_id: challengeId, nonce })
-  });
-  return storeTokenFromResponse(response);
-}
-
-export async function startEdsLogin() {
-  const response = await fetch(`${API_URL}/auth/eds/start`, {
-    method: "POST",
-    credentials: "include"
-  });
-  if (!response.ok) {
-    throw new Error(await parseApiError(response));
-  }
-  return (await response.json()) as EdsLoginStart;
-}
-
-export async function completeEdsLogin(challengeId: number, nonce: string, cmsBase64: string) {
-  const response = await fetch(`${API_URL}/auth/eds/complete`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ challenge_id: challengeId, nonce, cms_base64: cmsBase64 })
-  });
-  return storeTokenFromResponse(response);
 }
 
 export async function loginWithPassword(email: string, password: string) {

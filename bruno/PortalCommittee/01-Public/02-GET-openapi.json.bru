@@ -1,0 +1,17 @@
+meta {
+  name: Схема API
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/openapi.json
+  body: none
+  auth: none
+}
+
+docs {
+  GET /openapi.json
+
+  Токен пользователя не требуется.
+}

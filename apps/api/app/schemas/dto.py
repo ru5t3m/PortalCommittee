@@ -1,5 +1,16 @@
 from datetime import date, datetime
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from typing import Generic, Literal, TypeVar
+from email_validator import validate_email as validate_email_address
+from app.core.config import get_settings
+
+
+class PortalEmailStr(EmailStr):
+    @classmethod
+    def _validate(cls, value: str) -> str:
+        if get_settings().environment.lower() in {"development", "test"} and value.rsplit("@", 1)[-1].lower().endswith(".test"):
+            return validate_email_address(value, check_deliverability=False, test_environment=True).normalized
+        return super()._validate(value)
 
 
 class TokenOut(BaseModel):
@@ -10,7 +21,7 @@ class TokenOut(BaseModel):
 
 class UserOut(BaseModel):
     id: int
-    email: EmailStr | None
+    email: PortalEmailStr | None
     full_name: str
     role: str
     telegram_username: str | None = None
@@ -135,41 +146,8 @@ class AdminPsychologicalTestResultOut(PsychologicalTestResultOut):
     answers: dict = Field(default_factory=dict)
 
 
-class TelegramLoginStartOut(BaseModel):
-    challenge_id: int
-    nonce: str
-    deep_link: str
-    expires_at: datetime
-
-
-class TelegramLoginStatusOut(BaseModel):
-    challenge_id: int
-    status: str
-    expires_at: datetime
-    phone_verified: bool = False
-
-
-class TelegramLoginCompleteIn(BaseModel):
-    challenge_id: int
-    nonce: str = Field(min_length=16, max_length=128)
-
-
-class EdsLoginStartOut(BaseModel):
-    challenge_id: int
-    nonce: str
-    challenge_text: str
-    challenge_base64: str
-    expires_at: datetime
-
-
-class EdsLoginCompleteIn(BaseModel):
-    challenge_id: int
-    nonce: str = Field(min_length=16, max_length=128)
-    cms_base64: str = Field(min_length=64, max_length=200000)
-
-
 class PasswordRegisterIn(BaseModel):
-    email: EmailStr
+    email: PortalEmailStr
     password: str = Field(min_length=10, max_length=128)
     first_name: str = Field(min_length=2, max_length=120)
     last_name: str = Field(min_length=2, max_length=120)
@@ -190,19 +168,19 @@ class PasswordRegisterIn(BaseModel):
 
 
 class PasswordLoginIn(BaseModel):
-    email: EmailStr
+    email: PortalEmailStr
     password: str = Field(min_length=8, max_length=128)
 
 
 class AdminPanelLoginIn(BaseModel):
-    email: EmailStr
+    email: PortalEmailStr
     password: str = Field(min_length=8, max_length=128)
 
 
 class AppealCreate(BaseModel):
     full_name: str = Field(min_length=3, max_length=255)
     iin: str | None = Field(default=None, min_length=12, max_length=12)
-    email: EmailStr
+    email: PortalEmailStr
     phone: str = Field(min_length=5, max_length=60)
     subject: str = Field(min_length=5, max_length=255)
     message: str = Field(min_length=20, max_length=8000)
@@ -231,6 +209,8 @@ class AdminDashboardOut(BaseModel):
     appeals: int
     candidates: int
     region_offices: int
+    permissions: list[str] = Field(default_factory=list)
+    candidate_status_counts: dict[str, int] = Field(default_factory=dict)
 
 
 class AdminAppealOut(BaseModel):
@@ -238,13 +218,18 @@ class AdminAppealOut(BaseModel):
     tracking_code: str
     full_name: str
     iin: str | None
-    email: EmailStr
+    email: PortalEmailStr
     phone: str
     subject: str
     message: str
     status: str
     created_at: datetime
     updated_at: datetime
+    organizational_unit_id: int | None = None
+    assigned_to_id: int | None = None
+    assigned_to_name: str | None = None
+    organizational_unit_name_ru: str | None = None
+    organizational_unit_name_kk: str | None = None
 
 
 class AdminAppealStatusUpdate(BaseModel):
@@ -268,6 +253,11 @@ class AdminCandidateOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     user: UserOut
+    organizational_unit_id: int | None = None
+    assigned_to_id: int | None = None
+    assigned_to_name: str | None = None
+    organizational_unit_name_ru: str | None = None
+    organizational_unit_name_kk: str | None = None
 
 
 class AdminCandidateStatusUpdate(BaseModel):
@@ -320,3 +310,107 @@ class RegionOfficeCreate(BaseModel):
 
 class RegionOfficeUpdate(RegionOfficeCreate):
     pass
+
+
+class OrganizationalUnitCreate(BaseModel):
+    code: str = Field(min_length=2, max_length=80, pattern=r"^[a-zA-Z0-9_-]+$")
+    name_ru: str = Field(min_length=2, max_length=255)
+    name_kk: str = Field(min_length=2, max_length=255)
+
+    @field_validator("code", "name_ru", "name_kk", mode="before")
+    @classmethod
+    def strip_text(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+
+class OrganizationalUnitOut(OrganizationalUnitCreate):
+    id: int
+    model_config = {"from_attributes": True}
+
+
+class StaffAccessUpdate(BaseModel):
+    role: Literal["admin", "moderator", "candidate"]
+    staff_scope: Literal["central", "territorial"] | None = None
+    organizational_unit_id: int | None = Field(default=None, gt=0)
+    is_active: bool | None = None
+    is_blocked: bool | None = None
+
+    @model_validator(mode="after")
+    def validate_scope(self):
+        if self.role == "moderator":
+            if self.staff_scope is None:
+                raise ValueError("Staff scope is required for a moderator")
+            if (self.staff_scope == "territorial") != (self.organizational_unit_id is not None):
+                raise ValueError("Only territorial staff must have an organizational unit")
+        elif self.staff_scope is not None or self.organizational_unit_id is not None:
+            raise ValueError("Only moderators can have a staff scope or organizational unit")
+        return self
+
+
+class StaffUserOut(UserOut):
+    staff_scope: str | None
+    organizational_unit_id: int | None
+    is_active: bool
+    is_blocked: bool
+
+
+class CaseAssignmentUpdate(BaseModel):
+    organizational_unit_id: int | None = Field(default=None, gt=0)
+    assigned_to_id: int | None = Field(default=None, gt=0)
+
+
+Item = TypeVar("Item")
+
+
+class PageOut(BaseModel, Generic[Item]):
+    items: list[Item]
+    total: int
+    limit: int
+    offset: int
+
+
+class CaseCommentCreate(BaseModel):
+    visibility: Literal["internal", "candidate"]
+    text: str = Field(min_length=1, max_length=4000)
+
+    @field_validator("text")
+    @classmethod
+    def nonempty_text(cls, value):
+        value = value.strip()
+        if not value:
+            raise ValueError("Comment cannot be empty")
+        return value
+
+
+class CaseCommentOut(BaseModel):
+    id: int
+    author_id: int
+    author_name: str
+    visibility: str
+    text: str
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class CandidateMessageOut(BaseModel):
+    id: int
+    text: str
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class CaseHistoryOut(BaseModel):
+    id: int
+    actor_name: str | None
+    action: str
+    details: dict | None
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class AssigneeOut(BaseModel):
+    id: int
+    full_name: str
+    staff_scope: str | None
+    organizational_unit_id: int | None
+    model_config = {"from_attributes": True}

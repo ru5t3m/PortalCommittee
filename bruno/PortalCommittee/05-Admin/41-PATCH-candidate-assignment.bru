@@ -1,0 +1,30 @@
+meta {
+  name: Направить заявку в подразделение
+  type: http
+  seq: 41
+}
+
+patch {
+  url: {{base_url}}/api/v1/admin/candidates/{{application_id}}/assignment
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{admin_token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "organizational_unit_id": {{organizational_unit_id}},
+    "assigned_to_id": null
+  }
+}
+
+script:pre-request {
+  if (String(bru.getEnvVar("allow_writes")) !== "true") throw new Error("Для изменения данных задайте allow_writes=true.");
+  for (const name of ["admin_token","application_id","organizational_unit_id"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}

@@ -1,0 +1,27 @@
+meta {
+  name: GET /api/v1/admin/appeals/{appeal_id}
+  type: http
+  seq: 27
+}
+
+get {
+  url: {{base_url}}/api/v1/admin/appeals/{{appeal_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{admin_token}}
+}
+
+script:pre-request {
+  for (const name of ["appeal_id","admin_token"]) {
+    if (!bru.getVar(name)) throw new Error("Заполните переменную: " + name);
+  }
+}
+
+docs {
+  GET /api/v1/admin/appeals/{appeal_id}
+
+  Нужен отдельный токен админ-панели (admin_token).
+}
