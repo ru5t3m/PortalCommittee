@@ -2,7 +2,7 @@
 
 import { CalendarDays, CheckCircle2, Loader2, LockKeyhole, Mail, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import type { Locale } from "@/lib/i18n";
@@ -35,6 +35,9 @@ const copy = {
     goLogin: "Уже есть аккаунт? Войти",
     error: "Не удалось выполнить вход. Повторите попытку.",
     passwordPolicyError: "Пароль должен содержать не менее 10 символов, а также заглавную букву, строчную букву и цифру.",
+    consentPrefix: "Я даю согласие на сбор, обработку и хранение моих персональных данных для регистрации и использования сервисов портала в соответствии с Законом Республики Казахстан",
+    consentLaw: "«О персональных данных и их защите»",
+    consentError: "Для регистрации необходимо дать согласие на сбор, обработку и хранение персональных данных.",
     secureTitle: "Защищенная авторизация",
     dataProtection: "Данные используются только для идентификации, авторизации и работы с сервисами портала.",
     features: ["Вход по email и паролю", "Доступ к сервисам портала", "Защищенная сессия портала"],
@@ -64,6 +67,10 @@ const copy = {
     goLogin: "Аккаунтыңыз бар ма? Кіру",
     error: "Кіру орындалмады. Қайта көріңіз.",
     passwordPolicyError: "Құпия сөз кемінде 10 таңбадан тұрып, бас әріп, кіші әріп және цифр қамтуы керек.",
+    consentPrefix: "Қазақстан Республикасының",
+    consentLaw: "«Дербес деректер және оларды қорғау туралы» Заңына",
+    consentSuffix: " сәйкес тіркелу және портал сервистерін пайдалану үшін дербес деректерімді жинауға, өңдеуге және сақтауға келісім беремін",
+    consentError: "Тіркелу үшін дербес деректерді жинауға, өңдеуге және сақтауға келісім беру қажет.",
     secureTitle: "Қорғалған авторизация",
     dataProtection: "Деректер тек жеке басты тексеру, авторизация және портал сервистерімен жұмыс істеу үшін пайдаланылады.",
     features: ["Email және құпия сөз арқылы кіру", "Портал сервистеріне қол жеткізу", "Порталдың қорғалған сессиясы"],
@@ -72,6 +79,9 @@ const copy = {
 };
 
 function humanizeAuthError(message: string, locale: Locale) {
+  if (message.includes("personal_data_consent") || message.includes("Personal data consent is required")) {
+    return copy[locale].consentError;
+  }
   if (message.toLowerCase().includes("password must be at least 10 characters")) {
     return copy[locale].passwordPolicyError;
   }
@@ -82,6 +92,7 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
+  const submitting = useRef(false);
   const t = copy[locale];
   const isRegister = mode === "register";
   const pageTitle = isRegister ? t.registerTitle : t.title;
@@ -90,6 +101,8 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
 
   async function handleEmailSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setError("");
     setIsEmailSubmitting(true);
     const formData = new FormData(event.currentTarget);
@@ -102,14 +115,17 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
 
     try {
       if (isRegister) {
-        await registerWithPassword({ email, password, first_name: firstName, last_name: lastName, birth_date: birthDate, phone });
+        const consent = formData.get("personalDataConsent") === "on";
+        if (!consent) throw new Error(t.consentError);
+        await registerWithPassword({ email, password, first_name: firstName, last_name: lastName, birth_date: birthDate, phone,
+          personal_data_consent: consent, consent_locale: locale });
       } else {
         await loginWithPassword(email, password);
       }
       router.push(`/${locale}/account`);
     } catch (caught) {
       setError(caught instanceof Error ? humanizeAuthError(caught.message, locale) : t.error);
-    } finally {
+      submitting.current = false;
       setIsEmailSubmitting(false);
     }
   }
@@ -200,6 +216,22 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
                   <input name="password" type="password" autoComplete={isRegister ? "new-password" : "current-password"} className="w-full bg-transparent text-base font-medium outline-none placeholder:text-slate-400" placeholder={t.passwordPlaceholder} required />
                 </span>
               </label>
+              {isRegister ? (
+                <div className="flex items-start gap-3 text-sm leading-6 text-slate-600">
+                  <input id="personal-data-consent" name="personalDataConsent" type="checkbox" required
+                    aria-labelledby="personal-data-consent-text"
+                    className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-state-tealDark" />
+                  <p id="personal-data-consent-text">
+                    <label htmlFor="personal-data-consent" className="cursor-pointer">{t.consentPrefix} </label>
+                    <a href={`https://adilet.zan.kz/${locale === "kk" ? "kaz" : "rus"}/docs/Z1300000094`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="font-semibold text-state-tealDark underline underline-offset-2 hover:text-state-navy">
+                      {t.consentLaw}
+                    </a>
+                    <label htmlFor="personal-data-consent" className="cursor-pointer">{locale === "kk" ? copy.kk.consentSuffix : ""}.</label>
+                  </p>
+                </div>
+              ) : null}
               <button disabled={isEmailSubmitting} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-button-gradient px-5 py-3 text-sm font-semibold text-white shadow-lift transition hover:-translate-y-0.5 hover:shadow-premium disabled:cursor-not-allowed disabled:opacity-70" type="submit">
                 {isEmailSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
                 {isRegister ? t.registerSubmit : t.emailSubmit}

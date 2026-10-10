@@ -32,7 +32,7 @@ export function Button({ children, href, variant = "primary", className, type = 
 
   if (href) {
     return (
-      <Link className={classes} href={href}>
+      <Link prefetch={false} className={classes} href={href}>
         {content}
       </Link>
     );

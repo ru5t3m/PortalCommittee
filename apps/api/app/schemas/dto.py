@@ -153,6 +153,15 @@ class PasswordRegisterIn(BaseModel):
     last_name: str = Field(min_length=2, max_length=120)
     birth_date: date | None = None
     phone: str = Field(min_length=5, max_length=60)
+    personal_data_consent: bool = Field(strict=True)
+    consent_locale: Literal["ru", "kk"] = "ru"
+
+    @field_validator("personal_data_consent")
+    @classmethod
+    def require_personal_data_consent(cls, value):
+        if not value:
+            raise ValueError("Personal data consent is required")
+        return value
 
     @field_validator("first_name", "last_name", "phone", mode="before")
     @classmethod

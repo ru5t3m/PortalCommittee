@@ -6,7 +6,8 @@ import { Clock3 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
-import { primaryPsychologicalSections, type PrimaryPsychologicalQuestion } from "@/lib/primary-psychological-test";
+import type { PrimaryPsychologicalQuestion } from "@/lib/primary-psychological-test";
+import { primaryTestImageSizes } from "@/lib/psychological-test-images";
 import { useTestAttempt } from "@/lib/use-test-attempt";
 
 const primaryCopy = {
@@ -146,6 +147,23 @@ function hasAnswer(answer: AnswerValue | undefined) {
   return Array.isArray(answer) ? answer.length > 0 : typeof answer === "string" && answer.trim().length > 0;
 }
 
+function TestLoadingScreen({ locale, checkingAuth }: { locale: Locale; checkingAuth: boolean }) {
+  const t = primaryCopy[locale];
+  return (
+    <div className="min-h-screen bg-[#f3f7f6] px-4 py-6 text-state-navy md:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-3xl items-center">
+        <section role="status" className="w-full rounded-[1.5rem] border border-slate-200 bg-white p-8 text-center shadow-[0_22px_70px_rgba(6,24,45,0.08)] md:p-10">
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-state-tealDark">{t.testTitle}</p>
+          <div className="mt-4 grid text-3xl font-bold text-state-navy">
+            <p aria-hidden={!checkingAuth} className={cn("col-start-1 row-start-1 self-center", !checkingAuth && "invisible")}>{t.checkingAuth}</p>
+            <p aria-hidden={checkingAuth} className={cn("col-start-1 row-start-1 self-center", checkingAuth && "invisible")}>{t.loadingProgress}</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
 function PrimarySelectionRunner({ locale }: { locale: Locale }) {
   const router = useRouter();
   const t = primaryCopy[locale];
@@ -154,15 +172,16 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
   const sectionIndex = attempt?.current_section_index ?? 0;
   const questionIndex = attempt?.current_question_index ?? 0;
   const mode = attempt?.status === "ready" || attempt?.status === "completed" ? "finished" : attempt?.status ?? "instructions";
-  const readySections = attempt?.sections ?? primaryPsychologicalSections.map(section => ({ ...section, total_questions: section.questions.length, answered_questions: 0 }));
+  const readySections = attempt?.sections ?? [];
   const activeSection = readySections[sectionIndex];
   const activeQuestion = attempt?.current_question;
+  const imageSize = activeQuestion?.image ? primaryTestImageSizes[activeQuestion.image] : undefined;
   const currentAnswer = flow.answer;
   const isCurrentAnswered = hasAnswer(currentAnswer);
   const totalQuestions = attempt?.total_questions ?? 130;
   const currentQuestionNumber = readySections.slice(0, sectionIndex).reduce((sum, section) => sum + section.total_questions, 0) + questionIndex + 1;
   const answeredTotal = attempt?.answered_questions ?? 0;
-  const activeSectionAnswered = activeSection.answered_questions;
+  const activeSectionAnswered = activeSection?.answered_questions ?? 0;
   const savedResult = attempt?.result;
   const totalCorrectAnswers = savedResult?.sections.reduce((sum, section) => sum + (section.correct_answers ?? 0), 0) ?? 0;
   const totalScoredQuestions = savedResult?.sections.reduce((sum, section) => sum + (section.scored_questions ?? 0), 0) ?? 0;
@@ -218,16 +237,7 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
   const retryNotice = progressMessage ? <div role="alert" className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">{progressMessage} <button type="button" disabled={busy} onClick={() => void flow.retry()} className="ml-3 font-bold text-state-tealDark">{retryLabel}</button></div> : null;
 
   if (authStatus === "checking" || (authStatus === "allowed" && isLoadingProgress)) {
-    return (
-      <div className="min-h-screen bg-[#f3f7f6] px-4 py-6 text-state-navy md:px-8">
-        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-3xl items-center">
-          <section className="w-full rounded-[1.5rem] border border-slate-200 bg-white p-8 text-center shadow-[0_22px_70px_rgba(6,24,45,0.08)] md:p-10">
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-state-tealDark">{t.testTitle}</p>
-            <h1 className="mt-4 text-3xl font-bold text-state-navy">{authStatus === "checking" ? t.checkingAuth : t.loadingProgress}</h1>
-          </section>
-        </div>
-      </div>
-    );
+    return <TestLoadingScreen locale={locale} checkingAuth={authStatus === "checking"} />;
   }
 
   if (authStatus === "denied") {
@@ -403,7 +413,9 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
           {activeQuestion.stimulus ? <p className="mt-5 rounded-2xl bg-slate-50 px-5 py-5 text-2xl font-bold tracking-wide text-state-navy">{activeQuestion.stimulus}</p> : null}
           {activeQuestion.image ? (
             <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <img src={activeQuestion.image} alt={`${t.question} ${currentQuestionNumber}`} className="mx-auto max-h-[32rem] w-auto max-w-full object-contain" />
+              <img src={activeQuestion.image} alt={`${t.question} ${currentQuestionNumber}`} width={imageSize?.width} height={imageSize?.height}
+                style={imageSize ? { width: Math.min(imageSize.width, imageSize.width / imageSize.height * 512), height: "auto" } : undefined}
+                className="mx-auto max-h-[32rem] w-auto max-w-full object-contain" />
             </div>
           ) : null}
 

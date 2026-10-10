@@ -10,7 +10,7 @@ from app.api.deps import current_user
 from app.core.config import get_settings
 from app.core.security import create_access_token, create_refresh_token, hash_password, hash_token, verify_password
 from app.db.session import get_db
-from app.models.entities import AuthSession, CandidateApplication, LoginAttempt, RefreshSession, Role, User
+from app.models.entities import AuditLog, AuthSession, CandidateApplication, LoginAttempt, RefreshSession, Role, User
 from app.schemas.dto import (
     AuthMeOut,
     AdminPanelLoginIn,
@@ -28,6 +28,11 @@ router = APIRouter()
 REFRESH_COOKIE_NAME = "knb_refresh_token"
 LOCKOUT_WINDOW_MINUTES = 15
 MAX_FAILED_ATTEMPTS = 5
+PERSONAL_DATA_CONSENT_VERSION = "2026-10-11"
+PERSONAL_DATA_CONSENT_TEXT = {
+    "ru": "Я даю согласие на сбор, обработку и хранение моих персональных данных для регистрации и использования сервисов портала в соответствии с Законом Республики Казахстан «О персональных данных и их защите».",
+    "kk": "Қазақстан Республикасының «Дербес деректер және оларды қорғау туралы» Заңына сәйкес тіркелу және портал сервистерін пайдалану үшін дербес деректерімді жинауға, өңдеуге және сақтауға келісім беремін.",
+}
 
 
 def client_ip(request: Request) -> str | None:
@@ -248,6 +253,22 @@ def register_with_password(payload: PasswordRegisterIn, request: Request, respon
 
     user.last_login_at = now
     record_login_attempt(db, email=email, request=request, user=user, success=True, reason="password_registered")
+    db.add(AuditLog(
+        actor_id=user.id,
+        actor_name=user.full_name,
+        action="personal_data_consent.accepted",
+        entity="user",
+        entity_id=str(user.id),
+        created_at=now,
+        details={
+            "accepted": True,
+            "version": PERSONAL_DATA_CONSENT_VERSION,
+            "locale": payload.consent_locale,
+            "text": PERSONAL_DATA_CONSENT_TEXT[payload.consent_locale],
+            "law_url": f"https://adilet.zan.kz/{'kaz' if payload.consent_locale == 'kk' else 'rus'}/docs/Z1300000094",
+            "source": "password_registration",
+        },
+    ))
     session_id = create_refresh_session(db, user, request, response)
     db.commit()
     db.refresh(user)

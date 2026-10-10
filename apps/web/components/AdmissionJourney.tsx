@@ -407,7 +407,7 @@ export function AdmissionJourney({ locale, initialIndex = 0 }: { locale: Locale;
         <div className="relative mt-5 flex flex-wrap items-center gap-3 border-t border-white/10 pt-5">
           <Button href={`/${locale}/careers/admission`} variant="gold">{t.openAdmission}</Button>
           <Button href={`/${locale}/register`} variant="ghost">{t.register}</Button>
-          <Link href={`/${locale}/psychological-testing`} className="inline-flex items-center gap-2 text-sm font-semibold text-white/72 transition hover:text-state-gold">
+          <Link prefetch={false} href={`/${locale}/psychological-testing`} className="inline-flex items-center gap-2 text-sm font-semibold text-white/72 transition hover:text-state-gold">
             {t.psych} <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>

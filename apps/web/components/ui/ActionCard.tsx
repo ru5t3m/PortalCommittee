@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export function ActionCard({ icon: Icon, title, text, href, dark = false }: { icon: LucideIcon; title: string; text: string; href: string; dark?: boolean }) {
   return (
-    <Link href={href}>
+    <Link prefetch={false} href={href}>
       <PremiumCard className={cn("relative h-full overflow-hidden", dark ? "border-white/12 bg-white/[0.08] text-white hover:border-state-gold/45 hover:bg-white/[0.12]" : "bg-gradient-to-br from-white via-white to-[#eef8f4]")}>
         <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#00a99b,#f8b133)]" />
         <div className={cn("absolute -right-10 -top-10 h-28 w-28 rounded-full border", dark ? "border-white/12" : "border-state-teal/15")} />

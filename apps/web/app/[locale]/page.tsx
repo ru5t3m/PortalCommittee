@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -175,7 +175,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
           <Reveal>
             <div className="mx-auto max-w-5xl">
               <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-black shadow-[0_24px_70px_rgba(6,27,51,0.14)]">
-                <video className="block max-h-[72vh] w-full bg-black object-contain" controls playsInline preload="metadata" poster="/media/official/service-pin.webp">
+                <video className="block max-h-[72vh] w-full bg-black object-contain" controls playsInline preload="none" poster={getImageProps({ src: "/media/official/service-pin.webp", alt: "", width: 540, height: 354 }).props.src}>
                   <source src="/media/video/admission-and-service.mp4" type="video/mp4" />
                 </video>
               </div>
@@ -206,7 +206,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {activities.map((item, index) => (
             <Reveal delay={index * 0.035} key={item.slug}>
-              <Link href={`/${currentLocale}/activities#${item.slug}`}>
+              <Link prefetch={false} href={`/${currentLocale}/activities#${item.slug}`}>
                 <PremiumCard className="relative h-full overflow-hidden p-0">
                   <div className="relative aspect-[16/9] overflow-hidden bg-slate-100">
                     <Image src={activityVisuals[index]} alt="" fill className="object-cover transition duration-500 group-hover:scale-[1.03]" sizes="(max-width: 768px) 100vw, 33vw" />

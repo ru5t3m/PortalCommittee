@@ -2,7 +2,8 @@
 
 import { BarChart3, FileText, MapPinned, ShieldCheck, UserRoundCheck, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { Locale } from "@/lib/i18n";
 import { primaryPsychologicalSections } from "@/lib/primary-psychological-test";
 import {
@@ -22,8 +23,9 @@ import {
 } from "@/lib/admin";
 
 import { CaseWorkspace } from "@/components/admin/CaseWorkspace";
-import { StaffManager } from "@/components/admin/StaffManager";
 import { Pager, buttonClass, fieldClass } from "@/components/admin/ListControls";
+
+const StaffManager = dynamic(() => import("@/components/admin/StaffManager").then(module => module.StaffManager));
 
 const copy = {
   ru: {
@@ -208,6 +210,11 @@ export function AdminPanel({ locale }: { locale: Locale }) {
   const [testBusy, setTestBusy] = useState(false);
   const [testRevision, setTestRevision] = useState(0);
   const [caseRevision, setCaseRevision] = useState(0);
+  const [directoryRevision, setDirectoryRevision] = useState(0);
+  const overviewLoaded = useRef<number | null>(null);
+  const contactsLoaded = useRef<number | null>(null);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [contactsLoading, setContactsLoading] = useState(true);
   const [regionOffices, setRegionOffices] = useState<AdminRegionOffice[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("appeals");
   const [selectedOfficeId, setSelectedOfficeId] = useState<number | "new" | null>(null);
@@ -220,15 +227,8 @@ export function AdminPanel({ locale }: { locale: Locale }) {
 
   async function loadData() {
     setError("");
-    const [nextDashboard, nextCandidates, nextRegionOffices] = await Promise.all([
-      getAdminDashboard(),
-      listAdminCandidates(),
-      listAdminRegionOffices()
-    ]);
+    const nextDashboard = await getAdminDashboard();
     setDashboard(nextDashboard);
-    setCandidates(nextCandidates);
-    setRegionOffices(nextRegionOffices);
-    setSelectedOfficeId((current) => current ?? nextRegionOffices[0]?.id ?? "new");
   }
 
   useEffect(() => {
@@ -245,6 +245,32 @@ export function AdminPanel({ locale }: { locale: Locale }) {
       isMounted = false;
     };
   }, [t.denied]);
+
+  useEffect(() => {
+    if (activeTab !== "overview" || overviewLoaded.current === directoryRevision) return;
+    let active = true;
+    setOverviewLoading(true);
+    void listAdminCandidates().then(next => {
+      if (!active) return;
+      setCandidates(next);
+      overviewLoaded.current = directoryRevision;
+    }).catch(e => { if (active) setError(e instanceof Error ? e.message : t.denied); }).finally(() => { if (active) setOverviewLoading(false); });
+    return () => { active = false; };
+  }, [activeTab, directoryRevision, t.denied]);
+
+  const canManageContacts = Boolean(dashboard?.permissions?.includes("contacts:manage"));
+  useEffect(() => {
+    if (activeTab !== "contacts" || !canManageContacts || contactsLoaded.current === directoryRevision) return;
+    let active = true;
+    setContactsLoading(true);
+    void listAdminRegionOffices().then(next => {
+      if (!active) return;
+      setRegionOffices(next);
+      setSelectedOfficeId(current => current ?? next[0]?.id ?? "new");
+      contactsLoaded.current = directoryRevision;
+    }).catch(e => { if (active) setError(e instanceof Error ? e.message : t.denied); }).finally(() => { if (active) setContactsLoading(false); });
+    return () => { active = false; };
+  }, [activeTab, canManageContacts, directoryRevision, t.denied]);
 
   useEffect(() => {
     if (activeTab !== "testing") return;
@@ -266,6 +292,7 @@ export function AdminPanel({ locale }: { locale: Locale }) {
       try {
         await loadData();
         setCaseRevision(value => value + 1);
+        setDirectoryRevision(value => value + 1);
         setTestRevision(value => value + 1);
       } catch (refreshError) {
         setError(refreshError instanceof Error ? refreshError.message : t.denied);
@@ -400,7 +427,9 @@ export function AdminPanel({ locale }: { locale: Locale }) {
 
       {error ? <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{error}</div> : null}
 
-      {activeTab === "overview" ? (
+      {(activeTab === "overview" && overviewLoading) || (activeTab === "contacts" && contactsLoading) ? (
+        <div role="status" className="rounded-2xl border border-slate-200 bg-white p-5 text-sm font-semibold text-slate-600">{t.loading}</div>
+      ) : activeTab === "overview" ? (
         <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-xl font-bold text-state-navy">{t.needsReview}</h3>

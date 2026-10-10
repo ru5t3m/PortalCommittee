@@ -22,7 +22,7 @@ from app.core.config import get_settings
 from app.core.config import Settings
 from app.core.security import hash_password, verify_password
 from app.main import create_app
-from app.models.entities import AuthSession, EdsLoginChallenge, User, TelegramLoginChallenge, PsychologicalTestProgress
+from app.models.entities import AuditLog, AuthSession, CandidateApplication, EdsLoginChallenge, RefreshSession, User, TelegramLoginChallenge, PsychologicalTestProgress
 
 
 class PortalTests(unittest.TestCase):
@@ -42,10 +42,11 @@ class PortalTests(unittest.TestCase):
         self.addCleanup(self.client.close)
         self.addCleanup(self.engine.dispose)
 
-    def register(self, email="candidate@example.kz"):
+    def register(self, email="candidate@example.kz", consent_locale="ru"):
         response = self.client.post("/api/v1/auth/password/register", json={
             "email": email, "password": "PortalTest123!", "first_name": "Тестовый",
             "last_name": "Кандидат", "phone": "+77000000000",
+            "personal_data_consent": True, "consent_locale": consent_locale,
         })
         self.assertEqual(response.status_code, 201, response.text)
         return {"Authorization": f"Bearer {response.json()['access_token']}"}
@@ -70,6 +71,44 @@ class PortalTests(unittest.TestCase):
         self.assertEqual(self.client.post("/api/v1/auth/refresh").status_code, 200)
         self.assertEqual(self.client.post("/api/v1/auth/logout").status_code, 200)
         self.assertEqual(self.client.post("/api/v1/auth/refresh").status_code, 401)
+
+    def test_registration_requires_explicit_boolean_consent_without_side_effects(self):
+        payload = {"email": "candidate@example.kz", "password": "PortalTest123!", "first_name": "Тестовый",
+                   "last_name": "Кандидат", "phone": "+77000000000"}
+        for consent in ("missing", False, None, "true", "false", 1, 0):
+            with self.subTest(consent=consent):
+                body = dict(payload)
+                if consent != "missing":
+                    body["personal_data_consent"] = consent
+                response = self.client.post("/api/v1/auth/password/register", json=body)
+                self.assertEqual(response.status_code, 422, response.text)
+                self.assertTrue(any(error["loc"][-1] == "personal_data_consent" for error in response.json()["detail"]))
+                self.assertNotIn("set-cookie", response.headers)
+                with self.session_factory() as db:
+                    for model in (User, CandidateApplication, AuthSession, RefreshSession, AuditLog):
+                        self.assertEqual(db.query(model).count(), 0)
+
+    def test_registration_records_consent_text_language_and_server_time(self):
+        from app.api.v1.auth import PERSONAL_DATA_CONSENT_TEXT, PERSONAL_DATA_CONSENT_VERSION
+
+        for locale in ("ru", "kk"):
+            with self.subTest(locale=locale):
+                before = datetime.now(timezone.utc).replace(tzinfo=None)
+                self.register(email=f"{locale}@example.kz", consent_locale=locale)
+                with self.session_factory() as db:
+                    user = db.query(User).filter_by(email=f"{locale}@example.kz").one()
+                    consent = db.query(AuditLog).filter_by(actor_id=user.id, action="personal_data_consent.accepted").one()
+                    self.assertEqual(consent.entity, "user")
+                    self.assertEqual(consent.entity_id, str(user.id))
+                    self.assertEqual(consent.actor_name, user.full_name)
+                    self.assertEqual(consent.details, {
+                        "accepted": True, "version": PERSONAL_DATA_CONSENT_VERSION, "locale": locale,
+                        "text": PERSONAL_DATA_CONSENT_TEXT[locale],
+                        "law_url": f"https://adilet.zan.kz/{'kaz' if locale == 'kk' else 'rus'}/docs/Z1300000094",
+                        "source": "password_registration",
+                    })
+                    self.assertGreaterEqual(consent.created_at.replace(tzinfo=None), before)
+                    self.assertLessEqual(consent.created_at.replace(tzinfo=None), datetime.now(timezone.utc).replace(tzinfo=None))
 
     def test_appeal_requires_login_and_returns_tracking_status(self):
         payload = {"full_name": "Тестовый Кандидат", "email": "candidate@example.kz", "phone": "+77000000000", "subject": "Проверочное обращение", "message": "Проверяем создание и получение статуса обращения."}
@@ -131,12 +170,14 @@ class PortalTests(unittest.TestCase):
         response = self.client.post("/api/v1/auth/password/register", json={
             "email": "existing@example.kz", "password": "PortalTest123!", "first_name": "Тестовый",
             "last_name": "Кандидат", "phone": "+77000000000",
+            "personal_data_consent": True,
         })
         self.assertEqual(response.status_code, 409)
         with self.session_factory() as db:
             user = db.query(User).filter_by(email="existing@example.kz").one()
             self.assertIsNone(user.hashed_password)
             self.assertEqual(user.full_name, "Existing user")
+            self.assertEqual(db.query(AuditLog).filter_by(action="personal_data_consent.accepted").count(), 0)
 
     def test_tokens_require_expiration(self):
         self.register()
@@ -198,7 +239,7 @@ class PortalTests(unittest.TestCase):
             self.assertFalse(self.client.get("/api/v1/auth/me", headers=headers).json()["can_access_admin"])
 
     def test_invalid_profile_and_section_data_are_rejected(self):
-        payload = {"email": "candidate@example.kz", "password": "PortalTest123!", "first_name": "  ", "last_name": "Кандидат", "phone": "+77000000000", "birth_date": "2999-01-01"}
+        payload = {"email": "candidate@example.kz", "password": "PortalTest123!", "first_name": "  ", "last_name": "Кандидат", "phone": "+77000000000", "birth_date": "2999-01-01", "personal_data_consent": True}
         self.assertEqual(self.client.post("/api/v1/auth/password/register", json=payload).status_code, 422)
         payload = self.progress()
         payload["sections"][0].update(scored_questions=1, correct_answers=2)

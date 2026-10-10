@@ -1,4 +1,5 @@
 import { API_URL, parseApiError } from "@/lib/api";
+import type { Locale } from "@/lib/i18n";
 
 export type AuthUser = {
   id: number;
@@ -42,6 +43,8 @@ const DEMO_EMAIL_KEY = "knb-temporary-demo-email";
 export const TEMPORARY_DEMO_AUTH_ENABLED = false;
 
 let refreshPromise: Promise<TokenResponse> | null = null;
+let authRevision = 0;
+let profileRequest: { revision: number; promise: Promise<AuthMe> } | null = null;
 
 export function isTemporaryDemoSession() {
   return TEMPORARY_DEMO_AUTH_ENABLED && typeof window !== "undefined" && window.sessionStorage.getItem(DEMO_SESSION_KEY) === "active";
@@ -93,13 +96,19 @@ function getStoredAccessToken() {
   return window.sessionStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
-function setStoredAccessToken(token: string) {
+function setStoredAccessToken(token: string, newSession = false) {
+  if (newSession) {
+    authRevision++;
+    profileRequest = null;
+  }
   window.sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
   window.dispatchEvent(new CustomEvent("knb-auth-changed"));
 }
 
 function clearStoredAccessToken() {
   const hadStoredSession = window.sessionStorage.getItem(ACCESS_TOKEN_KEY) !== null || window.sessionStorage.getItem(ADMIN_ACCESS_TOKEN_KEY) !== null;
+  authRevision++;
+  profileRequest = null;
   window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
   window.sessionStorage.removeItem(ADMIN_ACCESS_TOKEN_KEY);
   if (hadStoredSession) {
@@ -107,12 +116,13 @@ function clearStoredAccessToken() {
   }
 }
 
-async function storeTokenFromResponse(response: Response) {
+async function storeTokenFromResponse(response: Response, newSession = false, expectedRevision = authRevision) {
   if (!response.ok) {
     throw new Error(await parseApiError(response));
   }
   const token = (await response.json()) as TokenResponse;
-  setStoredAccessToken(token.access_token);
+  if (expectedRevision !== authRevision) throw new Error("Session changed");
+  setStoredAccessToken(token.access_token, newSession);
   return token;
 }
 
@@ -128,7 +138,7 @@ export async function loginWithPassword(email: string, password: string) {
     credentials: "include",
     body: JSON.stringify({ email, password })
   });
-  return storeTokenFromResponse(response);
+  return storeTokenFromResponse(response, true);
 }
 
 export async function registerWithPassword(payload: {
@@ -138,6 +148,8 @@ export async function registerWithPassword(payload: {
   last_name: string;
   birth_date: string;
   phone: string;
+  personal_data_consent: boolean;
+  consent_locale: Locale;
 }) {
   const response = await fetch(`${API_URL}/auth/password/register`, {
     method: "POST",
@@ -145,7 +157,7 @@ export async function registerWithPassword(payload: {
     credentials: "include",
     body: JSON.stringify(payload)
   });
-  return storeTokenFromResponse(response);
+  return storeTokenFromResponse(response, true);
 }
 
 export async function loginAdminPanel(email: string, password: string) {
@@ -174,11 +186,15 @@ export function hasAdminPanelSession() {
 
 export async function refreshSession() {
   if (!refreshPromise) {
+    const revision = authRevision;
     refreshPromise = fetch(`${API_URL}/auth/refresh`, {
       method: "POST",
       credentials: "include"
     })
-      .then(storeTokenFromResponse)
+      .then(async response => {
+        if (revision !== authRevision) throw new Error("Session changed");
+        return storeTokenFromResponse(response, false, revision);
+      })
       .finally(() => {
         refreshPromise = null;
       });
@@ -207,12 +223,13 @@ export async function logout() {
 }
 
 export async function authFetch(input: string, init: RequestInit = {}, retry = true): Promise<Response> {
+  const revision = authRevision;
   let token = getStoredAccessToken();
   if (!token && retry) {
     try {
       token = (await refreshSession()).access_token;
     } catch {
-      clearStoredAccessToken();
+      if (revision === authRevision) clearStoredAccessToken();
     }
   }
 
@@ -225,14 +242,14 @@ export async function authFetch(input: string, init: RequestInit = {}, retry = t
     credentials: "include"
   });
 
-  if (response.status === 401 && retry) {
+  if (response.status === 401 && retry && revision === authRevision) {
     try {
       const refreshed = await refreshSession();
       const retryHeaders = new Headers(init.headers);
       retryHeaders.set("Authorization", `Bearer ${refreshed.access_token}`);
       return authFetch(input, { ...init, headers: retryHeaders }, false);
     } catch {
-      clearStoredAccessToken();
+      if (revision === authRevision) clearStoredAccessToken();
       return response;
     }
   }
@@ -257,18 +274,31 @@ export async function adminAuthFetch(input: string, init: RequestInit = {}): Pro
   return response;
 }
 
-export async function getMe() {
+export function getMe(): Promise<AuthMe> {
   if (isTemporaryDemoSession()) {
-    return getTemporaryDemoUser();
+    return Promise.resolve(getTemporaryDemoUser());
   }
   if (TEMPORARY_DEMO_AUTH_ENABLED) {
-    throw new Error("Temporary demo session is not active");
+    return Promise.reject(new Error("Temporary demo session is not active"));
   }
 
-  const response = await authFetch(`${API_URL}/auth/me`);
-  if (!response.ok) {
-    clearStoredAccessToken();
-    throw new Error(await parseApiError(response));
-  }
-  return (await response.json()) as AuthMe;
+  if (profileRequest?.revision === authRevision) return profileRequest.promise;
+  const revision = authRevision;
+  const promise = (async () => {
+    if (!getStoredAccessToken()) await refreshSession();
+    if (revision !== authRevision) throw new Error("Session changed");
+    const response = await authFetch(`${API_URL}/auth/me`);
+    if (revision !== authRevision) throw new Error("Session changed");
+    if (!response.ok) {
+      if (response.status === 401) clearStoredAccessToken();
+      throw new Error(await parseApiError(response));
+    }
+    const profile = (await response.json()) as AuthMe;
+    if (revision !== authRevision) throw new Error("Session changed");
+    return profile;
+  })();
+  profileRequest = { revision, promise };
+  const release = () => { if (profileRequest?.promise === promise) profileRequest = null; };
+  void promise.then(release, release);
+  return promise;
 }

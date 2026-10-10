@@ -2,10 +2,22 @@
 
 import { LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { notFound } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { AdminPanel } from "@/components/AdminPanel";
 import { Container } from "@/components/ui/Container";
 import { getMe, hasAdminPanelSession, isTemporaryDemoSession, loginAdminPanel } from "@/lib/auth";
+
+const AdminPanel = dynamic(() => import("@/components/AdminPanel").then(module => module.AdminPanel), {
+  loading: () => <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm font-semibold text-slate-600">Загрузка данных</div>
+});
+
+function AdminAccessLoadingScreen() {
+  return (
+    <main className="grid min-h-screen place-items-center bg-slate-950 text-white">
+      <div role="status" className="rounded-lg border border-white/10 px-5 py-4 text-sm font-semibold text-white/75">Проверка доступа</div>
+    </main>
+  );
+}
 
 export function AdminEntryPage() {
   const [accessState, setAccessState] = useState<"checking" | "denied" | "login" | "panel">("checking");
@@ -20,6 +32,7 @@ export function AdminEntryPage() {
           setAccessState("denied");
           return;
         }
+        if (hasAdminPanelSession()) void import("@/components/AdminPanel").catch(() => undefined);
         const auth = await getMe();
         if (!active) return;
         if (!auth.can_access_admin) {
@@ -60,11 +73,7 @@ export function AdminEntryPage() {
   }
 
   if (accessState === "checking") {
-    return (
-      <main className="grid min-h-screen place-items-center bg-slate-950 text-white">
-        <div className="rounded-lg border border-white/10 px-5 py-4 text-sm font-semibold text-white/75">Проверка доступа</div>
-      </main>
-    );
+    return <AdminAccessLoadingScreen />;
   }
 
   if (accessState === "denied") {

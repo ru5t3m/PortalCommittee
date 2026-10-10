@@ -49,10 +49,10 @@ export function Footer({ locale }: { locale: Locale }) {
           <div key={title}>
             <p className="font-semibold">{title}</p>
             <div className="mt-3 grid gap-2 text-sm text-slate-600">
-              <Link className="hover:text-state-tealDark" href={`/${locale}/${index === 0 ? "about" : index === 1 ? "activities" : "careers/admission"}`}>{t.main}</Link>
-              <Link className="hover:text-state-tealDark" href={`/${locale}/psychological-testing`}>{t.psych}</Link>
-              <Link className="hover:text-state-tealDark" href={`/${locale}/documents`}>{t.legal}</Link>
-              <Link className="hover:text-state-tealDark" href={`/${locale}/register`}>{t.register}</Link>
+              <Link prefetch={false} className="hover:text-state-tealDark" href={`/${locale}/${index === 0 ? "about" : index === 1 ? "activities" : "careers/admission"}`}>{t.main}</Link>
+              <Link prefetch={false} className="hover:text-state-tealDark" href={`/${locale}/psychological-testing`}>{t.psych}</Link>
+              <Link prefetch={false} className="hover:text-state-tealDark" href={`/${locale}/documents`}>{t.legal}</Link>
+              <Link prefetch={false} className="hover:text-state-tealDark" href={`/${locale}/register`}>{t.register}</Link>
             </div>
           </div>
         ))}

@@ -81,6 +81,7 @@ for (const locale of ["ru", "kk"]) {
       await page.goto(`/${locale}/${mode}`);
       await expect(page.locator('input[name="email"]')).toBeVisible();
       await expect(page.locator('input[name="password"]')).toBeVisible();
+      if (mode === "login") await expect(page.getByRole("checkbox")).toHaveCount(0);
       await expect(page.locator("main")).not.toContainText(/ЭЦП|ЭЦҚ|NCALayer|Telegram/i);
       await expect(page.getByRole("button", { name: /ЭЦП|ЭЦҚ|Telegram/i })).toHaveCount(0);
       expect(unsupportedRequests).toEqual([]);
@@ -88,7 +89,9 @@ for (const locale of ["ru", "kk"]) {
   }
 }
 
-test("email registration sends candidate data and opens the account", async ({ page }) => {
+for (const locale of ["ru", "kk"]) {
+test(`${locale}: registration requires consent and sends candidate data`, async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.route("**/api/v1/candidate/messages?*", (route) => route.fulfill({ json: { items: [], total: 0, limit: 10, offset: 0 } }));
   let registration: unknown;
   await page.route("**/api/v1/auth/password/register", (route) => {
@@ -97,18 +100,37 @@ test("email registration sends candidate data and opens the account", async ({ p
   });
   await page.route("**/api/v1/auth/me", (route) => route.fulfill({ json: authenticatedProfile }));
   await page.route("**/api/v1/psychological-tests/results/me", (route) => route.fulfill({ json: [] }));
-  await page.goto("/ru/register");
+  await page.goto(`/${locale}/register`);
+  const consent = page.getByRole("checkbox", { name: locale === "ru" ? /Я даю согласие/ : /келісім беремін/ });
+  await expect(consent).not.toBeChecked();
+  await expect(consent).toHaveAttribute("required", "");
+  const law = page.getByRole("link", { name: locale === "ru" ? /О персональных данных и их защите/ : /Дербес деректер және оларды қорғау туралы/ });
+  await expect(law).toHaveAttribute("href", `https://adilet.zan.kz/${locale === "kk" ? "kaz" : "rus"}/docs/Z1300000094`);
+  await expect(law).toHaveAttribute("target", "_blank");
+  await expect(law).toHaveAttribute("rel", "noopener noreferrer");
   await page.locator('input[name="firstName"]').fill("Тестовый");
   await page.locator('input[name="lastName"]').fill("Кандидат");
   await page.locator('input[name="birthDate"]').fill("2000-01-01");
   await page.locator('input[name="phone"]').fill("+77000000000");
   await page.locator('input[name="email"]').fill("candidate@example.kz");
   await page.locator('input[name="password"]').fill("PortalTest123!");
-  await page.getByRole("button", { name: "Создать аккаунт", exact: true }).click();
-  await expect(page).toHaveURL(/\/ru\/account$/);
+  const submit = page.getByRole("button", { name: locale === "ru" ? "Создать аккаунт" : "Аккаунт жасау", exact: true });
+  await submit.click();
+  expect(registration).toBeUndefined();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/register$`));
+  expect(await consent.evaluate((input) => input.matches(":invalid"))).toBe(true);
+  await page.locator("main form").evaluate((form) => form.setAttribute("novalidate", ""));
+  await submit.click();
+  await expect(page.locator("main").getByRole("alert")).toContainText(locale === "ru" ? "необходимо дать согласие" : "келісім беру қажет");
+  expect(registration).toBeUndefined();
+  await consent.check();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await submit.click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/account$`));
   expect(registration).toEqual({ email: "candidate@example.kz", password: "PortalTest123!", first_name: "Тестовый",
-    last_name: "Кандидат", birth_date: "2000-01-01", phone: "+77000000000" });
+    last_name: "Кандидат", birth_date: "2000-01-01", phone: "+77000000000", personal_data_consent: true, consent_locale: locale });
 });
+}
 
 test("login sends credentials to the API and displays the real profile", async ({ page }) => {
   let credentials: unknown;

@@ -40,6 +40,7 @@ const copy = {
     testsEmptyTitle: "Пока нет результатов",
     testsEmptyText: "После прохождения психотестирования результаты появятся в этом разделе.",
     testsLoadError: "Не удалось загрузить результаты. Обновите страницу, чтобы повторить попытку.",
+    testsLoading: "Загрузка результатов…",
     answered: "Ответов",
     correct: "Верно",
     submittedAt: "Дата прохождения",
@@ -73,6 +74,7 @@ const copy = {
     testsEmptyTitle: "Әзірге нәтиже жоқ",
     testsEmptyText: "Психотесттен өткеннен кейін нәтижелер осы бөлімде пайда болады.",
     testsLoadError: "Нәтижелерді жүктеу мүмкін болмады. Қайталап көру үшін бетті жаңартыңыз.",
+    testsLoading: "Нәтижелер жүктелуде…",
     answered: "Жауап",
     correct: "Дұрыс",
     submittedAt: "Өткен күні",
@@ -86,6 +88,7 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
   const [authState, setAuthState] = useState<AuthMe | null>(null);
   const [testResults, setTestResults] = useState<PsychologicalTestResult[]>([]);
   const [resultsLoadFailed, setResultsLoadFailed] = useState(false);
+  const [resultsLoading, setResultsLoading] = useState(true);
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
@@ -93,14 +96,16 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
     const load = async () => {
       try {
         const next = await getMe();
+        if (!isMounted) return;
+        setAuthState(next);
+        setIsChecking(false);
         const results = await listMyPsychologicalTestResults().catch(() => {
           if (isMounted) setResultsLoadFailed(true);
           return [];
         });
         if (isMounted) {
-          setAuthState(next);
           setTestResults(results);
-          setIsChecking(false);
+          setResultsLoading(false);
         }
       } catch {
         router.replace(`/${locale}/login`);
@@ -213,7 +218,7 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
               <h2 className="text-2xl font-bold">{t.actionsTitle}</h2>
               <div className="mt-4 grid gap-4 md:grid-cols-3">
                 {t.actions.map((action) => (
-                  <Link key={action.href} href={`/${locale}/${action.href}`} className="group rounded-[1.35rem] border border-slate-200/80 bg-white/[0.94] p-5 shadow-sm transition hover:-translate-y-1 hover:border-state-teal/45 hover:shadow-lift">
+                  <Link prefetch={false} key={action.href} href={`/${locale}/${action.href}`} className="group rounded-[1.35rem] border border-slate-200/80 bg-white/[0.94] p-5 shadow-sm transition hover:-translate-y-1 hover:border-state-teal/45 hover:shadow-lift">
                     <action.icon className="h-7 w-7 text-state-tealDark" />
                     <h3 className="mt-4 text-lg font-bold">{action.title}</h3>
                     <p className="mt-2 text-sm leading-6 text-slate-600">{action.text}</p>
@@ -256,8 +261,8 @@ export function AccountDashboard({ locale }: { locale: Locale }) {
                   <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white text-state-tealDark shadow-sm">
                     <Brain className="h-7 w-7" />
                   </span>
-                  <h3 className="mt-4 text-xl font-bold text-state-navy">{t.testsEmptyTitle}</h3>
-                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{resultsLoadFailed ? t.testsLoadError : t.testsEmptyText}</p>
+                  <h3 className="mt-4 text-xl font-bold text-state-navy" role={resultsLoading ? "status" : undefined}>{resultsLoading ? t.testsLoading : t.testsEmptyTitle}</h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{resultsLoading ? "" : resultsLoadFailed ? t.testsLoadError : t.testsEmptyText}</p>
                 </div>
               )}
             </section>

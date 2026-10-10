@@ -118,6 +118,11 @@ function createMarkerIcon(isSelected: boolean, service: Service) {
   });
 }
 
+const markerIcons = {
+  knb: { selected: createMarkerIcon(true, "knb"), default: createMarkerIcon(false, "knb") },
+  border: { selected: createMarkerIcon(true, "border"), default: createMarkerIcon(false, "border") }
+};
+
 function phoneHref(phone: string) {
   return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }
@@ -127,6 +132,7 @@ function SelectedPointController({ point }: { point: ContactPoint }) {
 
   useEffect(() => {
     map.attributionControl.setPrefix(false);
+    if (map.getCenter().equals([point.lat, point.lng]) && map.getZoom() >= 6) return;
     map.flyTo([point.lat, point.lng], Math.max(map.getZoom(), 6), {
       animate: true,
       duration: 0.7
@@ -141,7 +147,7 @@ export function ContactsMapLeaflet({ locale }: { locale: Locale }) {
   const [editablePoints, setEditablePoints] = useState<ContactPoint[]>([]);
   const [service, setService] = useState<Service>("knb");
   const sourcePoints = editablePoints.length ? editablePoints : staticContactPoints;
-  const points = sourcePoints.filter((point) => point.service === service);
+  const points = useMemo(() => sourcePoints.filter((point) => point.service === service), [sourcePoints, service]);
   const [selectedId, setSelectedId] = useState(knbPoints[0].id);
   const selectedPoint = useMemo(() => points.find((point) => point.id === selectedId) ?? points[0] ?? sourcePoints[0] ?? knbPoints[0], [points, selectedId, sourcePoints]);
 
@@ -195,8 +201,8 @@ export function ContactsMapLeaflet({ locale }: { locale: Locale }) {
       <div className="rounded-[1.35rem] border border-slate-200/80 bg-white/[0.94] p-4 shadow-sm md:p-6">
         <div className="relative min-h-[32rem] overflow-hidden rounded-[1.1rem] border border-state-teal/15 bg-state-surface">
           <MapContainer
-            center={[48.2, 67.7]}
-            zoom={5}
+            center={[selectedPoint.lat, selectedPoint.lng]}
+            zoom={6}
             minZoom={4}
             maxZoom={13}
             maxBounds={[[39.5, 44], [56.5, 90]]}
@@ -212,7 +218,7 @@ export function ContactsMapLeaflet({ locale }: { locale: Locale }) {
               <Marker
                 key={point.id}
                 position={[point.lat, point.lng]}
-                icon={createMarkerIcon(point.id === selectedPoint.id, point.service)}
+                icon={markerIcons[point.service][point.id === selectedPoint.id ? "selected" : "default"]}
                 eventHandlers={{ click: () => setSelectedId(point.id) }}
               />
             ))}
