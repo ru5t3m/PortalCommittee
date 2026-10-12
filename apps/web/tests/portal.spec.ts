@@ -63,7 +63,7 @@ test("mobile menu, FAQ and reduced motion", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/ru");
-  await page.getByLabel("Open menu").click();
+  await page.getByLabel("Меню").click();
   await page.locator("header details").getByRole("link", { name: "Контакты", exact: true }).click();
   await expect(page).toHaveURL(/\/ru\/contacts$/);
   await page.getByRole("button", { name: "Открыть FAQ-ассистента" }).click();
@@ -225,11 +225,11 @@ test("admission links keep the requested stage on a static page", async ({ page 
 
 test("accessibility preference survives page navigation", async ({ page }) => {
   await page.goto("/ru");
-  await page.getByRole("button", { name: "Accessibility mode" }).click();
-  await expect(page.locator("body")).toHaveClass(/visually-enhanced/);
+  await page.getByRole("button", { name: "Версия для слабовидящих" }).click();
+  await expect(page.locator("html")).toHaveClass(/visually-enhanced/);
   await page.goto("/ru/about");
-  await expect(page.getByRole("button", { name: "Accessibility mode" })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator("body")).toHaveClass(/visually-enhanced/);
+  await expect(page.getByRole("button", { name: "Версия для слабовидящих" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("html")).toHaveClass(/visually-enhanced/);
 });
 
 test("FAQ gives a recoverable error when the service is unavailable", async ({ page }) => {
@@ -431,7 +431,7 @@ test("navigation preloads a page when the visitor points to its link", async ({ 
   await page.goto("/ru");
   await expect(page.locator("header")).toBeVisible();
   expect(prefetched).not.toContain("/ru/about");
-  const aboutLink = page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "О КНБ РК", exact: true });
+  const aboutLink = page.getByRole("navigation", { name: "Основная навигация" }).getByRole("link", { name: "О КНБ РК", exact: true });
   await aboutLink.hover();
   await expect.poll(() => prefetched).toContain("/ru/about");
   await aboutLink.click();

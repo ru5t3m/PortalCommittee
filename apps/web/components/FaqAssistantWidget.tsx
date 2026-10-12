@@ -1,7 +1,7 @@
 "use client";
 
 import { Bot, Loader2, MessageCircle, Minus, Send, X } from "lucide-react";
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { askFaqAssistant, type FaqAssistantResponse } from "@/lib/api";
 import type { Locale } from "@/lib/i18n";
 
@@ -59,6 +59,12 @@ export function FaqAssistantWidget({ locale }: { locale: Locale }) {
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const nextId = useRef(2);
+  const questionRef = useRef<HTMLTextAreaElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (isOpen) questionRef.current?.focus();
+    else launcherRef.current?.focus();
+  }, [isOpen]);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
@@ -79,6 +85,7 @@ export function FaqAssistantWidget({ locale }: { locale: Locale }) {
     if (value.length < 2 || isLoading) return;
 
     setIsLoading(true);
+    questionRef.current?.focus();
     setQuestion("");
     setMessages((current) => [...current, { id: nextId.current++, role: "user", text: value }]);
 
@@ -107,10 +114,13 @@ export function FaqAssistantWidget({ locale }: { locale: Locale }) {
   if (!isOpen) {
     return (
       <button
+        ref={launcherRef}
         type="button"
         onClick={() => setIsOpen(true)}
         className="fixed bottom-5 right-5 z-[1300] grid h-14 w-14 place-items-center rounded-full bg-state-navy text-white shadow-[0_18px_46px_rgba(6,27,51,0.28)] ring-1 ring-white/20 transition hover:bg-[#0b2b4d] focus-visible:outline-state-gold"
         aria-label={text.open}
+        aria-expanded={false}
+        aria-controls="faq-dialog"
       >
         <MessageCircle className="h-6 w-6" />
       </button>
@@ -118,7 +128,7 @@ export function FaqAssistantWidget({ locale }: { locale: Locale }) {
   }
 
   return (
-    <section className="fixed bottom-4 right-4 z-[1300] flex h-[min(42rem,calc(100vh-2rem))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_24px_70px_rgba(6,27,51,0.26)]" aria-label={text.title}>
+    <section id="faq-dialog" role="dialog" aria-modal={false} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); setIsOpen(false); } }} className="fixed bottom-4 right-4 z-[1300] flex h-[min(42rem,calc(100vh-2rem))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_24px_70px_rgba(6,27,51,0.26)]" aria-label={text.title}>
       <div className="flex items-center justify-between gap-3 bg-state-navy px-4 py-3 text-white">
         <div className="flex min-w-0 items-center gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-state-gold text-state-navy">
@@ -139,7 +149,7 @@ export function FaqAssistantWidget({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-4 py-4">
+      <div role="log" aria-label={text.title} aria-live="polite" aria-relevant="additions text" aria-busy={isLoading} className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-4 py-4">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[88%] rounded-lg px-3 py-2 text-sm leading-relaxed shadow-sm ${message.role === "user" ? "bg-state-navy text-white" : "border border-slate-200 bg-white text-slate-800"}`}>
@@ -180,6 +190,7 @@ export function FaqAssistantWidget({ locale }: { locale: Locale }) {
           {text.placeholder}
         </label>
         <textarea
+          ref={questionRef}
           id="faq-assistant-question"
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
@@ -191,6 +202,7 @@ export function FaqAssistantWidget({ locale }: { locale: Locale }) {
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </button>
       </form>
+      <p role="status" className="sr-only">{isLoading ? (locale === "ru" ? "Загружаем ответ" : "Жауап жүктелуде") : ""}</p>
     </section>
   );
 }

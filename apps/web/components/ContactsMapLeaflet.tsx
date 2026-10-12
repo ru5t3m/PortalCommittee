@@ -5,8 +5,7 @@ import "./contacts-map.css";
 
 import { MapPin, Phone } from "lucide-react";
 import L from "leaflet";
-import { MapContainer, Marker, TileLayer, ZoomControl, useMap } from "react-leaflet";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { listRegionOffices, type RegionOffice } from "@/lib/api";
 import type { Locale } from "@/lib/i18n";
 
@@ -127,19 +126,55 @@ function phoneHref(phone: string) {
   return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }
 
-function SelectedPointController({ point }: { point: ContactPoint }) {
-  const map = useMap();
-
+function OfficeMap({ points, selectedPoint, locale, onSelect }: {
+  points: ContactPoint[]; selectedPoint: ContactPoint; locale: Locale; onSelect: (id: string) => void;
+}) {
+  const host = useRef<HTMLDivElement>(null);
+  const initial = useRef(selectedPoint);
+  const [map, setMap] = useState<L.Map | null>(null);
+  const markers = useRef(new Map<string, L.Marker>());
   useEffect(() => {
-    map.attributionControl.setPrefix(false);
-    if (map.getCenter().equals([point.lat, point.lng]) && map.getZoom() >= 6) return;
-    map.flyTo([point.lat, point.lng], Math.max(map.getZoom(), 6), {
-      animate: true,
-      duration: 0.7
+    if (!host.current) return;
+    const instance = L.map(host.current, {
+      center: [initial.current.lat, initial.current.lng], zoom: 6, minZoom: 4, maxZoom: 13,
+      maxBounds: [[39.5, 44], [56.5, 90]], maxBoundsViscosity: 0.85,
+      scrollWheelZoom: true, zoomControl: false, attributionControl: false
     });
-  }, [map, point]);
-
-  return null;
+    L.control.attribution({ prefix: false }).addTo(instance);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap contributors" }).addTo(instance);
+    L.control.zoom({ position: "topright", zoomInTitle: locale === "ru" ? "Приблизить" : "Үлкейту", zoomOutTitle: locale === "ru" ? "Отдалить" : "Кішірейту" }).addTo(instance);
+    setMap(instance);
+    return () => { instance.remove(); };
+  }, [locale]);
+  useEffect(() => {
+    if (!map) return;
+    const current = markers.current;
+    for (const point of points) {
+      const marker = L.marker([point.lat, point.lng], { icon: markerIcons[point.service].default, title: point.name[locale], alt: point.name[locale] })
+        .on("click", () => onSelect(point.id)).addTo(map);
+      const element = marker.getElement();
+      element?.setAttribute("aria-label", point.name[locale]);
+      element?.addEventListener("keydown", event => {
+        if (event.key === " " || event.key === "Enter") { event.preventDefault(); onSelect(point.id); }
+      });
+      current.set(point.id, marker);
+    }
+    return () => { current.forEach(marker => marker.remove()); current.clear(); };
+  }, [map, points, locale, onSelect]);
+  useEffect(() => {
+    if (!map) return;
+    for (const point of points) {
+      const marker = markers.current.get(point.id);
+      const selected = point.id === selectedPoint.id;
+      const icon = markerIcons[point.service][selected ? "selected" : "default"];
+      if (marker && marker.options.icon !== icon) marker.setIcon(icon);
+      marker?.getElement()?.setAttribute("aria-pressed", String(selected));
+    }
+    if (map.getCenter().equals([selectedPoint.lat, selectedPoint.lng]) && map.getZoom() >= 6) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("visually-enhanced");
+    map.flyTo([selectedPoint.lat, selectedPoint.lng], Math.max(map.getZoom(), 6), { animate: !reduceMotion, duration: 0.7 });
+  }, [map, points, selectedPoint]);
+  return <div ref={host} role="region" aria-label={locale === "ru" ? "Карта подразделений" : "Бөлімшелер картасы"} aria-describedby="contact-map-note" className="h-[32rem] w-full" />;
 }
 
 export function ContactsMapLeaflet({ locale }: { locale: Locale }) {
@@ -189,6 +224,7 @@ export function ContactsMapLeaflet({ locale }: { locale: Locale }) {
             <button
               key={item}
               type="button"
+              aria-pressed={service === item}
               onClick={() => selectService(item)}
               className={`min-h-12 rounded-xl px-5 py-3 text-sm font-bold transition ${service === item ? "bg-state-navy text-white shadow-sm" : "border border-slate-200 bg-white text-state-navy hover:border-state-teal"}`}
             >
@@ -200,32 +236,10 @@ export function ContactsMapLeaflet({ locale }: { locale: Locale }) {
 
       <div className="rounded-[1.35rem] border border-slate-200/80 bg-white/[0.94] p-4 shadow-sm md:p-6">
         <div className="relative min-h-[32rem] overflow-hidden rounded-[1.1rem] border border-state-teal/15 bg-state-surface">
-          <MapContainer
-            center={[selectedPoint.lat, selectedPoint.lng]}
-            zoom={6}
-            minZoom={4}
-            maxZoom={13}
-            maxBounds={[[39.5, 44], [56.5, 90]]}
-            maxBoundsViscosity={0.85}
-            scrollWheelZoom
-            zoomControl={false}
-            className="h-[32rem] w-full"
-          >
-            <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <ZoomControl position="topright" />
-            <SelectedPointController point={selectedPoint} />
-            {points.map((point) => (
-              <Marker
-                key={point.id}
-                position={[point.lat, point.lng]}
-                icon={markerIcons[point.service][point.id === selectedPoint.id ? "selected" : "default"]}
-                eventHandlers={{ click: () => setSelectedId(point.id) }}
-              />
-            ))}
-          </MapContainer>
+          <OfficeMap points={points} selectedPoint={selectedPoint} locale={locale} onSelect={setSelectedId} />
           <div className="absolute bottom-4 right-4 z-[650] w-[min(24rem,calc(100%-2rem))] rounded-2xl border border-slate-200 bg-white/[0.98] p-4 text-state-navy shadow-[0_24px_70px_rgba(6,27,51,0.2)]">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-state-tealDark">{selectedPoint.region[locale]}</p>
-            <h2 className="mt-2 text-xl font-bold">{selectedPoint.name[locale]}</h2>
+            <h2 aria-live="polite" className="mt-2 text-xl font-bold">{selectedPoint.name[locale]}</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {selectedPoint.phones.map((phone, index) => (
                 <a key={`${phone}-${index}`} href={phoneHref(phone)} className="inline-flex items-center gap-2 rounded-xl bg-state-teal/10 px-3 py-2 text-sm font-bold text-state-tealDark transition hover:bg-state-teal hover:text-white">
@@ -235,7 +249,7 @@ export function ContactsMapLeaflet({ locale }: { locale: Locale }) {
               ))}
             </div>
           </div>
-          <div className="pointer-events-none absolute bottom-4 left-4 z-[450] hidden max-w-[calc(100%-28rem)] rounded-2xl border border-slate-200 bg-white/[0.95] px-4 py-3 text-xs font-semibold leading-5 text-state-navy shadow-sm lg:block">
+          <div id="contact-map-note" className="pointer-events-none absolute bottom-4 left-4 z-[450] hidden max-w-[calc(100%-28rem)] rounded-2xl border border-slate-200 bg-white/[0.95] px-4 py-3 text-xs font-semibold leading-5 text-state-navy shadow-sm lg:block">
             {t.mapNote}
           </div>
         </div>
@@ -245,17 +259,17 @@ export function ContactsMapLeaflet({ locale }: { locale: Locale }) {
         <p className="text-sm font-bold uppercase tracking-[0.16em] text-slate-500">{t.listTitle}</p>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {points.map((point) => (
-              <button
+              <div
                 key={point.id}
-                type="button"
-                onClick={() => setSelectedId(point.id)}
                 className={`rounded-2xl border p-4 text-left transition ${point.id === selectedPoint.id ? "border-state-gold bg-state-gold/12" : "border-slate-200 bg-white hover:border-state-teal hover:bg-state-surface"}`}
               >
+                <button type="button" aria-pressed={point.id === selectedPoint.id} onClick={() => setSelectedId(point.id)} className="block w-full text-left">
                 <span className="flex items-start gap-2 text-sm font-bold text-state-navy">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-state-tealDark" />
                   {point.name[locale]}
                 </span>
                 <span className="mt-2 block text-xs font-semibold text-slate-500">{point.region[locale]}</span>
+                </button>
                 <span className="mt-3 flex flex-wrap gap-2">
                   {point.phones.map((phone, index) => (
                     <a key={`${phone}-${index}`} href={phoneHref(phone)} onClick={(event) => event.stopPropagation()} className="rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-state-tealDark transition hover:bg-state-teal hover:text-white">
@@ -263,7 +277,7 @@ export function ContactsMapLeaflet({ locale }: { locale: Locale }) {
                     </a>
                   ))}
                 </span>
-              </button>
+              </div>
             ))}
         </div>
       </div>

@@ -69,6 +69,21 @@ class OrganizationalUnit(Base, TimestampMixin):
     name_kk: Mapped[str] = mapped_column(String(255))
 
 
+class SpecGameProgress(Base, TimestampMixin):
+    __tablename__ = "specgame_progress"
+    __table_args__ = (CheckConstraint("version > 0", name="ck_specgame_version"),)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    skills: Mapped[dict] = mapped_column(JSON, nullable=False)
+    game_progress: Mapped[dict] = mapped_column(JSON, nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    rules_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_action: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    legacy_state: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    __mapper_args__ = {"version_id_col": version}
+
+
 class TelegramLoginChallenge(Base, TimestampMixin):
     __tablename__ = "telegram_login_challenges"
 

@@ -3,12 +3,12 @@
 import { LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { getMe, hasAdminPanelSession, isTemporaryDemoSession, loginAdminPanel } from "@/lib/auth";
 
 const AdminPanel = dynamic(() => import("@/components/AdminPanel").then(module => module.AdminPanel), {
-  loading: () => <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm font-semibold text-slate-600">Загрузка данных</div>
+  loading: () => <div role="status" className="rounded-2xl border border-slate-200 bg-white p-5 text-sm font-semibold text-slate-600">Загрузка данных</div>
 });
 
 function AdminAccessLoadingScreen() {
@@ -23,6 +23,8 @@ export function AdminEntryPage() {
   const [accessState, setAccessState] = useState<"checking" | "denied" | "login" | "panel">("checking");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
 
   useEffect(() => {
     let active = true;
@@ -93,7 +95,7 @@ export function AdminEntryPage() {
       <div className="security-grid absolute inset-0 opacity-50" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(0,169,155,0.28),transparent_26rem),linear-gradient(130deg,rgba(6,24,45,0.98),rgba(5,36,55,0.9)_58%,rgba(0,125,115,0.55))]" />
       <Container className="relative grid min-h-screen place-items-center py-10">
-        <form onSubmit={handleSubmit} className="w-full max-w-md rounded-lg border border-white/15 bg-white p-7 text-state-navy shadow-[0_30px_90px_rgba(0,0,0,0.28)]">
+        <form onSubmit={handleSubmit} aria-busy={isSubmitting} className="w-full max-w-md rounded-lg border border-white/15 bg-white p-7 text-state-navy shadow-[0_30px_90px_rgba(0,0,0,0.28)]">
           <div className="mb-7">
             <div className="grid h-12 w-12 place-items-center rounded-lg bg-state-teal/10 text-state-tealDark">
               <ShieldCheck className="h-6 w-6" />
@@ -120,9 +122,10 @@ export function AdminEntryPage() {
             <button disabled={isSubmitting} className="min-h-12 rounded-lg bg-state-navy px-4 text-sm font-bold text-white transition hover:bg-state-tealDark disabled:opacity-60" type="submit">
               {isSubmitting ? "Проверка..." : "Войти"}
             </button>
-            {error ? <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p> : null}
+            {error ? <p ref={errorRef} tabIndex={-1} role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p> : null}
           </div>
         </form>
+        <p className="sr-only" role="status">{isSubmitting ? "Проверяем служебный вход" : ""}</p>
       </Container>
     </main>
   );

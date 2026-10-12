@@ -106,7 +106,7 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
       release();
       await expect(page.getByRole("heading", { name: "Вход в админ-панель", exact: true })).toBeVisible();
       await expectStableLayout(page);
-      await expect(page.getByRole("status")).toHaveCount(0);
+      await expect(page.getByRole("status").filter({ hasText: "Проверка доступа" })).toHaveCount(0);
     } finally { release(); }
   });
 }

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Учебная симуляция спецподразделения</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./src/styles/main.css" />
+</head>
+<body>
+  <!-- Экран авторизации (перекрывает игру до входа) -->
+  <div id="auth-overlay">
+    <div id="auth-card">
+      <div id="auth-brand">Учебная симуляция спецподразделения</div>
+      <h1 id="auth-title">Загрузка игры</h1>
+      <p id="auth-subtitle">Подключаем учётную запись портала</p>
+
+      <div id="auth-loading" class="hidden">
+        <div class="auth-spinner"></div>
+        <p>Загрузка прогресса...</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="game-root" class="hidden">
+    <!-- Верхняя панель -->
+    <div id="top-bar">
+      <button id="menu-btn">Меню</button>
+      <button id="logout-btn" class="hidden" type="button">Выйти</button>
+      <span id="user-email-label" class="user-email-label"></span>
+      <div id="stats-panel" class="hidden">
+        <div class="stat-bar" data-stat="trust">
+          <div class="stat-bar-header">
+            <span class="stat-label">Доверие</span>
+            <span id="stat-trust-value" class="stat-value">50</span>
+          </div>
+          <div class="stat-track">
+            <div id="stat-trust-fill" class="stat-fill"></div>
+          </div>
+        </div>
+        <div class="stat-bar" data-stat="tension">
+          <div class="stat-bar-header">
+            <span class="stat-label">Напряжённость</span>
+            <span id="stat-tension-value" class="stat-value">50</span>
+          </div>
+          <div class="stat-track">
+            <div id="stat-tension-fill" class="stat-fill"></div>
+          </div>
+        </div>
+        <div class="stat-bar" data-stat="intel">
+          <div class="stat-bar-header">
+            <span class="stat-label">Данные</span>
+            <span id="stat-intel-value" class="stat-value">50</span>
+          </div>
+          <div class="stat-track">
+            <div id="stat-intel-fill" class="stat-fill"></div>
+          </div>
+        </div>
+        <div class="stat-bar" data-stat="analytics">
+          <div class="stat-bar-header">
+            <span class="stat-label">Аналитика</span>
+            <span id="stat-analytics-value" class="stat-value">50</span>
+          </div>
+          <div class="stat-track">
+            <div id="stat-analytics-fill" class="stat-fill"></div>
+          </div>
+        </div>
+        <div class="stat-bar" data-stat="recon">
+          <div class="stat-bar-header">
+            <span class="stat-label">Разведка</span>
+            <span id="stat-recon-value" class="stat-value">50</span>
+          </div>
+          <div class="stat-track">
+            <div id="stat-recon-fill" class="stat-fill"></div>
+          </div>
+        </div>
+        <div class="stat-bar" data-stat="decision">
+          <div class="stat-bar-header">
+            <span class="stat-label">Решительность</span>
+            <span id="stat-decision-value" class="stat-value">50</span>
+          </div>
+          <div class="stat-track">
+            <div id="stat-decision-fill" class="stat-fill"></div>
+          </div>
+        </div>
+        <div class="stat-bar" data-stat="speed">
+          <div class="stat-bar-header">
+            <span class="stat-label">Скорость</span>
+            <span id="stat-speed-value" class="stat-value">50</span>
+          </div>
+          <div class="stat-track">
+            <div id="stat-speed-fill" class="stat-fill"></div>
+          </div>
+        </div>
+        <div class="stat-bar" data-stat="confidence">
+          <div class="stat-bar-header">
+            <span class="stat-label">Уверенность</span>
+            <span id="stat-confidence-value" class="stat-value">50</span>
+          </div>
+          <div class="stat-track">
+            <div id="stat-confidence-fill" class="stat-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Фон сцены -->
+  <div id="scene-bg"></div>
+
+  <!-- Градиент снизу, чтобы текст читался -->
+  <div id="scene-gradient"></div>
+  <div id="transition-veil"></div>
+  <div id="preload-overlay" class="hidden">
+    <div class="preload-box">
+      <div class="preload-spinner"></div>
+      <div class="preload-text">Загружаем сцену...</div>
+    </div>
+  </div>
+
+    <!-- Передний план: персонаж -->
+    <div id="character-layer">
+      <img id="character-sprite" src="" alt="Персонаж" />
+    </div>
+
+    <!-- Нижняя панель диалога -->
+    <div id="ui-layer">
+      <div id="dialog-box">
+        <div id="name-box">
+          <span id="speaker-name"></span>
+        </div>
+
+        <div id="dialog-text"></div>
+
+        <div id="choices" class="choices"></div>
+        <div id="choice-timer" class="hidden">
+          <div id="choice-timer-track">
+            <div id="choice-timer-fill"></div>
+          </div>
+          <span id="choice-timer-label">00:00</span>
+        </div>
+
+        <div id="controls">
+          <button id="next-btn">ДАЛЬШЕ</button>
+          <button id="restart-btn" class="hidden">НАЧАТЬ СНАЧАЛА</button>
+        </div>
+
+        <div id="meta-row">
+          <span id="phase-label"></span>
+          <span id="progress-label"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Слой для мини-игры -->
+  <div id="minigame-layer" class="hidden">
+    <div id="minigame-backdrop"></div>
+    <div id="minigame-box">
+      <div id="minigame-question"></div>
+      <div id="minigame-options"></div>
+    </div>
+  </div>
+
+  <script src="./src/core/portal-bridge.js"></script>
+
+  <!-- Порядок важен: персонажи → сценарии → лоадер → state → minigames → auth → движок -->
+  <script src="./src/data/characters.js"></script>
+
+  <script src="./src/data/nodes/intro.js"></script>
+  <script src="./src/data/nodes/stub.js"></script>
+  <script src="./src/data/nodes/antiterror.js"></script>
+  <script src="./src/data/nodes/corruption.js"></script>
+  <script src="./src/data/nodes/nabat.js"></script>
+  <script src="./src/data/nodes/flash-royale.js"></script>
+  <script src="./src/data/nodes/silent-channel.js"></script>
+  <script src="./src/data/nodes/drug-traffic.js"></script>
+  <script src="./src/data/nodes/border-guard.js"></script>
+  <script src="./src/data/nodes/ntk-case.js"></script>
+
+  <script src="./src/data/nodes/index.js"></script>
+  <script src="./src/core/game_state.js"></script>
+  <script src="./src/core/minigames.js"></script>
+  <script src="./src/core/auth.js"></script>
+  <script src="./src/core/engine.js"></script>
+</body>
+</html>

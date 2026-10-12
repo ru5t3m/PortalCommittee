@@ -16,7 +16,7 @@ export function FaqAssistantLauncher({ locale }: { locale: Locale }) {
   if (hasOpened) return <Assistant locale={locale} />;
 
   return (
-    <button type="button" onClick={() => setHasOpened(true)} className={buttonClassName} aria-label={locale === "ru" ? "Открыть FAQ-ассистента" : "FAQ-ассистентті ашу"}>
+    <button type="button" aria-expanded={false} aria-controls="faq-dialog" onClick={() => setHasOpened(true)} className={buttonClassName} aria-label={locale === "ru" ? "Открыть FAQ-ассистента" : "FAQ-ассистентті ашу"}>
       <MessageCircle className="h-6 w-6" />
     </button>
   );

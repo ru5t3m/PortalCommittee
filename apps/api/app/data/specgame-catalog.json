@@ -1,0 +1,2617 @@
+{
+  "starts": {
+    "nabat": "nb_intro",
+    "flashRoyale": "fr_a1_intro",
+    "corruption": "cr_kapremont_prologue",
+    "drugTraffic": "dt_intro",
+    "borderGuard": "bg_intro",
+    "silentChannel": "sc_a1_intro",
+    "ntkCase": "ntk_s1_e1",
+    "antiterror": "at_intro"
+  },
+  "nodes": {
+    "curator_intro": {
+      "lines": 5,
+      "choices": false,
+      "scenario": null,
+      "timeoutMs": 30000
+    },
+    "direction_menu": {
+      "lines": 1,
+      "choices": true,
+      "scenario": null,
+      "timeoutMs": 30000
+    },
+    "intro_timeout": {
+      "lines": 2,
+      "choices": false,
+      "scenario": null,
+      "timeoutMs": 30000
+    },
+    "stub_corruption": {
+      "lines": 2,
+      "choices": true,
+      "scenario": null,
+      "timeoutMs": 30000
+    },
+    "stub_drugs": {
+      "lines": 2,
+      "choices": true,
+      "scenario": null,
+      "timeoutMs": 30000
+    },
+    "stub_cyber": {
+      "lines": 2,
+      "choices": true,
+      "scenario": null,
+      "timeoutMs": 30000
+    },
+    "stub_anticor": {
+      "lines": 2,
+      "choices": true,
+      "scenario": null,
+      "timeoutMs": 30000
+    },
+    "at_intro": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_van": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_arrival": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_arrival_info": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_negotiation_start": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_negotiation_proof": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_negotiation_hostage": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_negotiation_soft": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_mid_strategy": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_mid_talk": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_mid_assault": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_mid_balanced": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_pre_lock": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_lock_minigame": {
+      "lines": 0,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_after_lock_good": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_after_lock_bad": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_final_plan": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_ending_evaluate": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_ending_assault_fail": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_ending_talk_fail": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "at_timeout": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "antiterror",
+      "timeoutMs": 30000
+    },
+    "cr_kapremont_prologue": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_kapremont_initial": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_kapremont_phone_call": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_kapremont_phone_call2": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_kapremont_phone_followup": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_kapremont_phone_followup2": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_kapremont_day2_school": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_kapremont_office": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day2_office_staffing": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day2_office_history": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day2_office_friends": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day2_office_photos": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day2_office_photo_shot": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day2_evening": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_transition_call": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_transition_report": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_intro": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_restaurant": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_handoff": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_exit": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_chase": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_catch_success": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_gulmira_dialogue": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_gulmira_recon": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_gulmira_analytics": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_gulmira_arrest": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_gulmira_deal": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day3_arrest": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day4_intro": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day4_interrogation": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day4_timur_confession": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day5_intro": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day5_confrontation": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day5_offer": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day5_final_choice": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day5_end_arrest": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day5_end_investigate": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day5_end_informant": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day6_intro": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day6_airport_damir": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day6_airport_struggle": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_day6_airport_surrender": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_finale_office": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "cr_seriy_finale_narration": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "corruption",
+      "timeoutMs": 30000
+    },
+    "nb_intro": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_raid": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_unsuccess": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_office": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_office_call": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_office2": {
+      "lines": 7,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_general_corridor": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_general_report1": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_general_report": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_choice_truth": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_choice_truth2": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_choice_trick": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb_choice_trick2": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_highway_scene": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_gas_station": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_gas_outcome_risk": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_gas_outcome_safe": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_airport_arrival": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_airport_arrival2": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_airport_arrival3": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_tactical_choice": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_tactical_choice2": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_ending_fail_sniper": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_ending_fail_sniper2": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_ending_plane_ambush": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_ending_plane_ambush2": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_ending_truck_ram": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_ending_truck_ram2": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "nb2_ending_truck_ram3": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "nabat",
+      "timeoutMs": 30000
+    },
+    "fr_a1_intro": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a1_mentor_1": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a1_dossier_open": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a1_choice_0": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a1_micro_menu": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a1_choice_1": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a1_react_bad": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a1_react_neutral": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a1_react_good": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_entry_hard": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_entry_normal": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_entry_assist": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_scene1": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_micro1": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_after_m1_generic": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_after_m1_good": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_after_m1_bad": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_scene2": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_micro2": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_after_m2_bad": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_after_m2_good": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_scene3": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_micro3": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_after_m3_bad": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_after_m3_good": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a2_end": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a3_entry": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a3_entry1": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a3_after_entry": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a3_scene1": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a3_post1": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a3_postt": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a3_scene2": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a3_offer": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a3_after_key": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_router": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_router2": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_scene0": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_scene1": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_scene2": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_scene3": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_scene5": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_scene6": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_scene7": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_scene8": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_scene9": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_end_fail": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_end_neutral": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_scene4": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_key_after": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_hourx": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_hourx1": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_a4_hourx2": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "fr_end_success": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "flashRoyale",
+      "timeoutMs": 30000
+    },
+    "sc_a1_intro": {
+      "lines": 5,
+      "choices": true,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_a1_outcome": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_a2_intro": {
+      "lines": 5,
+      "choices": true,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_a3_intro": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_a4_intro": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_a5_intro": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_a6_intro": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_a7_intro": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_a8_intro": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_a9_intro": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_a10_intro": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "sc_epilogue": {
+      "lines": 6,
+      "choices": false,
+      "scenario": "silentChannel",
+      "timeoutMs": 30000
+    },
+    "dt_intro": {
+      "lines": 5,
+      "choices": true,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_ch2a_digital_trace": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_ch2b_first_contact": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_ch3_eyes_in_night": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_ch3_he_knows": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_ch4_house_near_airport": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_ch5_lab": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_timeout": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_win_clean_operation": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_fail_lost_case": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_fail_intercept": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_fail_contact_blow": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_fail_early_assault": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_fail_infiltration": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_fail_too_late": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "dt_fail_offsite_detention": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "drugTraffic",
+      "timeoutMs": 30000
+    },
+    "bg_intro": {
+      "lines": 4,
+      "choices": true,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_mountain_path": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_smoke_in_fog": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_before_stream": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_assault_setup": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_night_attack": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_night_attack_split": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_night_attack_escalated": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_capture_success": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_after_shots": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_final_clean": {
+      "lines": 7,
+      "choices": false,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_final_hard": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_fail_missed_smoke": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_fail_wait_backup": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_fail_callout": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "bg_fail_retreat": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "borderGuard",
+      "timeoutMs": 30000
+    },
+    "ntk_s1_e1": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s1_e2": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s1_e3": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s1_e4": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s1_e5": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_scene2": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_fail_s2": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s3a_e1": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_fail_s3a": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s3a_e2": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s3b_e1": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_fail_s3b": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s3b_e2": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s4_e1": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s4_e2": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_fail_s4_e2": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s4_e3": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_fail_s4_e3": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s4_final": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s5_e1": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_fail_s5_e1": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s5_e2": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_fail_s5_e2": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s5_e3": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_fail_s5_e3": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s5_final": {
+      "lines": 1,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s6_e1": {
+      "lines": 2,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_fail_s6_e1": {
+      "lines": 3,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s6_e2": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s6_final": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s7_e1": {
+      "lines": 3,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s7_voluntary": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_s7_criminal": {
+      "lines": 1,
+      "choices": true,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_end_win_voluntary": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_end_win_criminal": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_end_partial": {
+      "lines": 4,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_end_lose_a3": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    },
+    "ntk_end_lose_criminal": {
+      "lines": 2,
+      "choices": false,
+      "scenario": "ntkCase",
+      "timeoutMs": 30000
+    }
+  },
+  "rulesVersion": 1,
+  "enabledScenarios": [
+    "flashRoyale"
+  ],
+  "rules": {
+    "curator_intro": {
+      "lines": 5,
+      "scenario": null,
+      "next": "direction_menu",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "direction_menu": {
+      "lines": 1,
+      "scenario": null,
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "nb_intro",
+          "scenario": "nabat",
+          "disabled": true,
+          "effects": {},
+          "require": {}
+        },
+        {
+          "next": "fr_a1_intro",
+          "scenario": "flashRoyale",
+          "disabled": false,
+          "effects": {},
+          "require": {}
+        },
+        {
+          "next": "cr_kapremont_prologue",
+          "scenario": "corruption",
+          "disabled": true,
+          "effects": {},
+          "require": {}
+        },
+        {
+          "next": "dt_intro",
+          "scenario": "drugTraffic",
+          "disabled": true,
+          "effects": {},
+          "require": {}
+        },
+        {
+          "next": "bg_intro",
+          "scenario": "borderGuard",
+          "disabled": true,
+          "effects": {},
+          "require": {}
+        },
+        {
+          "next": "sc_a1_intro",
+          "scenario": "silentChannel",
+          "disabled": true,
+          "effects": {},
+          "require": {}
+        },
+        {
+          "next": "ntk_s1_e1",
+          "scenario": "ntkCase",
+          "disabled": true,
+          "effects": {},
+          "require": {}
+        }
+      ]
+    },
+    "fr_a1_intro": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a1_mentor_1",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a1_mentor_1": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_a1_dossier_open",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a1_dossier_open": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a1_choice_0",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a1_choice_0": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_a1_micro_menu",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a1_micro_menu": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a1_choice_1",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "recon": 10,
+            "intel": 10,
+            "analytics": 10
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a1_choice_1",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "analytics": 10,
+            "tension": 10,
+            "trust": 10
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a1_choice_1",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "trust": -10,
+            "tension": -10,
+            "recon": -10,
+            "analytics": -10
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a1_choice_1",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "decision": -10,
+            "analytics": -10
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a1_choice_1": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a1_react_bad",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "tension": -5,
+            "recon": -5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a1_react_neutral",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "decision": 10
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a1_react_good",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "recon": 10,
+            "tension": 10
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a1_react_bad": {
+      "lines": 4,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_entry_hard",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a1_react_neutral": {
+      "lines": 3,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_entry_normal",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a1_react_good": {
+      "lines": 3,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_entry_assist",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_entry_hard": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": true,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_entry_normal": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_scene1",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_entry_assist": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_scene1",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_scene1": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_micro1",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_micro1": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a2_after_m1_generic",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "recon": -10,
+            "tension": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a2_after_m1_generic",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "recon": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a2_after_m1_good",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "recon": 10,
+            "tension": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a1_react_bad",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "recon": -10,
+            "trust": -10
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a2_after_m1_generic": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_scene2",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_after_m1_good": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_scene2",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_after_m1_bad": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_scene2",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_scene2": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_micro2",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_micro2": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a2_after_m2_bad",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "recon": -5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a2_after_m2_good",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "analytics": 10,
+            "recon": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a2_after_m2_good",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "analytics": 10,
+            "intel": 10
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a2_after_m2_bad",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "recon": -10,
+            "analytics": -5,
+            "tension": 10
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a2_after_m2_bad": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_scene3",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_after_m2_good": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_scene3",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_scene3": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_micro3",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_micro3": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a2_after_m3_bad",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "analytics": -10,
+            "recon": -5,
+            "intel": -5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a2_after_m3_good",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "intel": 10,
+            "recon": 5,
+            "tension": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a2_after_m3_good",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "intel": 10,
+            "recon": 5,
+            "analytics": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a2_after_m3_bad",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "recon": -10,
+            "analytics": -10
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a2_after_m3_bad": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_end",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_after_m3_good": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a2_end",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a2_end": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_a3_entry",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a3_entry": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_a3_entry1",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a3_entry1": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_a3_after_entry",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a3_after_entry": {
+      "lines": 3,
+      "scenario": "flashRoyale",
+      "next": "fr_a3_scene1",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a3_scene1": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a3_post1",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "trust": -5,
+            "tension": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a3_post1",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "trust": 10,
+            "decision": 10
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a3_post1",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "trust": 10,
+            "tension": 10,
+            "intel": 10
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a3_post1": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a3_postt",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "trust": -5,
+            "decision": -5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a3_postt",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "trust": 10,
+            "recon": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a3_postt",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "trust": -10,
+            "tension": 10,
+            "decision": -5
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a3_postt": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a3_scene2",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a3_scene2": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a3_offer",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "confidence": 10,
+            "trust": -10,
+            "decision": -5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a3_offer",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "tension": 10,
+            "trust": 5,
+            "decision": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a3_offer",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "tension": 10,
+            "confidence": 10,
+            "decision": -5
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a3_offer": {
+      "lines": 3,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a3_after_key",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "tension": 15
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a3_after_key",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "confidence": 10,
+            "trust": 5,
+            "recon": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a3_after_key",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "confidence": 10,
+            "trust": -5,
+            "decision": -5
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a3_after_key": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_router",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_router": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_router2",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_router2": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_scene0",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_scene0": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_scene1",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_scene1": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_scene2",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_scene2": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a4_scene3",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "confidence": 10,
+            "recon": -5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a4_scene3",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "confidence": 10,
+            "tension": 10,
+            "trust": -10
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a4_scene3",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "tension": 10,
+            "recon": 10,
+            "confidence": 10,
+            "trust": 10
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a4_scene3": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": [
+        {
+          "next": "fr_a4_scene5",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "confidence": 10,
+            "trust": 10,
+            "recon": 10
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_a4_scene4",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "confidence": 10,
+            "tension": 10,
+            "decision": 5
+          },
+          "require": {}
+        },
+        {
+          "next": "fr_end_neutral",
+          "scenario": null,
+          "disabled": false,
+          "effects": {
+            "tension": 10,
+            "trust": -10
+          },
+          "require": {}
+        }
+      ]
+    },
+    "fr_a4_scene5": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_scene6",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_scene6": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_scene7",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_scene7": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_scene8",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_scene8": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_scene9",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_scene9": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_end_fail",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_end_fail": {
+      "lines": 4,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": true,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_end_neutral": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": true,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_scene4": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_key_after",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_key_after": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_hourx",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_hourx": {
+      "lines": 2,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_hourx1",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_hourx1": {
+      "lines": 1,
+      "scenario": "flashRoyale",
+      "next": "fr_a4_hourx2",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_a4_hourx2": {
+      "lines": 3,
+      "scenario": "flashRoyale",
+      "next": "fr_end_success",
+      "ending": false,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    },
+    "fr_end_success": {
+      "lines": 4,
+      "scenario": "flashRoyale",
+      "next": null,
+      "ending": true,
+      "timeoutMs": 30000,
+      "timeoutEffects": {
+        "trust": -1,
+        "tension": 2
+      },
+      "effects": {},
+      "choices": []
+    }
+  }
+}

@@ -8,7 +8,7 @@ const ContactsMapLeaflet = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="rounded-[1.35rem] border border-slate-200/80 bg-white/[0.94] p-4 shadow-sm md:p-6">
+      <div role="status" aria-label="Карта / Карта жүктелуде" className="rounded-[1.35rem] border border-slate-200/80 bg-white/[0.94] p-4 shadow-sm md:p-6">
         <div className="h-[34rem] animate-pulse rounded-[1.1rem] border border-state-teal/15 bg-state-surface" />
       </div>
     )

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Clock3 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
 import type { PrimaryPsychologicalQuestion } from "@/lib/primary-psychological-test";
@@ -194,6 +194,16 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
   const isSavingProgress = busy;
   const isForcedExitSaving = busy;
   const [showExitWarning, setShowExitWarning] = useState(false);
+  const exitDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = exitDialog.current;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (showExitWarning && dialog && !dialog.open) dialog.showModal();
+    return () => {
+      if (dialog?.open) dialog.close();
+      if (showExitWarning && previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [showExitWarning]);
 
   useEffect(() => {
     if (authStatus !== "allowed" || mode !== "questions") return;
@@ -405,8 +415,8 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
 
       <div className="mx-auto max-w-5xl px-4 py-6 md:px-8">
         {retryNotice}
-        <fieldset disabled={busy} className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm md:p-8">
-          <legend className="px-1 text-sm font-bold uppercase tracking-[0.16em] text-state-tealDark">
+        <fieldset disabled={busy} aria-busy={busy} className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm md:p-8">
+          <legend aria-live="polite" className="px-1 text-sm font-bold uppercase tracking-[0.16em] text-state-tealDark">
             {t.question} {questionIndex + 1} {t.of} {activeSection.total_questions}
           </legend>
           <p className="mt-3 text-2xl font-bold leading-8 text-state-navy">{activeQuestion.prompt}</p>
@@ -471,7 +481,17 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
       </div>
 
       {showExitWarning ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-state-navy/65 px-4 py-6 backdrop-blur-sm">
+        <dialog ref={exitDialog} aria-label={t.saveAndExit}
+          onCancel={event => { event.preventDefault(); if (!isForcedExitSaving) setShowExitWarning(false); }}
+          onKeyDown={event => {
+            if (event.key !== "Tab") return;
+            const controls = event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)");
+            const first = controls[0]; const last = controls[controls.length - 1];
+            if (!first) { event.preventDefault(); return; }
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+          }}
+          className="fixed inset-0 z-[1500] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-state-navy/65 px-4 py-6 backdrop-blur-sm [&::backdrop]:bg-transparent">
           <section className="w-full max-w-2xl rounded-[1.5rem] border border-red-200 bg-white p-6 shadow-[0_30px_90px_rgba(0,0,0,0.28)] md:p-8">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-red-700">{t.exitWarningTitle}</p>
             <h2 className="mt-3 text-2xl font-bold leading-tight text-state-navy md:text-3xl">{t.saveAndExit}</h2>
@@ -500,7 +520,7 @@ function PrimarySelectionRunner({ locale }: { locale: Locale }) {
               </button>
             </div>
           </section>
-        </div>
+        </dialog>
       ) : null}
     </div>
   );

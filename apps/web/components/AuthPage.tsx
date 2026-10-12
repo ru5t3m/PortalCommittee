@@ -2,7 +2,7 @@
 
 import { CalendarDays, CheckCircle2, Loader2, LockKeyhole, Mail, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import type { Locale } from "@/lib/i18n";
@@ -88,11 +88,18 @@ function humanizeAuthError(message: string, locale: Locale) {
   return message || copy[locale].error;
 }
 
+function gameReturnPath(locale: Locale) {
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next && /^\/(ru|kk)\/game$/.test(next) ? `/${locale}/game` : null;
+}
+
 export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
   const submitting = useRef(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
   const t = copy[locale];
   const isRegister = mode === "register";
   const pageTitle = isRegister ? t.registerTitle : t.title;
@@ -122,7 +129,7 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
       } else {
         await loginWithPassword(email, password);
       }
-      router.push(`/${locale}/account`);
+      router.push(gameReturnPath(locale) || `/${locale}/account`);
     } catch (caught) {
       setError(caught instanceof Error ? humanizeAuthError(caught.message, locale) : t.error);
       submitting.current = false;
@@ -165,7 +172,9 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
               <h2 className="mt-2 text-2xl font-bold">{isRegister ? t.emailRegisterTitle : t.emailTitle}</h2>
             </div>
 
-            <form className="grid gap-4" onSubmit={handleEmailSubmit}>
+            <form className="grid gap-4" aria-busy={isEmailSubmitting} onSubmit={handleEmailSubmit}
+              onInvalidCapture={event => event.target instanceof HTMLInputElement && event.target.setAttribute("aria-invalid", "true")}
+              onInput={event => event.target instanceof HTMLInputElement && event.target.removeAttribute("aria-invalid")}>
               {isRegister ? (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="grid gap-2 text-sm font-semibold text-state-navy">
@@ -239,10 +248,11 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
             </form>
 
             {error ? (
-              <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold leading-6 text-red-700" role="alert">
+              <p ref={errorRef} tabIndex={-1} id="auth-error" className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold leading-6 text-red-700" role="alert">
                 {error}
               </p>
             ) : null}
+            <p role="status" className="sr-only">{isEmailSubmitting ? (locale === "ru" ? "Проверяем данные. Загружаем личный кабинет." : "Деректер тексерілуде. Жеке кабинет жүктелуде.") : ""}</p>
 
             <div className="mt-6 rounded-2xl border border-state-teal/15 bg-state-surface p-4">
               <div className="flex gap-3">
@@ -257,6 +267,13 @@ export function AuthPage({ locale, mode }: { locale: Locale; mode: AuthMode }) {
             <a
               className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-state-teal/25 bg-white px-5 text-sm font-bold text-state-tealDark transition hover:border-state-gold hover:text-state-navy"
               href={`/${locale}/${isRegister ? "login" : "register"}`}
+              onClick={event => {
+                const next = gameReturnPath(locale);
+                if (next) {
+                  event.preventDefault();
+                  router.push(`/${locale}/${isRegister ? "login" : "register"}?next=${encodeURIComponent(next)}`);
+                }
+              }}
             >
               {isRegister ? t.goLogin : t.goRegister}
             </a>

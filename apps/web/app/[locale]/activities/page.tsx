@@ -10,7 +10,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { getActivities } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
 
-const gameUrl = "https://spec-game-pi.vercel.app";
+
 
 const activityVisuals = [
   "/media/official/special-unit-winter.webp",
@@ -206,6 +206,7 @@ const pageCopy = {
 
 export default async function ActivitiesOverviewPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
+  const gameUrl = `/${locale}/game`;
   const activities = getActivities(locale);
   const activityDetails = locale === "kk" ? activityDetailsKk : activityDetailsRu;
   const copy = pageCopy[locale];

@@ -11,6 +11,7 @@ async function discover(root, directory = root) {
     const filename = join(directory, entry.name);
     const path = relative(root, filename).replaceAll("\\", "/");
     if (path.startsWith("psychological-tests/")) continue;
+    if (path.startsWith("game/")) continue;
     if (entry.isDirectory()) await discover(root, filename);
     else if (/\.(jpe?g|png)$/i.test(entry.name)) sources.set(path, filename);
   }

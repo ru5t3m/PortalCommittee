@@ -1,0 +1,9 @@
+S.W.A.T. Operator- 4k Followers Special Remaster
+Author: Mateusz Woliński (jeandiz)
+https://sketchfab.com/jeandiz
+Source: https://sketchfab.com/3d-models/swat-operator-4k-followers-special-remaster-f6923917c8014578b1c1cb2b4c249268
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+Local adaptations: embedded textures re-encoded losslessly as WebP;
+rendered preview; interactive presentation and a separate personalized name patch.

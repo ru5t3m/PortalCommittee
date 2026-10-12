@@ -9,6 +9,7 @@ import {
   UsersRound
 } from "lucide-react";
 import { AdmissionJourney } from "@/components/AdmissionJourney";
+import { HeroCharacter } from "@/components/HeroCharacter";
 import { KnbEmblem } from "@/components/KnbEmblem";
 import { ActionCard } from "@/components/ui/ActionCard";
 import { Badge } from "@/components/ui/Badge";
@@ -151,22 +152,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
             </div>
           </Reveal>
 
-          <Reveal delay={0.12}>
-            <div className="relative mx-auto max-w-[44rem] pb-14 sm:pl-10">
-              <div className="relative aspect-[4/4.35] overflow-hidden rounded-[2.25rem] bg-slate-100 shadow-[0_30px_90px_rgba(6,27,51,0.16)] sm:aspect-[4/3.55]">
-                <Image src="/media/official/honor-guard.webp" alt="" fill priority className="object-cover object-[58%_center]" sizes="(max-width: 1024px) 100vw, 52vw" />
-                <div className="absolute inset-0 bg-gradient-to-t from-state-navy/35 via-transparent to-white/5" />
-              </div>
-              <div className="absolute -bottom-1 left-0 grid w-[88%] grid-cols-2 gap-px overflow-hidden rounded-3xl border border-white bg-white/95 shadow-[0_18px_55px_rgba(6,27,51,0.14)] backdrop-blur sm:grid-cols-4">
-                {trustStats.map(([value, label]) => (
-                  <div className="min-h-24 p-4" key={label}>
-                    <p className="text-2xl font-bold text-state-navy">{value}</p>
-                    <p className="mt-1 text-xs leading-4 text-slate-500">{label}</p>
-                  </div>
-                ))}
-              </div>
+          <HeroCharacter locale={currentLocale}>
+            <div className="absolute bottom-8 left-0 z-10 grid w-full grid-cols-2 gap-px overflow-hidden rounded-3xl border border-white bg-white/95 shadow-[0_18px_55px_rgba(6,27,51,0.14)] backdrop-blur sm:grid-cols-4">
+              {trustStats.map(([value, label]) => (
+                <div className="min-h-24 p-4" key={label}>
+                  <p className="text-2xl font-bold text-state-navy">{value}</p>
+                  <p className="mt-1 text-xs leading-4 text-slate-500">{label}</p>
+                </div>
+              ))}
             </div>
-          </Reveal>
+          </HeroCharacter>
         </Container>
       </section>
 

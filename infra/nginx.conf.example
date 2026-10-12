@@ -1,8 +1,14 @@
+map $uri $portal_frame_options {
+  default DENY;
+  ~^/game/ SAMEORIGIN;
+}
+
 server {
   listen 80;
   server_name example.gov.kz;
 
-  add_header X-Frame-Options DENY always;
+  proxy_hide_header X-Frame-Options;
+  add_header X-Frame-Options $portal_frame_options always;
   add_header X-Content-Type-Options nosniff always;
   add_header Referrer-Policy strict-origin-when-cross-origin always;
 

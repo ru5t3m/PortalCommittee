@@ -8,7 +8,7 @@ import { Section } from "@/components/ui/Section";
 import { getActivities } from "@/lib/data";
 import { isLocale, type Locale } from "@/lib/i18n";
 
-const gameUrl = "https://spec-game-pi.vercel.app";
+
 export const dynamicParams = false;
 
 export function generateStaticParams({ params }: { params: { locale: string } }) {
@@ -51,6 +51,7 @@ const copy = {
 
 export default async function ActivityPage({ params }: { params: Promise<{ locale: Locale; slug: string }> }) {
   const { locale, slug } = await params;
+  const gameUrl = `/${locale}/game`;
   const activities = getActivities(locale);
   const activity = activities.find((item) => item.slug === slug);
   if (!activity) notFound();

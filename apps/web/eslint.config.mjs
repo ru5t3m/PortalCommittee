@@ -13,5 +13,5 @@ export default defineConfig([
     files: ["components/PsychologicalTestRunner.tsx"],
     rules: { "@next/next/no-img-element": "off" }
   },
-  globalIgnores([".next/**", "assets/**", ".verification/**", "playwright-report/**", "test-results/**", "next-env.d.ts"])
+  globalIgnores([".next/**", "assets/**", "public/game/**", ".verification/**", "playwright-report/**", "test-results/**", "next-env.d.ts"])
 ]);

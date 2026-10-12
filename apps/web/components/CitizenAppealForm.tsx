@@ -97,10 +97,12 @@ async function submitAuthorizedCitizenAppeal(payload: CitizenAppealPayload) {
 export function CitizenAppealForm({ locale }: { locale: Locale }) {
   const t = copy[locale];
   const formRef = useRef<HTMLFormElement>(null);
+  const feedbackRef = useRef<HTMLDivElement>(null);
   const [authStatus, setAuthStatus] = useState<"checking" | "allowed" | "denied">("checking");
   const [submitResult, setSubmitResult] = useState<TrackingResponse | null>(null);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, startSubmit] = useTransition();
+  useEffect(() => { if (submitError || submitResult) feedbackRef.current?.focus(); }, [submitError, submitResult]);
 
   useEffect(() => {
     let active = true;
@@ -144,6 +146,7 @@ export function CitizenAppealForm({ locale }: { locale: Locale }) {
 
   return (
     <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+      <p role="status" className="sr-only">{isSubmitting ? (locale === "ru" ? "Отправляем заявку" : "Өтінім жіберілуде") : ""}</p>
       <aside className="relative min-h-[34rem] overflow-hidden rounded-2xl bg-state-navy p-6 text-white shadow-premium md:p-8">
         <div className="security-grid absolute inset-0 opacity-45" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_18%,rgba(0,169,155,0.32),transparent_18rem),radial-gradient(circle_at_82%_28%,rgba(214,168,58,0.22),transparent_16rem)]" />
@@ -166,7 +169,7 @@ export function CitizenAppealForm({ locale }: { locale: Locale }) {
       </aside>
 
       {authStatus === "checking" ? (
-        <section className="grid min-h-[20rem] content-center rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm md:p-8">
+        <section role="status" className="grid min-h-[20rem] content-center rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm md:p-8">
           <p className="text-sm font-bold uppercase tracking-[0.18em] text-state-tealDark">{t.checkingAuth}</p>
         </section>
       ) : authStatus === "denied" ? (
@@ -183,10 +186,10 @@ export function CitizenAppealForm({ locale }: { locale: Locale }) {
           </div>
         </section>
       ) : (
-      <form ref={formRef} onSubmit={handleSubmit} className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+      <form ref={formRef} onSubmit={handleSubmit} aria-busy={isSubmitting} className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <h2 className="text-2xl font-bold text-state-navy">{t.formTitle}</h2>
         {submitResult ? (
-          <div className="grid gap-4 rounded-xl bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
+          <div ref={feedbackRef} tabIndex={-1} role="status" className="grid gap-4 rounded-xl bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
             <div className="flex flex-wrap items-center gap-3 font-semibold">
               <CheckCircle2 className="h-5 w-5" />
               <span>{t.success}: {submitResult.tracking_code}</span>
@@ -239,7 +242,7 @@ export function CitizenAppealForm({ locale }: { locale: Locale }) {
               {t.message}
               <textarea required name="message" minLength={20} maxLength={8000} rows={7} className="rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-state-teal focus:ring-4 focus:ring-state-teal/10" />
             </label>
-            {submitError ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{submitError}</p> : null}
+            {submitError ? <div ref={feedbackRef} tabIndex={-1} role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{submitError}</div> : null}
             <button type="submit" disabled={isSubmitting} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-state-gold px-5 py-3 text-sm font-bold text-state-navy transition hover:bg-[#e5bd55] disabled:cursor-not-allowed disabled:opacity-60">
               {isSubmitting ? "..." : t.submit}
             </button>

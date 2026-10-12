@@ -99,11 +99,12 @@ for (const locale of ["ru", "kk"]) {
     await page.goto(`/${locale}/appeals`);
     const input = page.getByLabel(locale === "ru" ? "Код заявки" : "Өтінім коды", { exact: true });
     await input.fill(" apl-known ");
+    const resultStatus = page.locator("#tracking").getByRole("status").filter({ hasText: /APL-/ });
     await page.getByRole("button", { name: locale === "ru" ? "Проверить статус" : "Мәртебені тексеру", exact: true }).click();
-    await expect(page.getByRole("status")).toContainText(locale === "ru" ? "На рассмотрении" : "Қаралуда");
+    await expect(resultStatus).toContainText(locale === "ru" ? "На рассмотрении" : "Қаралуда");
     await input.fill("APL-UNKNOWN");
     await page.getByRole("button", { name: locale === "ru" ? "Проверить статус" : "Мәртебені тексеру", exact: true }).click();
     await expect(page.getByRole("alert").filter({ hasText: locale === "ru" ? "Заявка не найдена" : "Өтінім табылмады" })).toContainText(locale === "ru" ? "Заявка не найдена" : "Өтінім табылмады");
-    await expect(page.getByRole("status")).toHaveCount(0);
+    await expect(resultStatus).toHaveCount(0);
   });
 }
